@@ -147,6 +147,90 @@ body {
   gap: 4px;
 }
 
+/* Refresh Controls */
+.header-center {
+  display: flex;
+  align-items: center;
+}
+
+.refresh-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.refresh-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.refresh-toggle:hover {
+  color: var(--text-primary);
+}
+
+.refresh-toggle.active {
+  background-color: var(--accent-green);
+  color: #000;
+}
+
+.refresh-interval {
+  padding: 6px 10px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 11px;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+}
+
+.refresh-interval:focus {
+  border-color: var(--accent-purple);
+}
+
+.manual-refresh {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.manual-refresh:hover {
+  background-color: var(--accent-purple);
+  color: #fff;
+}
+
+.last-updated {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.spin-slow {
+  animation: spin 3s linear infinite;
+}
+
 .currency-btn {
   padding: 6px 12px;
   border: none;
@@ -1049,6 +1133,15 @@ body {
   .dashboard-header {
     flex-direction: column;
     gap: 12px;
+  }
+
+  .header-center {
+    order: 3;
+  }
+
+  .refresh-controls {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
 

@@ -70,13 +70,59 @@ const Sidebar = () => {
 };
 
 // Header Component
-const Header = ({ selectedCurrency, onCurrencyChange }) => {
+const Header = ({ 
+  selectedCurrency, 
+  onCurrencyChange, 
+  autoRefresh, 
+  setAutoRefresh, 
+  refreshInterval,
+  setRefreshInterval,
+  lastUpdated,
+  onManualRefresh 
+}) => {
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
   return (
     <header className="dashboard-header" data-testid="dashboard-header">
       <div className="header-left">
         <h1 className="logo">Macro Hub</h1>
         <span className="badge live">LIVE</span>
         <span className="badge bias">Bias</span>
+      </div>
+      <div className="header-center">
+        <div className="refresh-controls" data-testid="refresh-controls">
+          <button 
+            className={`refresh-toggle ${autoRefresh ? 'active' : ''}`}
+            onClick={() => setAutoRefresh(!autoRefresh)}
+            data-testid="auto-refresh-toggle"
+          >
+            <RefreshCw size={14} className={autoRefresh ? 'spin-slow' : ''} />
+            Auto
+          </button>
+          <select 
+            className="refresh-interval"
+            value={refreshInterval}
+            onChange={(e) => setRefreshInterval(Number(e.target.value))}
+            data-testid="refresh-interval-select"
+          >
+            <option value={60}>1 min</option>
+            <option value={300}>5 min</option>
+            <option value={600}>10 min</option>
+            <option value={900}>15 min</option>
+          </select>
+          <button 
+            className="manual-refresh"
+            onClick={onManualRefresh}
+            data-testid="manual-refresh-btn"
+          >
+            <RefreshCw size={14} />
+          </button>
+          <span className="last-updated">
+            Updated: {formatTime(lastUpdated)}
+          </span>
+        </div>
       </div>
       <div className="currency-selector" data-testid="currency-selector">
         {CURRENCIES.map((currency) => (
@@ -635,6 +681,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [strengthTimeframe, setStrengthTimeframe] = useState("2W");
   const [expandedWidget, setExpandedWidget] = useState(null);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [refreshInterval, setRefreshInterval] = useState(300); // 5 minutes in seconds
   
   // Data states
   const [riskSentiment, setRiskSentiment] = useState({ value: 37, label: "Risk Off" });
@@ -651,8 +700,8 @@ const Dashboard = () => {
   const [currencyStrength, setCurrencyStrength] = useState([]);
   const [currencyHeatmap, setCurrencyHeatmap] = useState({ heatmap: {}, timeframes: [] });
 
-  const fetchAllData = useCallback(async (currency) => {
-    setLoading(true);
+  const fetchAllData = useCallback(async (currency, isRefresh = false) => {
+    if (!isRefresh) setLoading(true);
     try {
       const [
         riskRes,
@@ -697,16 +746,29 @@ const Dashboard = () => {
       setSeasonality(seasonalityRes.data.data);
       setCurrencyStrength(strengthRes.data.currencies);
       setCurrencyHeatmap(heatmapRes.data);
+      setLastUpdated(new Date());
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
-      setLoading(false);
+      if (!isRefresh) setLoading(false);
     }
   }, []);
 
+  // Initial load
   useEffect(() => {
     fetchAllData(selectedCurrency);
   }, [selectedCurrency, fetchAllData]);
+
+  // Auto-refresh timer
+  useEffect(() => {
+    if (!autoRefresh) return;
+    
+    const interval = setInterval(() => {
+      fetchAllData(selectedCurrency, true);
+    }, refreshInterval * 1000);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, refreshInterval, selectedCurrency, fetchAllData]);
 
   const handleCurrencyChange = (currency) => {
     setSelectedCurrency(currency);
@@ -718,6 +780,10 @@ const Dashboard = () => {
 
   const closeExpandedView = () => {
     setExpandedWidget(null);
+  };
+
+  const handleManualRefresh = () => {
+    fetchAllData(selectedCurrency, true);
   };
 
   // Expanded content renderers
@@ -780,6 +846,12 @@ const Dashboard = () => {
         <Header 
           selectedCurrency={selectedCurrency} 
           onCurrencyChange={handleCurrencyChange}
+          autoRefresh={autoRefresh}
+          setAutoRefresh={setAutoRefresh}
+          refreshInterval={refreshInterval}
+          setRefreshInterval={setRefreshInterval}
+          lastUpdated={lastUpdated}
+          onManualRefresh={handleManualRefresh}
         />
         
         {loading ? (
