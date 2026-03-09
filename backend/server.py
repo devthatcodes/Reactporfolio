@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, WebSocket, WebSocketDisconnect
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -6,12 +6,13 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
 import uuid
 from datetime import datetime, timezone, timedelta
 import httpx
 import random
 import asyncio
+import json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -66,6 +67,95 @@ class DataCache:
         self.expiry.clear()
 
 data_cache = DataCache()
+
+# WebSocket Connection Manager
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[str, Set[WebSocket]] = {}  # currency -> connections
+        self.all_connections: Set[WebSocket] = set()
+    
+    async def connect(self, websocket: WebSocket, currency: str = "USD"):
+        await websocket.accept()
+        self.all_connections.add(websocket)
+        if currency not in self.active_connections:
+            self.active_connections[currency] = set()
+        self.active_connections[currency].add(websocket)
+        logger.info(f"WebSocket connected for {currency}. Total connections: {len(self.all_connections)}")
+    
+    def disconnect(self, websocket: WebSocket, currency: str = "USD"):
+        self.all_connections.discard(websocket)
+        if currency in self.active_connections:
+            self.active_connections[currency].discard(websocket)
+        logger.info(f"WebSocket disconnected. Total connections: {len(self.all_connections)}")
+    
+    async def send_personal_message(self, message: dict, websocket: WebSocket):
+        try:
+            await websocket.send_json(message)
+        except Exception as e:
+            logger.error(f"Error sending message: {e}")
+    
+    async def broadcast_to_currency(self, message: dict, currency: str):
+        if currency in self.active_connections:
+            disconnected = set()
+            for connection in self.active_connections[currency]:
+                try:
+                    await connection.send_json(message)
+                except Exception:
+                    disconnected.add(connection)
+            # Clean up disconnected
+            for conn in disconnected:
+                self.active_connections[currency].discard(conn)
+                self.all_connections.discard(conn)
+    
+    async def broadcast_all(self, message: dict):
+        disconnected = set()
+        for connection in self.all_connections:
+            try:
+                await connection.send_json(message)
+            except Exception:
+                disconnected.add(connection)
+        # Clean up disconnected
+        for conn in disconnected:
+            self.all_connections.discard(conn)
+
+manager = ConnectionManager()
+
+# Background task for pushing updates
+async def push_updates_task():
+    """Background task that pushes updates every 30 seconds"""
+    while True:
+        await asyncio.sleep(30)  # Push updates every 30 seconds
+        
+        try:
+            # Get all active currencies
+            currencies_to_update = set(manager.active_connections.keys())
+            
+            for currency in currencies_to_update:
+                if manager.active_connections.get(currency):
+                    # Fetch fresh data for this currency
+                    risk_data = calculate_risk_sentiment(currency)
+                    strength_data = await calculate_currency_strength(currency)
+                    
+                    update = {
+                        "type": "update",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "currency": currency,
+                        "data": {
+                            "risk_sentiment": risk_data,
+                            "currency_strength": strength_data,
+                        }
+                    }
+                    
+                    await manager.broadcast_to_currency(update, currency)
+                    logger.info(f"Pushed update to {len(manager.active_connections.get(currency, []))} clients for {currency}")
+        except Exception as e:
+            logger.error(f"Error in push_updates_task: {e}")
+
+# Start background task on startup
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(push_updates_task())
+    logger.info("WebSocket push updates task started")
 
 # Alpha Vantage API calls
 async def fetch_alpha_vantage(function: str, params: dict = {}) -> Optional[dict]:
@@ -602,6 +692,90 @@ async def get_market_status():
     }
     
     return {"markets": markets, "timestamp": now.isoformat()}
+
+# WebSocket endpoint for real-time updates
+@api_router.websocket("/ws/{currency}")
+async def websocket_endpoint(websocket: WebSocket, currency: str):
+    """WebSocket endpoint for real-time data updates"""
+    await manager.connect(websocket, currency)
+    
+    try:
+        # Send initial data
+        risk_data = calculate_risk_sentiment(currency)
+        strength_data = await calculate_currency_strength(currency)
+        
+        initial_data = {
+            "type": "initial",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "currency": currency,
+            "data": {
+                "risk_sentiment": risk_data,
+                "currency_strength": strength_data,
+            }
+        }
+        await manager.send_personal_message(initial_data, websocket)
+        
+        # Keep connection alive and listen for messages
+        while True:
+            try:
+                # Wait for client messages (ping/pong or currency change)
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=60)
+                message = json.loads(data)
+                
+                if message.get("type") == "ping":
+                    await manager.send_personal_message({"type": "pong"}, websocket)
+                
+                elif message.get("type") == "subscribe":
+                    # Client wants to change currency subscription
+                    new_currency = message.get("currency", currency)
+                    if new_currency != currency:
+                        manager.disconnect(websocket, currency)
+                        currency = new_currency
+                        if currency not in manager.active_connections:
+                            manager.active_connections[currency] = set()
+                        manager.active_connections[currency].add(websocket)
+                        
+                        # Send data for new currency
+                        risk_data = calculate_risk_sentiment(currency)
+                        strength_data = await calculate_currency_strength(currency)
+                        
+                        await manager.send_personal_message({
+                            "type": "subscription_changed",
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "currency": currency,
+                            "data": {
+                                "risk_sentiment": risk_data,
+                                "currency_strength": strength_data,
+                            }
+                        }, websocket)
+                
+                elif message.get("type") == "refresh":
+                    # Client requests immediate refresh
+                    risk_data = calculate_risk_sentiment(currency)
+                    strength_data = await calculate_currency_strength(currency)
+                    
+                    await manager.send_personal_message({
+                        "type": "refresh",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "currency": currency,
+                        "data": {
+                            "risk_sentiment": risk_data,
+                            "currency_strength": strength_data,
+                        }
+                    }, websocket)
+                    
+            except asyncio.TimeoutError:
+                # Send keepalive ping
+                try:
+                    await manager.send_personal_message({"type": "ping"}, websocket)
+                except Exception:
+                    break
+                    
+    except WebSocketDisconnect:
+        manager.disconnect(websocket, currency)
+    except Exception as e:
+        logger.error(f"WebSocket error: {e}")
+        manager.disconnect(websocket, currency)
 
 # Include the router
 app.include_router(api_router)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import "@/App.css";
 import axios from "axios";
 import {
@@ -18,6 +18,8 @@ import {
   ExternalLink,
   X,
   Maximize2,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import {
   LineChart,
@@ -35,6 +37,7 @@ import {
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const WS_URL = BACKEND_URL.replace('https://', 'wss://').replace('http://', 'ws://') + '/api/ws';
 
 const CURRENCIES = ["USD", "GBP", "EUR", "CAD", "AUD", "NZD", "JPY", "CHF"];
 
@@ -78,7 +81,8 @@ const Header = ({
   refreshInterval,
   setRefreshInterval,
   lastUpdated,
-  onManualRefresh 
+  onManualRefresh,
+  wsConnected 
 }) => {
   const formatTime = (date) => {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -90,6 +94,10 @@ const Header = ({
         <h1 className="logo">Macro Hub</h1>
         <span className="badge live">LIVE</span>
         <span className="badge bias">Bias</span>
+        <span className={`ws-status ${wsConnected ? 'connected' : 'disconnected'}`} data-testid="ws-status">
+          {wsConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
+          {wsConnected ? 'Live' : 'Offline'}
+        </span>
       </div>
       <div className="header-center">
         <div className="refresh-controls" data-testid="refresh-controls">
@@ -684,6 +692,11 @@ const Dashboard = () => {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [refreshInterval, setRefreshInterval] = useState(300); // 5 minutes in seconds
+  const [wsConnected, setWsConnected] = useState(false);
+  
+  // WebSocket ref
+  const wsRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
   
   // Data states
   const [riskSentiment, setRiskSentiment] = useState({ value: 37, label: "Risk Off" });
@@ -699,6 +712,88 @@ const Dashboard = () => {
   const [seasonality, setSeasonality] = useState([]);
   const [currencyStrength, setCurrencyStrength] = useState([]);
   const [currencyHeatmap, setCurrencyHeatmap] = useState({ heatmap: {}, timeframes: [] });
+
+  // WebSocket connection
+  const connectWebSocket = useCallback((currency) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      // Already connected, just change subscription
+      wsRef.current.send(JSON.stringify({ type: 'subscribe', currency }));
+      return;
+    }
+
+    // Close existing connection
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+
+    const ws = new WebSocket(`${WS_URL}/${currency}`);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      setWsConnected(true);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        
+        if (message.type === 'ping') {
+          ws.send(JSON.stringify({ type: 'pong' }));
+          return;
+        }
+
+        if (message.type === 'initial' || message.type === 'update' || message.type === 'subscription_changed' || message.type === 'refresh') {
+          const { data, timestamp } = message;
+          
+          if (data.risk_sentiment) {
+            setRiskSentiment(data.risk_sentiment);
+          }
+          if (data.currency_strength) {
+            setCurrencyStrength(data.currency_strength);
+          }
+          
+          setLastUpdated(new Date(timestamp));
+        }
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+      setWsConnected(false);
+      
+      // Attempt to reconnect after 5 seconds
+      reconnectTimeoutRef.current = setTimeout(() => {
+        if (wsRef.current?.readyState !== WebSocket.OPEN) {
+          connectWebSocket(currency);
+        }
+      }, 5000);
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setWsConnected(false);
+    };
+  }, []);
+
+  // Cleanup WebSocket on unmount
+  useEffect(() => {
+    return () => {
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Connect WebSocket when currency changes
+  useEffect(() => {
+    connectWebSocket(selectedCurrency);
+  }, [selectedCurrency, connectWebSocket]);
 
   const fetchAllData = useCallback(async (currency, isRefresh = false) => {
     if (!isRefresh) setLoading(true);
@@ -759,19 +854,23 @@ const Dashboard = () => {
     fetchAllData(selectedCurrency);
   }, [selectedCurrency, fetchAllData]);
 
-  // Auto-refresh timer
+  // Auto-refresh timer (fallback when WebSocket not connected)
   useEffect(() => {
     if (!autoRefresh) return;
     
     const interval = setInterval(() => {
-      fetchAllData(selectedCurrency, true);
+      // Only use polling if WebSocket is not connected
+      if (!wsConnected) {
+        fetchAllData(selectedCurrency, true);
+      }
     }, refreshInterval * 1000);
 
     return () => clearInterval(interval);
-  }, [autoRefresh, refreshInterval, selectedCurrency, fetchAllData]);
+  }, [autoRefresh, refreshInterval, selectedCurrency, fetchAllData, wsConnected]);
 
   const handleCurrencyChange = (currency) => {
     setSelectedCurrency(currency);
+    // WebSocket will automatically subscribe to new currency
   };
 
   const openExpandedView = (widgetName) => {
@@ -783,6 +882,11 @@ const Dashboard = () => {
   };
 
   const handleManualRefresh = () => {
+    // Request refresh via WebSocket if connected
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'refresh' }));
+    }
+    // Also fetch all data via REST
     fetchAllData(selectedCurrency, true);
   };
 
@@ -852,6 +956,7 @@ const Dashboard = () => {
           setRefreshInterval={setRefreshInterval}
           lastUpdated={lastUpdated}
           onManualRefresh={handleManualRefresh}
+          wsConnected={wsConnected}
         />
         
         {loading ? (

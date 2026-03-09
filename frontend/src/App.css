@@ -141,6 +141,45 @@ body {
   color: #fff;
 }
 
+/* WebSocket Status Indicator */
+.ws-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.ws-status.connected {
+  background-color: rgba(34, 197, 94, 0.2);
+  color: var(--accent-green);
+}
+
+.ws-status.disconnected {
+  background-color: rgba(239, 68, 68, 0.2);
+  color: var(--accent-red);
+}
+
+.ws-status svg {
+  animation: pulse 2s infinite;
+}
+
+.ws-status.disconnected svg {
+  animation: none;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
 /* Currency Selector */
 .currency-selector {
   display: flex;
