@@ -16,6 +16,8 @@ import {
   Filter,
   ChevronRight,
   ExternalLink,
+  X,
+  Maximize2,
 } from "lucide-react";
 import {
   LineChart,
@@ -93,7 +95,7 @@ const Header = ({ selectedCurrency, onCurrencyChange }) => {
 };
 
 // Widget Card Component
-const WidgetCard = ({ title, icon, children, actions, className = "" }) => {
+const WidgetCard = ({ title, icon, children, actions, className = "", onViewClick }) => {
   return (
     <div className={`widget-card ${className}`} data-testid={`widget-${title?.toLowerCase().replace(/\s+/g, "-")}`}>
       <div className="widget-header">
@@ -101,24 +103,56 @@ const WidgetCard = ({ title, icon, children, actions, className = "" }) => {
           {icon && <span className="widget-icon">{icon}</span>}
           <span>{title}</span>
         </div>
-        <div className="widget-actions">{actions}</div>
+        <div className="widget-actions">
+          {actions}
+          {onViewClick && (
+            <button className="view-btn" onClick={onViewClick} data-testid={`view-btn-${title?.toLowerCase().replace(/\s+/g, "-")}`}>
+              View <Maximize2 size={12} />
+            </button>
+          )}
+        </div>
       </div>
       <div className="widget-content">{children}</div>
     </div>
   );
 };
 
+// Modal Component for expanded view
+const ExpandedModal = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose} data-testid="expanded-modal">
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="modal-title">
+            <Zap size={16} className="modal-icon" />
+            <span>{title}</span>
+          </div>
+          <button className="modal-close" onClick={onClose} data-testid="modal-close-btn">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="modal-body">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Risk Sentiment Gauge
-const RiskSentimentGauge = ({ value, label }) => {
+const RiskSentimentGauge = ({ value, label, expanded }) => {
   const rotation = (value / 100) * 180 - 90;
+  const size = expanded ? 280 : 180;
   
   return (
-    <div className="risk-gauge" data-testid="risk-sentiment-gauge">
+    <div className={`risk-gauge ${expanded ? 'expanded' : ''}`} data-testid="risk-sentiment-gauge">
       <div className="gauge-labels">
         <span className="label-left">RISK OFF</span>
         <span className="label-right">RISK ON</span>
       </div>
-      <div className="gauge-container">
+      <div className="gauge-container" style={expanded ? { width: size, height: size * 0.55 } : {}}>
         <svg viewBox="0 0 200 120" className="gauge-svg">
           {/* Background arc */}
           <path
@@ -153,9 +187,9 @@ const RiskSentimentGauge = ({ value, label }) => {
         </svg>
         <div className="gauge-center">
           <div className="gauge-label">RISK SENTIMENT</div>
-          <div className="gauge-value">{value}%</div>
+          <div className="gauge-value" style={expanded ? { fontSize: '48px' } : {}}>{value}%</div>
           <div className="gauge-bolt">
-            <Zap size={20} fill="#8b5cf6" color="#8b5cf6" />
+            <Zap size={expanded ? 28 : 20} fill="#8b5cf6" color="#8b5cf6" />
           </div>
         </div>
         <div 
@@ -172,13 +206,13 @@ const RiskSentimentGauge = ({ value, label }) => {
 };
 
 // Trade Flows Component
-const TradeFlows = ({ data }) => {
+const TradeFlows = ({ data, expanded }) => {
   const [activeTab, setActiveTab] = useState("exports");
 
   const items = activeTab === "exports" ? data?.exports : data?.imports;
 
   return (
-    <div className="trade-flows" data-testid="trade-flows">
+    <div className={`trade-flows ${expanded ? 'expanded' : ''}`} data-testid="trade-flows">
       <div className="trade-tabs">
         <button
           className={`trade-tab ${activeTab === "exports" ? "active" : ""}`}
@@ -197,12 +231,12 @@ const TradeFlows = ({ data }) => {
       </div>
       <div className="trade-items">
         {items?.map((item, index) => (
-          <div key={index} className="trade-item">
+          <div key={index} className={`trade-item ${expanded ? 'expanded' : ''}`}>
             <div className="trade-info">
-              <span className="trade-sector">{item.sector}</span>
+              <span className="trade-sector" style={expanded ? { fontSize: '16px' } : {}}>{item.sector}</span>
               <span className="trade-values">
-                <span className="trade-value">${item.value}B</span>
-                <span className="trade-percentage">{item.percentage}%</span>
+                <span className="trade-value" style={expanded ? { fontSize: '14px' } : {}}>${item.value}B</span>
+                <span className="trade-percentage" style={expanded ? { fontSize: '14px' } : {}}>{item.percentage}%</span>
               </span>
             </div>
             <span className="trade-rank">Rank #{item.rank}</span>
@@ -214,19 +248,19 @@ const TradeFlows = ({ data }) => {
 };
 
 // Insights Component
-const Insights = ({ insights }) => {
+const Insights = ({ insights, expanded }) => {
   return (
-    <div className="insights-list" data-testid="insights-list">
+    <div className={`insights-list ${expanded ? 'expanded' : ''}`} data-testid="insights-list">
       {insights?.map((insight, index) => (
-        <div key={index} className="insight-item">
+        <div key={index} className={`insight-item ${expanded ? 'expanded' : ''}`}>
           <div className="insight-header">
-            <span className="insight-source">{insight.source}</span>
+            <span className="insight-source" style={expanded ? { fontSize: '14px' } : {}}>{insight.source}</span>
             <span className={`sentiment-badge ${insight.sentiment?.toLowerCase().includes("bullish") ? "bullish" : "bearish"}`}>
               {insight.sentiment}
             </span>
             {insight.is_new && <span className="new-badge">New</span>}
           </div>
-          <p className="insight-title">{insight.title}</p>
+          <p className="insight-title" style={expanded ? { fontSize: '14px' } : {}}>{insight.title}</p>
         </div>
       ))}
     </div>
@@ -234,31 +268,31 @@ const Insights = ({ insights }) => {
 };
 
 // FED Widget Component
-const FedWidget = ({ data }) => {
+const FedWidget = ({ data, expanded }) => {
   return (
-    <div className="fed-widget" data-testid="fed-widget">
+    <div className={`fed-widget ${expanded ? 'expanded' : ''}`} data-testid="fed-widget">
       <div className="fed-stance">
-        <span className="stance-label">FED</span>
-        <span className="stance-value">{data?.stance}</span>
+        <span className="stance-label" style={expanded ? { fontSize: '18px' } : {}}>FED</span>
+        <span className="stance-value" style={expanded ? { fontSize: '16px' } : {}}>{data?.stance}</span>
       </div>
       <div className="fed-rate-section">
         <div className="rate-info">
           <span className="rate-label">RATE</span>
-          <span className="rate-value">{data?.rate}</span>
+          <span className="rate-value" style={expanded ? { fontSize: '36px' } : {}}>{data?.rate}</span>
         </div>
         <div className="rate-change">
           <span className="change-label">LAST</span>
-          <span className="change-value">{data?.last_change}</span>
+          <span className="change-value" style={expanded ? { fontSize: '20px' } : {}}>{data?.last_change}</span>
         </div>
       </div>
       <div className="fed-next-section">
         <div className="next-info">
           <span className="next-label">NEXT</span>
-          <span className="next-date">{data?.next_date}</span>
+          <span className="next-date" style={expanded ? { fontSize: '20px' } : {}}>{data?.next_date}</span>
         </div>
         <div className="hold-info">
           <span className="hold-label">HOLD %</span>
-          <span className="hold-value">{data?.hold_probability}%</span>
+          <span className="hold-value" style={expanded ? { fontSize: '28px' } : {}}>{data?.hold_probability}%</span>
         </div>
       </div>
     </div>
@@ -266,18 +300,18 @@ const FedWidget = ({ data }) => {
 };
 
 // Fed Events Component
-const FedEvents = ({ events }) => {
+const FedEvents = ({ events, expanded }) => {
   return (
-    <div className="fed-events" data-testid="fed-events">
+    <div className={`fed-events ${expanded ? 'expanded' : ''}`} data-testid="fed-events">
       {events?.map((event, index) => (
-        <div key={index} className="event-item">
+        <div key={index} className={`event-item ${expanded ? 'expanded' : ''}`}>
           <div className="event-info">
-            <span className="event-name">{event.name}</span>
-            <span className="event-datetime">
-              <Calendar size={12} /> {event.date} at {event.time}
+            <span className="event-name" style={expanded ? { fontSize: '14px' } : {}}>{event.name}</span>
+            <span className="event-datetime" style={expanded ? { fontSize: '13px' } : {}}>
+              <Calendar size={expanded ? 14 : 12} /> {event.date} at {event.time}
             </span>
           </div>
-          <ChevronRight size={16} className="event-arrow" />
+          <ChevronRight size={expanded ? 20 : 16} className="event-arrow" />
         </div>
       ))}
     </div>
@@ -285,19 +319,19 @@ const FedEvents = ({ events }) => {
 };
 
 // Recent News Component
-const RecentNews = ({ news }) => {
+const RecentNews = ({ news, expanded }) => {
   return (
-    <div className="recent-news" data-testid="recent-news">
+    <div className={`recent-news ${expanded ? 'expanded' : ''}`} data-testid="recent-news">
       {news?.map((item, index) => (
-        <div key={index} className="news-item">
+        <div key={index} className={`news-item ${expanded ? 'expanded' : ''}`}>
           <div className="news-header">
-            <span className="news-source">{item.source}</span>
+            <span className="news-source" style={expanded ? { fontSize: '14px' } : {}}>{item.source}</span>
             <span className={`sentiment-badge ${item.sentiment?.toLowerCase().includes("bullish") ? "bullish" : "bearish"}`}>
               {item.sentiment}
             </span>
             <span className="news-time">{item.time_ago}</span>
           </div>
-          <p className="news-title">{item.title}</p>
+          <p className="news-title" style={expanded ? { fontSize: '14px' } : {}}>{item.title}</p>
         </div>
       ))}
     </div>
@@ -305,20 +339,20 @@ const RecentNews = ({ news }) => {
 };
 
 // Yield Reactions Component
-const YieldReactions = ({ reactions }) => {
+const YieldReactions = ({ reactions, expanded }) => {
   return (
-    <div className="yield-reactions" data-testid="yield-reactions">
+    <div className={`yield-reactions ${expanded ? 'expanded' : ''}`} data-testid="yield-reactions">
       {reactions?.map((reaction, index) => (
-        <div key={index} className="reaction-item">
+        <div key={index} className={`reaction-item ${expanded ? 'expanded' : ''}`}>
           <div className="reaction-event">
-            <span className="event-name">{reaction.event}</span>
+            <span className="event-name" style={expanded ? { fontSize: '14px' } : {}}>{reaction.event}</span>
             <span className={`sentiment-badge ${reaction.sentiment?.toLowerCase() === "hawkish" ? "hawkish" : "dovish"}`}>
               {reaction.sentiment}
             </span>
           </div>
           <div className="reaction-yields">
-            <span className="yield">2Y: {reaction.two_year}</span>
-            <span className="yield">10Y: {reaction.ten_year}</span>
+            <span className="yield" style={expanded ? { fontSize: '13px' } : {}}>2Y: {reaction.two_year}</span>
+            <span className="yield" style={expanded ? { fontSize: '13px' } : {}}>10Y: {reaction.ten_year}</span>
           </div>
           <span className="reaction-date">{reaction.date}</span>
         </div>
@@ -328,13 +362,13 @@ const YieldReactions = ({ reactions }) => {
 };
 
 // FedWatch Component
-const FedWatch = ({ fedwatch }) => {
+const FedWatch = ({ fedwatch, expanded }) => {
   return (
-    <div className="fedwatch" data-testid="fedwatch">
+    <div className={`fedwatch ${expanded ? 'expanded' : ''}`} data-testid="fedwatch">
       {fedwatch?.map((item, index) => (
-        <div key={index} className="fedwatch-item">
-          <span className="fedwatch-date">{item.date}</span>
-          <div className="probability-bar">
+        <div key={index} className={`fedwatch-item ${expanded ? 'expanded' : ''}`}>
+          <span className="fedwatch-date" style={expanded ? { fontSize: '14px' } : {}}>{item.date}</span>
+          <div className="probability-bar" style={expanded ? { height: '28px' } : {}}>
             <div 
               className="prob-segment hold" 
               style={{ width: `${item.hold}%` }}
@@ -367,27 +401,29 @@ const FedWatch = ({ fedwatch }) => {
 };
 
 // Labor Market Chart
-const LaborMarketChart = ({ data }) => {
+const LaborMarketChart = ({ data, expanded }) => {
+  const chartHeight = expanded ? 400 : 200;
+  
   return (
-    <div className="chart-container" data-testid="labor-market-chart">
-      <ResponsiveContainer width="100%" height={200}>
+    <div className={`chart-container ${expanded ? 'expanded' : ''}`} data-testid="labor-market-chart" style={expanded ? { height: chartHeight } : {}}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
           <XAxis 
             dataKey="date" 
-            tick={{ fill: "#888", fontSize: 10 }} 
+            tick={{ fill: "#888", fontSize: expanded ? 12 : 10 }} 
             axisLine={{ stroke: "#2a2a2a" }}
           />
           <YAxis 
             yAxisId="left"
-            tick={{ fill: "#888", fontSize: 10 }} 
+            tick={{ fill: "#888", fontSize: expanded ? 12 : 10 }} 
             axisLine={{ stroke: "#2a2a2a" }}
             tickFormatter={(v) => `${v/1000}k`}
           />
           <YAxis 
             yAxisId="right"
             orientation="right"
-            tick={{ fill: "#888", fontSize: 10 }} 
+            tick={{ fill: "#888", fontSize: expanded ? 12 : 10 }} 
             axisLine={{ stroke: "#2a2a2a" }}
             domain={[4, 5]}
           />
@@ -400,37 +436,45 @@ const LaborMarketChart = ({ data }) => {
             type="monotone"
             dataKey="employment"
             stroke="#3b82f6"
-            strokeWidth={2}
-            dot={false}
+            strokeWidth={expanded ? 3 : 2}
+            dot={expanded}
           />
           <Line
             yAxisId="right"
             type="monotone"
             dataKey="unemployment"
             stroke="#8b5cf6"
-            strokeWidth={2}
-            dot={false}
+            strokeWidth={expanded ? 3 : 2}
+            dot={expanded}
           />
         </LineChart>
       </ResponsiveContainer>
+      {expanded && (
+        <div className="chart-legend">
+          <div className="legend-item"><span className="legend-color" style={{ backgroundColor: '#3b82f6' }}></span>Employment</div>
+          <div className="legend-item"><span className="legend-color" style={{ backgroundColor: '#8b5cf6' }}></span>Unemployment Rate</div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Inflation Chart
-const InflationChart = ({ data }) => {
+const InflationChart = ({ data, expanded }) => {
+  const chartHeight = expanded ? 400 : 200;
+  
   return (
-    <div className="chart-container" data-testid="inflation-chart">
-      <ResponsiveContainer width="100%" height={200}>
+    <div className={`chart-container ${expanded ? 'expanded' : ''}`} data-testid="inflation-chart" style={expanded ? { height: chartHeight } : {}}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
           <XAxis 
             dataKey="date" 
-            tick={{ fill: "#888", fontSize: 9 }} 
+            tick={{ fill: "#888", fontSize: expanded ? 11 : 9 }} 
             axisLine={{ stroke: "#2a2a2a" }}
           />
           <YAxis 
-            tick={{ fill: "#888", fontSize: 10 }} 
+            tick={{ fill: "#888", fontSize: expanded ? 12 : 10 }} 
             axisLine={{ stroke: "#2a2a2a" }}
             domain={[2.3, 3.1]}
           />
@@ -443,36 +487,44 @@ const InflationChart = ({ data }) => {
             type="monotone"
             dataKey="cpi"
             stroke="#8b5cf6"
-            strokeWidth={2}
-            dot={{ fill: "#8b5cf6", r: 4 }}
+            strokeWidth={expanded ? 3 : 2}
+            dot={{ fill: "#8b5cf6", r: expanded ? 6 : 4 }}
           />
           <Line
             type="monotone"
             dataKey="core"
             stroke="#ec4899"
-            strokeWidth={2}
-            dot={{ fill: "#ec4899", r: 4 }}
+            strokeWidth={expanded ? 3 : 2}
+            dot={{ fill: "#ec4899", r: expanded ? 6 : 4 }}
           />
         </LineChart>
       </ResponsiveContainer>
+      {expanded && (
+        <div className="chart-legend">
+          <div className="legend-item"><span className="legend-color" style={{ backgroundColor: '#8b5cf6' }}></span>CPI</div>
+          <div className="legend-item"><span className="legend-color" style={{ backgroundColor: '#ec4899' }}></span>Core Inflation</div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Seasonality Chart
-const SeasonalityChart = ({ data }) => {
+const SeasonalityChart = ({ data, expanded }) => {
+  const chartHeight = expanded ? 400 : 200;
+  
   return (
-    <div className="chart-container" data-testid="seasonality-chart">
-      <ResponsiveContainer width="100%" height={200}>
+    <div className={`chart-container ${expanded ? 'expanded' : ''}`} data-testid="seasonality-chart" style={expanded ? { height: chartHeight } : {}}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
           <XAxis 
             dataKey="month" 
-            tick={{ fill: "#888", fontSize: 10 }} 
+            tick={{ fill: "#888", fontSize: expanded ? 12 : 10 }} 
             axisLine={{ stroke: "#2a2a2a" }}
           />
           <YAxis 
-            tick={{ fill: "#888", fontSize: 10 }} 
+            tick={{ fill: "#888", fontSize: expanded ? 12 : 10 }} 
             axisLine={{ stroke: "#2a2a2a" }}
             domain={[-2, 2]}
           />
@@ -481,7 +533,7 @@ const SeasonalityChart = ({ data }) => {
             contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #333" }}
             labelStyle={{ color: "#fff" }}
           />
-          <Bar dataKey="value" radius={[2, 2, 0, 0]}>
+          <Bar dataKey="value" radius={[4, 4, 0, 0]}>
             {data?.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
@@ -491,14 +543,20 @@ const SeasonalityChart = ({ data }) => {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      {expanded && (
+        <div className="chart-legend">
+          <div className="legend-item"><span className="legend-color" style={{ backgroundColor: '#8b5cf6' }}></span>Positive Seasonality</div>
+          <div className="legend-item"><span className="legend-color" style={{ backgroundColor: '#ef4444' }}></span>Negative Seasonality</div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Currency Strength Component
-const CurrencyStrength = ({ currencies, timeframe, onTimeframeChange }) => {
+const CurrencyStrength = ({ currencies, timeframe, onTimeframeChange, expanded }) => {
   return (
-    <div className="currency-strength" data-testid="currency-strength">
+    <div className={`currency-strength ${expanded ? 'expanded' : ''}`} data-testid="currency-strength">
       <div className="strength-timeframes">
         {["1W", "2W", "1M"].map((tf) => (
           <button
@@ -512,15 +570,15 @@ const CurrencyStrength = ({ currencies, timeframe, onTimeframeChange }) => {
       </div>
       <div className="strength-bars">
         {currencies?.map((currency, index) => (
-          <div key={index} className="strength-bar-item">
-            <span className="currency-label">{currency.currency}</span>
-            <div className="strength-bar-bg">
+          <div key={index} className={`strength-bar-item ${expanded ? 'expanded' : ''}`}>
+            <span className="currency-label" style={expanded ? { fontSize: '14px', width: '45px' } : {}}>{currency.currency}</span>
+            <div className="strength-bar-bg" style={expanded ? { height: '10px' } : {}}>
               <div 
                 className={`strength-bar-fill ${currency.change >= 0 ? "positive" : "negative"}`}
                 style={{ width: `${Math.abs(currency.strength)}%` }}
               />
             </div>
-            <span className={`change-value ${currency.change >= 0 ? "positive" : "negative"}`}>
+            <span className={`change-value ${currency.change >= 0 ? "positive" : "negative"}`} style={expanded ? { fontSize: '13px', width: '55px' } : {}}>
               {currency.change >= 0 ? "+" : ""}{currency.change}%
             </span>
           </div>
@@ -531,7 +589,7 @@ const CurrencyStrength = ({ currencies, timeframe, onTimeframeChange }) => {
 };
 
 // Currency Heatmap Component
-const CurrencyHeatmap = ({ heatmap, timeframes }) => {
+const CurrencyHeatmap = ({ heatmap, timeframes, expanded }) => {
   const currencies = heatmap ? Object.keys(heatmap) : [];
   
   const getColor = (value) => {
@@ -542,21 +600,25 @@ const CurrencyHeatmap = ({ heatmap, timeframes }) => {
   };
 
   return (
-    <div className="currency-heatmap" data-testid="currency-heatmap">
-      <div className="heatmap-header">
+    <div className={`currency-heatmap ${expanded ? 'expanded' : ''}`} data-testid="currency-heatmap">
+      <div className="heatmap-header" style={expanded ? { gridTemplateColumns: '60px repeat(3, 1fr)' } : {}}>
         <span></span>
         {timeframes?.map((tf) => (
-          <span key={tf} className="tf-header">{tf}</span>
+          <span key={tf} className="tf-header" style={expanded ? { fontSize: '14px' } : {}}>{tf}</span>
         ))}
       </div>
       {currencies.map((currency) => (
-        <div key={currency} className="heatmap-row">
-          <span className="heatmap-currency">{currency}</span>
+        <div key={currency} className="heatmap-row" style={expanded ? { gridTemplateColumns: '60px repeat(3, 1fr)' } : {}}>
+          <span className="heatmap-currency" style={expanded ? { fontSize: '14px' } : {}}>{currency}</span>
           {timeframes?.map((tf) => (
             <span 
               key={tf} 
               className="heatmap-cell"
-              style={{ backgroundColor: getColor(heatmap[currency][tf]) }}
+              style={{ 
+                backgroundColor: getColor(heatmap[currency][tf]),
+                padding: expanded ? '12px' : '6px',
+                fontSize: expanded ? '13px' : '9px'
+              }}
             >
               {heatmap[currency][tf]?.toFixed(1)}%
             </span>
@@ -572,6 +634,7 @@ const Dashboard = () => {
   const [selectedCurrency, setSelectedCurrency] = useState("USD");
   const [loading, setLoading] = useState(true);
   const [strengthTimeframe, setStrengthTimeframe] = useState("2W");
+  const [expandedWidget, setExpandedWidget] = useState(null);
   
   // Data states
   const [riskSentiment, setRiskSentiment] = useState({ value: 37, label: "Risk Off" });
@@ -649,6 +712,67 @@ const Dashboard = () => {
     setSelectedCurrency(currency);
   };
 
+  const openExpandedView = (widgetName) => {
+    setExpandedWidget(widgetName);
+  };
+
+  const closeExpandedView = () => {
+    setExpandedWidget(null);
+  };
+
+  // Expanded content renderers
+  const renderExpandedContent = () => {
+    switch (expandedWidget) {
+      case "risk-sentiment":
+        return <RiskSentimentGauge value={riskSentiment.value} label={riskSentiment.label} expanded />;
+      case "trade-flows":
+        return <TradeFlows data={tradeFlows} expanded />;
+      case "insights":
+        return <Insights insights={insights} expanded />;
+      case "fed":
+        return <FedWidget data={fedData} expanded />;
+      case "fed-events":
+        return <FedEvents events={fedEvents} expanded />;
+      case "recent-news":
+        return <RecentNews news={recentNews} expanded />;
+      case "yield-reactions":
+        return <YieldReactions reactions={yieldReactions} expanded />;
+      case "fedwatch":
+        return <FedWatch fedwatch={fedwatch} expanded />;
+      case "labor-market":
+        return <LaborMarketChart data={laborMarket} expanded />;
+      case "inflation":
+        return <InflationChart data={inflation} expanded />;
+      case "seasonality":
+        return <SeasonalityChart data={seasonality} expanded />;
+      case "currency-strength":
+        return <CurrencyStrength currencies={currencyStrength} timeframe={strengthTimeframe} onTimeframeChange={setStrengthTimeframe} expanded />;
+      case "currency-heatmap":
+        return <CurrencyHeatmap heatmap={currencyHeatmap.heatmap} timeframes={currencyHeatmap.timeframes} expanded />;
+      default:
+        return null;
+    }
+  };
+
+  const getExpandedTitle = () => {
+    const titles = {
+      "risk-sentiment": "RISK SENTIMENT",
+      "trade-flows": "TRADE FLOWS",
+      "insights": "INSIGHTS",
+      "fed": "FED",
+      "fed-events": "FED EVENTS",
+      "recent-news": "RECENT NEWS",
+      "yield-reactions": "YIELD REACTIONS",
+      "fedwatch": "FEDWATCH",
+      "labor-market": "LABOR MARKET",
+      "inflation": "INFLATION",
+      "seasonality": "SEASONALITY",
+      "currency-strength": "CURRENCY STRENGTH INDEX",
+      "currency-heatmap": "CURRENCY STRENGTH HEATMAP",
+    };
+    return titles[expandedWidget] || "";
+  };
+
   return (
     <div className="dashboard" data-testid="macro-hub-dashboard">
       <Sidebar />
@@ -669,8 +793,9 @@ const Dashboard = () => {
             <WidgetCard 
               title="RISK SENTIMENT" 
               icon={<Zap size={14} />}
-              actions={<button className="view-btn">View <RefreshCw size={12} /></button>}
+              actions={<RefreshCw size={12} className="action-icon" />}
               className="risk-sentiment-card"
+              onViewClick={() => openExpandedView("risk-sentiment")}
             >
               <RiskSentimentGauge value={riskSentiment.value} label={riskSentiment.label} />
             </WidgetCard>
@@ -678,8 +803,8 @@ const Dashboard = () => {
             <WidgetCard 
               title="TRADE FLOWS" 
               icon={<Zap size={14} />}
-              actions={<button className="view-btn">View</button>}
               className="trade-flows-card"
+              onViewClick={() => openExpandedView("trade-flows")}
             >
               <TradeFlows data={tradeFlows} />
             </WidgetCard>
@@ -687,26 +812,18 @@ const Dashboard = () => {
             <WidgetCard 
               title="INSIGHTS" 
               icon={<Zap size={14} />}
-              actions={
-                <>
-                  <Settings size={14} className="action-icon" />
-                  <button className="view-btn">View</button>
-                </>
-              }
+              actions={<Settings size={14} className="action-icon" />}
               className="insights-card"
+              onViewClick={() => openExpandedView("insights")}
             >
               <Insights insights={insights} />
             </WidgetCard>
 
             <WidgetCard 
               title="FED" 
-              actions={
-                <>
-                  <Settings size={14} className="action-icon" />
-                  <button className="view-btn">View</button>
-                </>
-              }
+              actions={<Settings size={14} className="action-icon" />}
               className="fed-card"
+              onViewClick={() => openExpandedView("fed")}
             >
               <FedWidget data={fedData} />
             </WidgetCard>
@@ -715,8 +832,8 @@ const Dashboard = () => {
             <WidgetCard 
               title="FED EVENTS" 
               icon={<Zap size={14} />}
-              actions={<button className="view-btn">View</button>}
               className="fed-events-card"
+              onViewClick={() => openExpandedView("fed-events")}
             >
               <FedEvents events={fedEvents} />
             </WidgetCard>
@@ -724,13 +841,9 @@ const Dashboard = () => {
             <WidgetCard 
               title="RECENT NEWS" 
               icon={<Zap size={14} />}
-              actions={
-                <>
-                  <button className="view-btn">View</button>
-                  <Filter size={14} className="action-icon" />
-                </>
-              }
+              actions={<Filter size={14} className="action-icon" />}
               className="recent-news-card"
+              onViewClick={() => openExpandedView("recent-news")}
             >
               <RecentNews news={recentNews} />
             </WidgetCard>
@@ -738,13 +851,9 @@ const Dashboard = () => {
             <WidgetCard 
               title="YIELD REACTIONS" 
               icon={<Zap size={14} />}
-              actions={
-                <>
-                  <Settings size={14} className="action-icon" />
-                  <button className="view-btn">View</button>
-                </>
-              }
+              actions={<Settings size={14} className="action-icon" />}
               className="yield-reactions-card"
+              onViewClick={() => openExpandedView("yield-reactions")}
             >
               <YieldReactions reactions={yieldReactions} />
             </WidgetCard>
@@ -752,8 +861,8 @@ const Dashboard = () => {
             <WidgetCard 
               title="FEDWATCH" 
               icon={<Zap size={14} />}
-              actions={<button className="view-btn">View</button>}
               className="fedwatch-card"
+              onViewClick={() => openExpandedView("fedwatch")}
             >
               <FedWatch fedwatch={fedwatch} />
             </WidgetCard>
@@ -762,13 +871,9 @@ const Dashboard = () => {
             <WidgetCard 
               title="LABOR MARKET" 
               icon={<BarChart3 size={14} />}
-              actions={
-                <>
-                  <Settings size={14} className="action-icon" />
-                  <button className="view-btn">View</button>
-                </>
-              }
+              actions={<Settings size={14} className="action-icon" />}
               className="labor-market-card"
+              onViewClick={() => openExpandedView("labor-market")}
             >
               <LaborMarketChart data={laborMarket} />
             </WidgetCard>
@@ -776,13 +881,9 @@ const Dashboard = () => {
             <WidgetCard 
               title="INFLATION" 
               icon={<Zap size={14} />}
-              actions={
-                <>
-                  <Settings size={14} className="action-icon" />
-                  <button className="view-btn">View</button>
-                </>
-              }
+              actions={<Settings size={14} className="action-icon" />}
               className="inflation-card"
+              onViewClick={() => openExpandedView("inflation")}
             >
               <InflationChart data={inflation} />
             </WidgetCard>
@@ -790,8 +891,8 @@ const Dashboard = () => {
             <WidgetCard 
               title="SEASONALITY" 
               icon={<Zap size={14} />}
-              actions={<button className="view-btn">View</button>}
               className="seasonality-card"
+              onViewClick={() => openExpandedView("seasonality")}
             >
               <SeasonalityChart data={seasonality} />
             </WidgetCard>
@@ -800,8 +901,8 @@ const Dashboard = () => {
             <WidgetCard 
               title="CURRENCY STRENGTH INDEX" 
               icon={<Zap size={14} />}
-              actions={<button className="view-btn">View</button>}
               className="currency-strength-card"
+              onViewClick={() => openExpandedView("currency-strength")}
             >
               <CurrencyStrength 
                 currencies={currencyStrength}
@@ -813,8 +914,8 @@ const Dashboard = () => {
             <WidgetCard 
               title="CURRENCY STRENGTH HEATMAP" 
               icon={<Zap size={14} />}
-              actions={<button className="view-btn">View</button>}
               className="currency-heatmap-card"
+              onViewClick={() => openExpandedView("currency-heatmap")}
             >
               <CurrencyHeatmap 
                 heatmap={currencyHeatmap.heatmap}
@@ -824,6 +925,15 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Expanded Modal */}
+      <ExpandedModal
+        isOpen={expandedWidget !== null}
+        onClose={closeExpandedView}
+        title={getExpandedTitle()}
+      >
+        {renderExpandedContent()}
+      </ExpandedModal>
     </div>
   );
 };
