@@ -1,1 +1,1 @@
-This is where you can review my React portfolio and all of the work I have done. I am available for hire and for contract work for clients, and can do both front and backend work 
+This is where you can review my React portfolio and all of the work I have done and am working on. I wanted to give people the opportunity to see finished products as well as things I am working on so that they can see things in progress as well in order to get a better feel for my skill level. I am available for hire and for contract work for clients, and can do both front and backend work 
