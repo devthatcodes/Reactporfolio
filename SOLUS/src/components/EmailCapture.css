@@ -1,0 +1,91 @@
+.email-capture-wrapper {
+  display: flex;
+  gap: 2rem;
+  width: 100%;
+}
+
+.email-capture-wrapper.stacked {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+  margin: 0 auto;
+}
+
+.email-capture-wrapper.inline {
+  flex-direction: row;
+  align-items: center;
+}
+
+.email-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.email-capture-text h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+}
+
+.email-capture-text p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.email-capture-form {
+  display: flex;
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  transition: border-color 0.3s ease;
+  padding-bottom: 4px;
+}
+
+.email-capture-form:focus-within {
+  border-bottom-color: var(--text-primary);
+}
+
+.email-capture-form input {
+  flex-grow: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  padding: 10px 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  outline: none;
+}
+
+.email-capture-form input::placeholder {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.email-capture-form button.btn-subscribe {
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--text-primary);
+  color: var(--bg-color);
+  transition: all 0.3s ease;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+
+.email-capture-form button.btn-subscribe:hover {
+  background-color: transparent;
+  color: var(--text-primary);
+  border-color: var(--text-primary);
+  transform: none;
+}
+
+.email-capture-form button.btn-subscribe:disabled {
+  background-color: rgba(255,255,255,0.5);
+  color: #000;
+  cursor: not-allowed;
+}
