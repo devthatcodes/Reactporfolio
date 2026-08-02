@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -17,6 +18,7 @@ function App() {
         <Route path="/merch" element={<Merch />} />
       </Routes>
       <Footer />
+      <SpeedInsights />
     </>
   );
 }
