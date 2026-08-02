@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { SpeedInsights } from "@vercel/speed-insights/react"
 import Heroimage from "./components/Heroimage"
 import Navbar from "./components/Navbar"
 import Aboutme from "./components/Aboutme"
@@ -15,6 +16,7 @@ function App() {
       <Aboutme/>
       <Whatido/>
       <Latestprojects/>
+      <SpeedInsights />
     </div>  
   )
 }
