@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { Play } from 'lucide-react';
 import norffCover from '../assets/Norffside (Final Cover).JPG';
 import img0684 from '../assets/IMG_0684.JPG';
-import img1523 from '../assets/IMG_1523.png';
+import img1523 from '../assets/IMG_1523.jpg';
 import campaign from '../assets/campaign.jpg';
 import './Music.css';
 
