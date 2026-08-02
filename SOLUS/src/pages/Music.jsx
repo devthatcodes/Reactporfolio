@@ -66,7 +66,7 @@ const Music = () => {
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
               <div className="music-card-image">
-                <img src={release.image} alt={release.title} />
+                <img src={release.image} alt={release.title} loading="lazy" />
                 <div className="play-overlay">
                   <Play fill="white" size={48} />
                 </div>

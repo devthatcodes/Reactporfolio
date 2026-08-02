@@ -43,7 +43,7 @@ const Home = () => {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
           >
-            <img src={norffCover} alt="Midnight Echoes Final Cover" className="album-art" />
+            <img src={norffCover} alt="Midnight Echoes Final Cover" className="album-art" fetchPriority="high" />
           </motion.div>
         </div>
       </section>
@@ -69,6 +69,7 @@ const Home = () => {
                 src={featuredOne} 
                 alt="Midnight Echoes Visuals" 
                 className="featured-art"
+                loading="lazy"
                 initial={{ opacity: 0, x: -50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
@@ -103,6 +104,7 @@ const Home = () => {
                 src={featuredTwo} 
                 alt="Fragments Visuals" 
                 className="featured-art"
+                loading="lazy"
                 initial={{ opacity: 0, x: 50 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, margin: "-100px" }}
