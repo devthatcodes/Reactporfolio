@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -8,7 +8,21 @@ const Music = lazy(() => import('./pages/Music'));
 const Journal = lazy(() => import('./pages/Journal'));
 const Merch = lazy(() => import('./pages/Merch'));
 
+const LazySpeedInsights = lazy(() => 
+  import('@vercel/speed-insights/react').then(module => ({ default: module.SpeedInsights }))
+);
+
 function App() {
+  const [loadInsights, setLoadInsights] = useState(false);
+
+  useEffect(() => {
+    // Delay loading speed insights until after the page is interactive
+    const timer = setTimeout(() => {
+      setLoadInsights(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <>
       <Navbar />
@@ -33,6 +47,11 @@ function App() {
         </Routes>
       </Suspense>
       <Footer />
+      {loadInsights && (
+        <Suspense fallback={null}>
+          <LazySpeedInsights />
+        </Suspense>
+      )}
     </>
   );
 }
