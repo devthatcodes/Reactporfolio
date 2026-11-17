@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    background-color: #FBF8F3;
+    color: #1E1612;
+  }
+
+  h1, h2, h3, h4, .font-serif {
+    font-family: 'Fraunces', Georgia, serif;
+  }
+}
+
+/* Subtle warm paper grain overlay */
+.paper-grain {
+  background-image: radial-gradient(rgba(58, 42, 34, 0.04) 1px, transparent 0);
+  background-size: 20px 20px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FBF8F3;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D6CBBF;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A89888;
+}
