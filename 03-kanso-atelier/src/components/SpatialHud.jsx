@@ -45,7 +45,7 @@ export default function SpatialHud({
       {/* Bottom Floating Telemetry & Lighting Preset Bar */}
       <div className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-8 sm:right-8 z-30 pointer-events-none flex items-end justify-between gap-4">
         {/* Left Telemetry Readout */}
-        <div className="hidden lg:flex items-center gap-6 px-4 py-2 bg-alabaster/85 backdrop-blur-md border border-charcoal/15 text-[10px] font-mono uppercase tracking-[0.2em] text-taupe pointer-events-auto shadow-sm">
+        <div className="hidden lg:flex items-center gap-6 px-4 py-2 bg-alabaster/95 border border-charcoal/15 text-[10px] font-mono uppercase tracking-[0.2em] text-taupe pointer-events-auto shadow-sm">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-bronze animate-pulse" />
             <span className="text-charcoal font-medium">{activeSectionLabel}</span>
@@ -67,7 +67,7 @@ export default function SpatialHud({
 
         {/* Right Interactive Shader Lighting Mode Switcher */}
         <div
-          className="ml-auto pointer-events-auto flex items-center gap-1 p-1 bg-alabaster/90 backdrop-blur-md border border-charcoal/15 shadow-sm"
+          className="ml-auto pointer-events-auto flex items-center gap-1 p-1 bg-alabaster/95 border border-charcoal/15 shadow-sm"
           role="group"
           aria-label="WebGL Architectural Lighting Mode"
         >

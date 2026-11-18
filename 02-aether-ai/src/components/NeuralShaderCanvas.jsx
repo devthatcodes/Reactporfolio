@@ -16,23 +16,31 @@ const FRAGMENT_SHADER = `
   uniform float u_scroll;
   uniform float u_mode;
 
-  // 2D Simplex-like hash & noise
-  vec2 hash(vec2 p) {
-    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
-    return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+  // Lightweight 2D hash & 3-octave FBM
+  float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
   }
 
-  float noise(in vec2 p) {
-    const float K1 = 0.366025404;
-    const float K2 = 0.211324865;
-    vec2 i = floor(p + (p.x + p.y) * K1);
-    vec2 a = p - i + (i.x + i.y) * K2;
-    vec2 o = (a.x > a.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
-    vec2 b = a - o + K2;
-    vec2 c = a - 1.0 + 2.0 * K2;
-    vec3 h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);
-    vec3 n = h * h * h * h * vec3(dot(a, hash(i + 0.0)), dot(b, hash(i + o)), dot(c, hash(i + 1.0)));
-    return dot(n, vec3(70.0));
+  float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(
+      mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+      mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x),
+      u.y
+    );
+  }
+
+  float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 0.5;
+    for (int i = 0; i < 3; i++) {
+      v += a * noise(p);
+      p = p * 2.02 + vec2(1.7, 9.2);
+      a *= 0.5;
+    }
+    return v;
   }
 
   void main() {
@@ -43,28 +51,27 @@ const FRAGMENT_SHADER = `
 
     // Cursor gravitational warp
     float dist = length(p - m);
-    float warpStrength = (0.14 + u_velocity * 0.25) * exp(-dist * 3.8);
+    float warpStrength = (0.12 + u_velocity * 0.2) * exp(-dist * 3.8);
     vec2 dir = normalize(p - m + 0.0001);
     vec2 warpedP = p - dir * warpStrength;
 
     // Scroll & time evolution
-    float t = u_time * 0.32;
-    warpedP.y -= u_scroll * 0.00035;
+    float t = u_time * 0.3;
+    warpedP.y -= u_scroll * 0.0003;
 
-    // Mode 0: TENSOR FIELD | Mode 1: QUANTUM FLUX | Mode 2: SYNAPTIC GRID
-    float n1 = noise(warpedP * (2.6 + u_mode * 0.8) + vec2(t, -t * 0.6));
-    float n2 = noise(warpedP * (5.2 + u_mode * 1.4) - vec2(t * 0.7, t * 0.5) + n1 * 0.65);
+    // 3-iteration FBM field
+    float n1 = fbm(warpedP * (2.4 + u_mode * 0.7) + vec2(t, -t * 0.5));
+    float n2 = noise(warpedP * (4.8 + u_mode * 1.2) - vec2(t * 0.6, t * 0.4) + n1 * 0.6);
 
-    // Cybernetic perspective grid lines
-    vec2 gridUV = warpedP * (12.0 + u_mode * 4.0);
-    gridUV += vec2(sin(t + warpedP.y * 4.0) * 0.25, cos(t + warpedP.x * 4.0) * 0.25) * (1.0 - u_mode * 0.35);
-    vec2 grid = abs(fract(gridUV - 0.5) - 0.5) / fwidth(gridUV + 0.001);
-    float line = min(grid.x, grid.y);
-    float gridMask = 1.0 - min(line, 1.0);
+    // Lightweight perspective grid lines without derivatives
+    vec2 gridUV = fract(warpedP * (10.0 + u_mode * 3.0) + vec2(sin(t) * 0.15, cos(t) * 0.15));
+    float lineX = smoothstep(0.04, 0.0, abs(gridUV.x - 0.5));
+    float lineY = smoothstep(0.04, 0.0, abs(gridUV.y - 0.5));
+    float gridMask = max(lineX, lineY);
 
     // Chromatic plasma wave ribbons
-    float wave = sin(warpedP.x * 6.0 + n1 * 3.5 + t * 1.6) * cos(warpedP.y * 5.0 + n2 * 3.0 - t);
-    float ribbon = smoothstep(0.45, 0.0, abs(wave) - 0.08 * u_velocity);
+    float wave = sin(warpedP.x * 5.5 + n1 * 3.2 + t * 1.5) * cos(warpedP.y * 4.5 + n2 * 2.5 - t);
+    float ribbon = smoothstep(0.42, 0.0, abs(wave) - 0.06 * u_velocity);
 
     // Palette definitions
     vec3 bgDark = vec3(0.035, 0.035, 0.043); // #09090B
@@ -77,12 +84,12 @@ const FRAGMENT_SHADER = `
 
     // Combine field layers
     vec3 color = bgDark;
-    color += primaryCol * ribbon * (0.14 + u_velocity * 0.12);
-    color += secondaryCol * max(0.0, n2) * 0.13;
-    color += mix(primaryCol, secondaryCol, uv.x) * gridMask * (0.065 + u_mode * 0.035);
+    color += primaryCol * ribbon * (0.14 + u_velocity * 0.1);
+    color += secondaryCol * n1 * 0.12;
+    color += mix(primaryCol, secondaryCol, uv.x) * gridMask * (0.06 + u_mode * 0.03);
 
-    // Cursor core aura & chromatic halo
-    float cursorGlow = exp(-dist * 5.2) * (0.24 + u_velocity * 0.35);
+    // Cursor core aura
+    float cursorGlow = exp(-dist * 5.2) * (0.22 + u_velocity * 0.3);
     color += mix(cyan, violet, sin(u_time * 2.0) * 0.5 + 0.5) * cursorGlow;
 
     // Subtle vignette
@@ -93,7 +100,7 @@ const FRAGMENT_SHADER = `
   }
 `;
 
-export default function NeuralShaderCanvas({ shaderMode = 0, onFpsUpdate }) {
+export default function NeuralShaderCanvas({ shaderMode = 0, onFpsUpdate, onTelemetryUpdate }) {
   const canvasRef = useRef(null);
   const modeRef = useRef(shaderMode);
 
@@ -106,12 +113,16 @@ export default function NeuralShaderCanvas({ shaderMode = 0, onFpsUpdate }) {
     if (!canvas) return undefined;
 
     let rafId = null;
-    let gl = canvas.getContext('webgl', { antialias: false, depth: false, stencil: false });
+    let gl = canvas.getContext('webgl', {
+      antialias: false,
+      depth: false,
+      stencil: false,
+      powerPreference: 'high-performance',
+    });
     if (!gl) {
       gl = canvas.getContext('experimental-webgl');
     }
 
-    // Mouse & scroll tracking with smooth lerp
     const state = {
       targetX: 0.5,
       targetY: 0.5,
@@ -154,7 +165,6 @@ export default function NeuralShaderCanvas({ shaderMode = 0, onFpsUpdate }) {
     };
 
     if (gl) {
-      gl.getExtension('OES_standard_derivatives');
       const vs = compileShader(gl.VERTEX_SHADER, VERTEX_SHADER);
       const fs = compileShader(gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
 
@@ -192,11 +202,10 @@ export default function NeuralShaderCanvas({ shaderMode = 0, onFpsUpdate }) {
       }
     }
 
-    // 2D fallback context if WebGL fails
     const ctx2d = !program ? canvas.getContext('2d') : null;
 
     const handleResize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const dpr = 0.8;
       canvas.width = Math.floor(window.innerWidth * dpr);
       canvas.height = Math.floor(window.innerHeight * dpr);
       if (gl && program) {
@@ -213,14 +222,16 @@ export default function NeuralShaderCanvas({ shaderMode = 0, onFpsUpdate }) {
 
     const render = (now) => {
       frameCount += 1;
-      if (now - lastFpsCheck >= 600) {
-        const currentFps = Math.min(60, Math.round((frameCount * 1000) / (now - lastFpsCheck)));
+      // Throttle telemetry/FPS updates to once every 60 frames (~1 second)
+      if (frameCount >= 60) {
+        const elapsedMs = Math.max(1, now - lastFpsCheck);
+        const currentFps = Math.min(60, Math.round((frameCount * 1000) / elapsedMs));
         if (onFpsUpdate) onFpsUpdate(currentFps);
+        if (onTelemetryUpdate) onTelemetryUpdate(currentFps);
         frameCount = 0;
         lastFpsCheck = now;
       }
 
-      // Smooth lerp cursor & mode
       state.currX += (state.targetX - state.currX) * 0.08;
       state.currY += (state.targetY - state.currY) * 0.08;
       state.velocity *= 0.92;
@@ -263,7 +274,7 @@ export default function NeuralShaderCanvas({ shaderMode = 0, onFpsUpdate }) {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
-  }, [onFpsUpdate]);
+  }, [onFpsUpdate, onTelemetryUpdate]);
 
   return (
     <canvas

@@ -179,7 +179,7 @@ export default function OriginPortalModal({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[75] bg-espresso/95 backdrop-blur-xl text-cream overflow-y-auto"
+        className="fixed inset-0 z-[75] bg-espresso/98 text-cream overflow-y-auto"
       >
         <div className="min-h-screen max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 flex flex-col justify-between">
           {/* Top Portal Telemetry Header */}

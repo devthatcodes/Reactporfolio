@@ -42,7 +42,7 @@ export default function SandboxModal({ isOpen, onClose, initialPlan = 'Pro' }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleResetAndClose}
-            className="fixed inset-0 bg-black/75 backdrop-blur-sm"
+            className="fixed inset-0 bg-[#090D16]/90"
           />
 
           {/* Modal Card */}

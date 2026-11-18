@@ -44,25 +44,17 @@ export default function Preloader({ onComplete }) {
           exit={{ opacity: 0, transition: { duration: 0.45, delay: 0.25 } }}
           className="fixed inset-0 z-[100] pointer-events-auto flex flex-col justify-between p-6 sm:p-10 text-cream overflow-hidden"
         >
-          {/* 5-Slice Active Theory Curtain Panels */}
-          <div className="absolute inset-0 grid grid-cols-5 pointer-events-none">
-            {[0, 1, 2, 3, 4].map((slice) => (
-              <motion.div
-                key={slice}
-                initial={{ scaleY: 1 }}
-                exit={{
-                  scaleY: 0,
-                  transition: {
-                    duration: 0.55,
-                    delay: slice * 0.045,
-                    ease: [0.76, 0, 0.24, 1],
-                  },
-                }}
-                style={{ transformOrigin: slice % 2 === 0 ? 'top' : 'bottom' }}
-                className="bg-espresso border-r border-cream/10 h-full w-full"
-              />
-            ))}
-          </div>
+          {/* Circular Crema Iris Bloom Aperture Backdrop (NO vertical slices) */}
+          <motion.div
+            initial={{ scale: 2.2, opacity: 1 }}
+            exit={{
+              scale: 0,
+              opacity: 0,
+              transition: { duration: 0.48, ease: [0.65, 0, 0.35, 1] },
+            }}
+            style={{ willChange: 'transform, opacity' }}
+            className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[140vmax] h-[140vmax] rounded-full bg-espresso border-8 border-terracotta/50"
+          />
 
           {/* Top Telemetry Bar */}
           <div className="relative z-10 flex items-center justify-between text-[11px] font-mono tracking-[0.2em] uppercase text-cream/70">

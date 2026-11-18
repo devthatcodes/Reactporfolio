@@ -28,37 +28,21 @@ function GlowCard({
     offset: ['start end', 'end start'],
   });
 
-  const smoothScroll = useSpring(scrollYProgress, {
-    stiffness: 160,
-    damping: 28,
-    mass: 0.25,
-  });
-
-  // Differential vertical parallax & 3D perspective unfold on scroll
+  // Pure GPU vertical parallax & scale on scroll
   const yParallax = useTransform(
-    smoothScroll,
+    scrollYProgress,
     [0, 0.45, 1],
-    [85 * parallaxSpeed, 0, -65 * parallaxSpeed]
-  );
-  const scrollRotateX = useTransform(
-    smoothScroll,
-    [0, 0.35, 0.75, 1],
-    [22, 0, 0, -14]
-  );
-  const scrollRotateY = useTransform(
-    smoothScroll,
-    [0, 0.38, 0.75, 1],
-    [direction * 10, 0, 0, direction * -6]
+    [40 * parallaxSpeed, 0, -30 * parallaxSpeed]
   );
   const scrollScale = useTransform(
-    smoothScroll,
-    [0, 0.32, 0.8, 1],
-    [0.88, 1, 1, 0.93]
+    scrollYProgress,
+    [0, 0.25, 0.85, 1],
+    [0.96, 1, 1, 0.97]
   );
   const scrollOpacity = useTransform(
-    smoothScroll,
-    [0, 0.22, 0.82, 1],
-    [0, 1, 1, 0.25]
+    scrollYProgress,
+    [0, 0.2, 0.88, 1],
+    [0.25, 1, 1, 0.45]
   );
 
   const handleMouseMove = (e) => {
@@ -70,8 +54,8 @@ function GlowCard({
     setMousePos({
       x,
       y,
-      rx: (0.5 - py) * 8,
-      ry: (px - 0.5) * 8,
+      rx: (0.5 - py) * 6,
+      ry: (px - 0.5) * 6,
     });
   };
 
@@ -80,12 +64,8 @@ function GlowCard({
       ref={cardRef}
       style={{
         y: yParallax,
-        rotateX: scrollRotateX,
-        rotateY: scrollRotateY,
         scale: scrollScale,
         opacity: scrollOpacity,
-        transformPerspective: 1200,
-        transformStyle: 'preserve-3d',
       }}
       className={`will-change-transform ${className}`}
     >
@@ -101,9 +81,8 @@ function GlowCard({
         }}
         style={{
           transform: `perspective(1000px) rotateX(${mousePos.rx}deg) rotateY(${mousePos.ry}deg)`,
-          transformStyle: 'preserve-3d',
         }}
-        className="group relative h-full overflow-hidden rounded-2xl border border-[#27272A] bg-[#111115]/90 p-6 backdrop-blur-md transition-all duration-200 hover:border-cyan-400/60 hover:shadow-[0_20px_60px_rgba(34,211,238,0.12)]"
+        className="group relative h-full overflow-hidden rounded-2xl border border-[#27272A] bg-[#090D16]/95 p-6 transition-all duration-200 hover:border-cyan-400/60 hover:shadow-[0_20px_60px_rgba(34,211,238,0.12)]"
       >
         {/* Top Depth Index Tag */}
         <div className="pointer-events-none absolute top-2.5 right-4 font-mono text-[9px] tracking-[0.2em] text-zinc-600">

@@ -118,7 +118,7 @@ export default function Navbar({
   const modeInfo = ROAST_MODES[roastMode % ROAST_MODES.length];
 
   return (
-    <header className="sticky top-0 z-40 bg-cream/85 backdrop-blur-md border-b border-espresso/10">
+    <header className="sticky top-0 z-40 bg-cream/95 border-b border-espresso/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-20 flex items-center justify-between gap-4">
           {/* Brand */}

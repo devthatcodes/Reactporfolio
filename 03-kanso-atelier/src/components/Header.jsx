@@ -49,9 +49,9 @@ export default function Header({ onNavigatePortal }) {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-40 transition-colors duration-300 ${
           scrolled
-            ? 'bg-alabaster/90 backdrop-blur-md border-b border-charcoal/10 py-3.5'
+            ? 'bg-alabaster/95 border-b border-charcoal/10 py-3.5'
             : 'bg-transparent py-6'
         }`}
       >

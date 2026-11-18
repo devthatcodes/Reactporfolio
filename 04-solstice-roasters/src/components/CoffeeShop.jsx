@@ -5,7 +5,6 @@ import {
   useScroll,
   useTransform,
   useSpring,
-  useMotionValueEvent,
 } from 'framer-motion';
 import {
   Check,
@@ -37,7 +36,7 @@ function TastingBar({ label, value, colorClass }) {
           initial={{ width: 0 }}
           whileInView={{ width: `${value}%` }}
           viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className={`h-full rounded-full ${colorClass}`}
         />
       </div>
@@ -46,12 +45,11 @@ function TastingBar({ label, value, colorClass }) {
 }
 
 /**
- * ScrollLotFlightStage
- * Sticky scroll-scrubbed 3D micro-lot flight runway (250vh) where scrolling continuously
- * rotates, translates, and scales the 4 micro-lot coffee bags and floating flavor notes
- * through 3D space.
+ * RotaryArcBagCard
+ * Positioned along a gentle 2D/GPU circular arc (translateX, translateY, rotate, scale, opacity)
+ * driven purely by Framer Motion useTransform on scrollYProgress with zero React state updates during scroll!
  */
-function ScrollLotFlightCard({
+function RotaryArcBagCard({
   coffee,
   index,
   total,
@@ -59,65 +57,49 @@ function ScrollLotFlightCard({
   onOpenPortal,
   onAddToCart,
 }) {
-  const center = index / (total - 1); // 0, 0.333, 0.666, 1
+  const center = index / Math.max(1, total - 1); // 0.0 -> 1.0 across the 6 single-origin bags
 
+  // Gentle circular tasting wheel arc: X sweeps across the wheel, Y dips down along the arc edges
   const x = useTransform(
     scrollYProgress,
-    [center - 0.55, center - 0.25, center, center + 0.25, center + 0.55],
-    ['115%', '52%', '0%', '-52%', '-115%']
+    [center - 0.52, center - 0.24, center, center + 0.24, center + 0.52],
+    ['105%', '52%', '0%', '-52%', '-105%']
   );
 
   const y = useTransform(
     scrollYProgress,
-    [center - 0.4, center, center + 0.4],
-    [70, 0, -70]
+    [center - 0.45, center - 0.22, center, center + 0.22, center + 0.45],
+    [130, 38, 0, 38, 130]
+  );
+
+  const rotate = useTransform(
+    scrollYProgress,
+    [center - 0.45, center - 0.22, center, center + 0.22, center + 0.45],
+    [22, 9, 0, -9, -22]
   );
 
   const scale = useTransform(
     scrollYProgress,
-    [center - 0.38, center - 0.16, center, center + 0.16, center + 0.38],
-    [0.68, 0.86, 1.04, 0.86, 0.68]
-  );
-
-  const rotateY = useTransform(
-    scrollYProgress,
-    [center - 0.45, center, center + 0.45],
-    [-46, 0, 46]
-  );
-
-  const rotateX = useTransform(
-    scrollYProgress,
-    [center - 0.45, center, center + 0.45],
-    [18, 0, -18]
-  );
-
-  const rotateZ = useTransform(
-    scrollYProgress,
-    [center - 0.45, center, center + 0.45],
-    [8, 0, -8]
+    [center - 0.36, center - 0.16, center, center + 0.16, center + 0.36],
+    [0.72, 0.88, 1.0, 0.88, 0.72]
   );
 
   const opacity = useTransform(
     scrollYProgress,
-    [center - 0.42, center - 0.18, center, center + 0.18, center + 0.42],
-    [0, 0.72, 1, 0.72, 0]
+    [center - 0.36, center - 0.16, center, center + 0.16, center + 0.36],
+    [0, 0.42, 1, 0.42, 0]
   );
 
-  // Differential foreground parallax for floating flavor pills & bag
   const bagFloatY = useTransform(
     scrollYProgress,
-    [center - 0.3, center, center + 0.3],
-    [45, -14, -55]
+    [center - 0.25, center, center + 0.25],
+    [18, -8, 18]
   );
-  const notesParallaxY = useTransform(
+
+  const bagRotate = useTransform(
     scrollYProgress,
-    [center - 0.3, center, center + 0.3],
-    [85, -18, -95]
-  );
-  const notesParallaxX = useTransform(
-    scrollYProgress,
-    [center - 0.3, center, center + 0.3],
-    [60, 0, -60]
+    [center - 0.25, center, center + 0.25],
+    [-8, 0, 8]
   );
 
   return (
@@ -125,54 +107,47 @@ function ScrollLotFlightCard({
       style={{
         x,
         y,
+        rotate,
         scale,
-        rotateY,
-        rotateX,
-        rotateZ,
         opacity,
-        transformStyle: 'preserve-3d',
+        willChange: 'transform, opacity',
       }}
       className="absolute inset-0 flex items-center justify-center pointer-events-none px-4"
     >
-      <div className="pointer-events-auto relative w-full max-w-4xl rounded-3xl bg-cream/95 backdrop-blur-md border-2 border-espresso/15 shadow-editorial p-6 sm:p-10 grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center">
+      <div className="pointer-events-auto relative w-full max-w-4xl rounded-3xl bg-cream border-2 border-espresso/15 shadow-editorial p-6 sm:p-9 grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center text-espresso">
         {/* Top-Right Lot Index Telemetry */}
-        <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-espresso text-cream text-[10px] font-mono uppercase tracking-[0.22em] border border-terracotta/40 shadow-md">
-          3D FLIGHT // 0{index + 1} OF 0{total} • {coffee.lotCode}
+        <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-espresso text-cream text-[10px] font-mono uppercase tracking-[0.22em] border border-terracotta/50 shadow-md">
+          ROTARY WHEEL // 0{index + 1} OF 0{total} • {coffee.lotCode}
         </div>
 
-        {/* Left 3D Floating Bag + Differential Parallax Flavor Orbit */}
-        <div className="md:col-span-5 relative flex flex-col items-center justify-center py-6 rounded-2xl bg-cream-dark/80 border border-espresso/10 overflow-visible">
-          {/* Glowing thermal ring behind bag */}
-          <div
-            className="w-40 h-40 rounded-full blur-2xl opacity-35 pointer-events-none absolute"
-            style={{ background: coffee.palette.accent }}
-          />
+        {/* Left Rotary Botanical Seal Stage + Coffee Bag */}
+        <div className="md:col-span-5 relative flex flex-col items-center justify-center py-6 rounded-2xl bg-cream-dark border border-espresso/10 overflow-hidden">
+          {/* Concentric Botanical Seal Ring behind bag */}
+          <div className="pointer-events-none absolute w-48 h-48 rounded-full border border-dashed border-terracotta/35" />
+          <div className="pointer-events-none absolute w-36 h-36 rounded-full border border-sage/25" />
 
           <motion.div
-            style={{ y: bagFloatY, translateZ: '60px' }}
+            style={{ y: bagFloatY, rotate: bagRotate, willChange: 'transform' }}
             className="relative z-10 cursor-pointer"
             onClick={() => {
               soundEngine.playPortalWipe();
               onOpenPortal(coffee);
             }}
           >
-            <CoffeeBagSVG coffee={coffee} className="w-40 h-48 sm:w-48 sm:h-56 drop-shadow-2xl" />
+            <CoffeeBagSVG coffee={coffee} className="w-36 h-44 sm:w-44 sm:h-52" />
           </motion.div>
 
-          {/* Differential Foreground Flavor Note Chips */}
-          <motion.div
-            style={{ y: notesParallaxY, x: notesParallaxX }}
-            className="relative z-20 flex flex-wrap justify-center gap-1.5 mt-3 px-2"
-          >
+          {/* Flavor Note Chips */}
+          <div className="relative z-20 flex flex-wrap justify-center gap-1.5 mt-3 px-2">
             {coffee.notes.map((note) => (
               <span
                 key={note}
-                className="px-3 py-1 rounded-full bg-espresso text-cream text-[11px] font-mono uppercase tracking-wider shadow-md border border-terracotta/40"
+                className="px-3 py-1 rounded-full bg-espresso text-cream text-[11px] font-mono uppercase tracking-wider border border-terracotta/40"
               >
                 {note}
               </span>
             ))}
-          </motion.div>
+          </div>
         </div>
 
         {/* Right Lot Telemetry & Direct Actions */}
@@ -182,14 +157,14 @@ function ScrollLotFlightCard({
               <Sparkles className="w-3.5 h-3.5" />
               {coffee.badge} • {coffee.roastCategory}
             </span>
-            <span className="font-mono text-xs text-umber/70">
+            <span className="font-mono text-xs text-umber/75">
               {coffee.elevation} • {coffee.process}
             </span>
           </div>
 
           <div className="flex items-baseline justify-between gap-4">
             <div>
-              <h3 className="font-serif text-3xl sm:text-4xl text-espresso leading-tight">
+              <h3 className="font-serif text-2xl sm:text-4xl text-espresso leading-tight">
                 {coffee.name}
               </h3>
               <p className="text-xs sm:text-sm font-mono text-umber/75 mt-1">
@@ -207,7 +182,7 @@ function ScrollLotFlightCard({
 
           {/* Live Sensory Telemetry Strip */}
           <div className="grid grid-cols-3 gap-2.5 pt-1">
-            <div className="p-2.5 rounded-xl bg-cream-dark/70 border border-espresso/10">
+            <div className="p-2.5 rounded-xl bg-cream-dark border border-espresso/10">
               <span className="text-[10px] font-mono uppercase tracking-wider text-umber/60 block">
                 DROP TEMP
               </span>
@@ -215,7 +190,7 @@ function ScrollLotFlightCard({
                 {coffee.dropTemp}
               </span>
             </div>
-            <div className="p-2.5 rounded-xl bg-cream-dark/70 border border-espresso/10">
+            <div className="p-2.5 rounded-xl bg-cream-dark border border-espresso/10">
               <span className="text-[10px] font-mono uppercase tracking-wider text-umber/60 block">
                 AGTRON
               </span>
@@ -223,7 +198,7 @@ function ScrollLotFlightCard({
                 {coffee.agtron}
               </span>
             </div>
-            <div className="p-2.5 rounded-xl bg-cream-dark/70 border border-espresso/10">
+            <div className="p-2.5 rounded-xl bg-cream-dark border border-espresso/10">
               <span className="text-[10px] font-mono uppercase tracking-wider text-umber/60 block">
                 CLARITY / SWEET
               </span>
@@ -265,9 +240,41 @@ function ScrollLotFlightCard({
   );
 }
 
-function ScrollLotFlightRunway({ coffees, onOpenPortal, onAddToCart }) {
+/**
+ * RotaryArcPill
+ * Pure GPU scroll-linked indicator pill (zero React state updates during scroll)
+ */
+function RotaryArcPill({ lot, idx, total, scrollYProgress }) {
+  const center = idx / Math.max(1, total - 1);
+  const opacity = useTransform(
+    scrollYProgress,
+    [center - 0.22, center, center + 0.22],
+    [0.45, 1, 0.45]
+  );
+  const scale = useTransform(
+    scrollYProgress,
+    [center - 0.22, center, center + 0.22],
+    [0.94, 1.06, 0.94]
+  );
+
+  return (
+    <motion.span
+      style={{ opacity, scale, willChange: 'transform, opacity' }}
+      className="px-2.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-wider bg-cream/10 text-cream border border-terracotta/40"
+    >
+      0{idx + 1} // {lot.name.split(' ')[0]}
+    </motion.span>
+  );
+}
+
+/**
+ * CurvedBotanicalArcShowcase
+ * Sticky scroll-scrubbed Curved Arc / Rotary Carousel Scroll Showcase (`min-h-[210vh]` with `sticky top-20` stage)
+ * where scrolling smoothly rotates the 6 single-origin coffee bags along a gentle 2D/GPU circular arc
+ * with zero React state updates during scroll!
+ */
+function CurvedBotanicalArcShowcase({ coffees, onOpenPortal, onAddToCart }) {
   const runwayRef = useRef(null);
-  const [activeIndex, setActiveIndex] = useState(0);
 
   const { scrollYProgress } = useScroll({
     target: runwayRef,
@@ -275,79 +282,65 @@ function ScrollLotFlightRunway({ coffees, onOpenPortal, onAddToCart }) {
   });
 
   const smoothProgress = useSpring(scrollYProgress, {
-    damping: 32,
-    stiffness: 220,
-    mass: 0.45,
+    damping: 36,
+    stiffness: 240,
+    mass: 0.38,
   });
 
-  useMotionValueEvent(smoothProgress, 'change', (v) => {
-    const idx = Math.min(
-      coffees.length - 1,
-      Math.max(0, Math.round(v * (coffees.length - 1)))
-    );
-    if (idx !== activeIndex) {
-      setActiveIndex(idx);
-    }
-  });
-
-  const bgRingRotate = useTransform(smoothProgress, [0, 1], [0, 180]);
-  const altitudeReadoutY = useTransform(smoothProgress, [0, 1], ['15%', '-15%']);
-  const progressWidth = useTransform(smoothProgress, [0, 1], ['0%', '100%']);
+  // Pure GPU-composited rotary wheel dial & progress bar
+  const wheelRotate = useTransform(smoothProgress, [0, 1], [-75, 75]);
+  const innerSealRotate = useTransform(smoothProgress, [0, 1], [0, 240]);
+  const progressScaleX = useTransform(smoothProgress, [0, 1], [0, 1]);
 
   return (
-    <div ref={runwayRef} className="relative min-h-[250vh] mb-20">
-      <div
-        className="sticky top-16 h-[calc(100vh-4rem)] w-full overflow-hidden rounded-3xl border border-espresso/15 bg-espresso/95 text-cream shadow-editorial flex flex-col justify-between p-5 sm:p-8"
-        style={{ perspective: '1600px' }}
-      >
-        {/* Giant Foreground-Parallax Kinetic Background Ring & Telemetry Watermark */}
+    <div ref={runwayRef} className="relative min-h-[210vh] mb-20">
+      <div className="sticky top-20 h-[calc(100vh-5.5rem)] w-full overflow-hidden rounded-3xl border border-espresso/15 bg-espresso text-cream shadow-editorial flex flex-col justify-between p-5 sm:p-8">
+        {/* Giant Curved Botanical Tasting Wheel Arc SVG in Background */}
         <motion.div
-          style={{ rotate: bgRingRotate }}
-          className="pointer-events-none absolute -right-28 -bottom-28 w-[460px] h-[460px] rounded-full border border-terracotta/25 border-dashed"
-        />
-        <motion.div
-          style={{ y: altitudeReadoutY }}
-          className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center select-none opacity-10 font-serif text-[72px] sm:text-[130px] leading-none tracking-tighter text-cream whitespace-nowrap"
+          style={{ rotate: wheelRotate, willChange: 'transform' }}
+          className="pointer-events-none absolute left-1/2 -bottom-[420px] -translate-x-1/2 w-[920px] h-[920px] rounded-full border-2 border-dashed border-terracotta/30 flex items-center justify-center"
         >
-          {coffees[activeIndex]?.origin.toUpperCase()} • {coffees[activeIndex]?.elevation}
+          <div className="w-[740px] h-[740px] rounded-full border border-cream/10" />
+          <div className="w-[560px] h-[560px] rounded-full border border-dashed border-sage/25" />
         </motion.div>
 
-        {/* Top Sticky Runway Telemetry Bar */}
+        {/* Top-Right Rotating Botanical Roastery Seal Watermark */}
+        <motion.div
+          style={{ rotate: innerSealRotate, willChange: 'transform' }}
+          className="pointer-events-none absolute -right-16 -top-16 w-64 h-64 rounded-full border border-terracotta/25 border-dashed flex items-center justify-center"
+        >
+          <div className="w-44 h-44 rounded-full border border-cream/10" />
+        </motion.div>
+
+        {/* Top Sticky Rotary Wheel Telemetry Bar */}
         <div className="relative z-20 flex flex-wrap items-center justify-between gap-3 border-b border-cream/15 pb-4">
           <div className="flex items-center gap-2.5">
-            <Compass className="w-4 h-4 text-terracotta animate-spin" style={{ animationDuration: '10s' }} />
+            <motion.div style={{ rotate: innerSealRotate, willChange: 'transform' }}>
+              <Compass className="w-4 h-4 text-terracotta" />
+            </motion.div>
             <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-terracotta font-semibold">
-              SCROLL-SCRUBBED 3D MICRO-LOT FLIGHT RUNWAY
+              ROTARY TASTING WHEEL // CURVED BOTANICAL ARC ({coffees.length} SINGLE ORIGINS)
             </span>
           </div>
 
-          {/* Lot Quick-Scrub Indicator Pills */}
-          <div className="flex items-center gap-1.5">
-            {coffees.map((lot, idx) => {
-              const isCurrent = idx === activeIndex;
-              return (
-                <span
-                  key={lot.id}
-                  className={`px-3 py-1 rounded-full text-[10px] font-mono uppercase tracking-wider transition-all ${
-                    isCurrent
-                      ? 'bg-terracotta text-cream font-semibold scale-105'
-                      : 'bg-cream/10 text-cream/55'
-                  }`}
-                >
-                  0{idx + 1} // {lot.name.split(' ')[0]}
-                </span>
-              );
-            })}
+          {/* 6 Lot Quick-Scrub Indicator Pills (Pure GPU opacity/scale) */}
+          <div className="hidden md:flex items-center gap-1.5">
+            {coffees.map((lot, idx) => (
+              <RotaryArcPill
+                key={lot.id}
+                lot={lot}
+                idx={idx}
+                total={coffees.length}
+                scrollYProgress={smoothProgress}
+              />
+            ))}
           </div>
         </div>
 
-        {/* Center 3D Perspective Stage */}
-        <div
-          className="relative flex-1 my-2"
-          style={{ transformStyle: 'preserve-3d' }}
-        >
+        {/* Center 2D/GPU Circular Arc Stage */}
+        <div className="relative flex-1 my-2">
           {coffees.map((coffee, index) => (
-            <ScrollLotFlightCard
+            <RotaryArcBagCard
               key={coffee.id}
               coffee={coffee}
               index={index}
@@ -361,21 +354,24 @@ function ScrollLotFlightRunway({ coffees, onOpenPortal, onAddToCart }) {
 
         {/* Bottom Scroll Progress Scrubber Bar */}
         <div className="relative z-20 pt-3 border-t border-cream/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs font-mono text-cream/70">
+          <div className="flex items-center gap-2 text-xs font-mono text-cream/75">
             <Flame className="w-3.5 h-3.5 text-terracotta" />
             <span>
-              ACTIVE LOT: <strong className="text-cream">{coffees[activeIndex]?.name}</strong> (
-              {coffees[activeIndex]?.targetTds})
+              BOTANICAL TASTING WHEEL • <strong className="text-cream">6 MICRO-LOT HARVESTS</strong>
             </span>
           </div>
           <div className="w-full sm:w-64 h-1.5 rounded-full bg-cream/15 overflow-hidden">
             <motion.div
-              style={{ width: progressWidth }}
-              className="h-full bg-terracotta rounded-full"
+              style={{
+                scaleX: progressScaleX,
+                transformOrigin: '0% 50%',
+                willChange: 'transform',
+              }}
+              className="h-full w-full bg-terracotta rounded-full"
             />
           </div>
           <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-cream/60">
-            KEEP SCROLLING TO FLY LOTS →
+            SCROLL TO ROTATE TASTING ARC →
           </span>
         </div>
       </div>
@@ -383,38 +379,9 @@ function ScrollLotFlightRunway({ coffees, onOpenPortal, onAddToCart }) {
   );
 }
 
-function CoffeeCard({ coffee, index, onAddToCart, onOpenPortal }) {
+function CoffeeCard({ coffee, onAddToCart, onOpenPortal }) {
   const [selectedGrind, setSelectedGrind] = useState(GRIND_OPTIONS[0]);
   const [justAdded, setJustAdded] = useState(false);
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0, gx: 50, gy: 50 });
-  const cardRef = useRef(null);
-
-  // Per-card scroll-linked 3D parallax
-  const { scrollYProgress } = useScroll({
-    target: cardRef,
-    offset: ['start end', 'end start'],
-  });
-  const cardScrollY = useTransform(
-    scrollYProgress,
-    [0, 0.5, 1],
-    [45 + (index % 2) * 28, 0, -35 - (index % 2) * 20]
-  );
-  const cardScrollRotateX = useTransform(scrollYProgress, [0, 0.5, 1], [12, 0, -10]);
-
-  const handleMouseMove = (e) => {
-    const el = cardRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width;
-    const y = (e.clientY - rect.top) / rect.height;
-    const ry = (x - 0.5) * 11;
-    const rx = (0.5 - y) * 11;
-    setTilt({ rx, ry, gx: Math.round(x * 100), gy: Math.round(y * 100) });
-  };
-
-  const handleMouseLeave = () => {
-    setTilt({ rx: 0, ry: 0, gx: 50, gy: 50 });
-  };
 
   const handleAdd = () => {
     soundEngine.playSuccess();
@@ -424,241 +391,81 @@ function CoffeeCard({ coffee, index, onAddToCart, onOpenPortal }) {
   };
 
   return (
-    <motion.div
-      style={{
-        y: cardScrollY,
-        rotateX: cardScrollRotateX,
-        transformPerspective: 1100,
-      }}
+    <motion.article
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      className="h-full group relative bg-cream border border-espresso/12 rounded-3xl p-6 flex flex-col justify-between shadow-card hover:shadow-editorial hover:border-terracotta/45 transition-all duration-300 overflow-hidden"
     >
-      <motion.article
-        ref={cardRef}
-        layout
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.15 }}
-        transition={{ duration: 0.45 }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        style={{
-          transform: `perspective(1000px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
-          transition: 'transform 140ms ease-out',
-        }}
-        className="h-full group relative bg-cream/90 backdrop-blur-sm border border-espresso/12 rounded-3xl p-6 flex flex-col justify-between shadow-card hover:shadow-editorial hover:border-terracotta/40 transition-shadow duration-300 overflow-hidden"
-      >
-        {/* Specular 3D Light Sheen Overlay */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          style={{
-            background: `radial-gradient(360px circle at ${tilt.gx}% ${tilt.gy}%, rgba(200, 90, 50, 0.11), transparent 70%)`,
-          }}
-        />
+      <div className="relative z-10">
+        {/* Top Row: Badge & Roast Level */}
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cream-dark text-umber text-xs font-medium border border-espresso/10">
+            <Sparkles className="w-3 h-3 text-terracotta" />
+            {coffee.badge}
+          </span>
 
-        <div className="relative z-10">
-          {/* Top Row: Badge & Roast Level */}
-          <div className="flex items-center justify-between gap-2 mb-4">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cream-dark text-umber text-xs font-medium border border-espresso/10">
-              <Sparkles className="w-3 h-3 text-terracotta" />
-              {coffee.badge}
+          {/* Roast Level Dots (1-5) */}
+          <div className="flex items-center gap-1.5" title={`Roast: ${coffee.roastCategory}`}>
+            <span className="text-[11px] uppercase tracking-wider text-umber/65 font-medium">
+              {coffee.roastCategory}
             </span>
-
-            {/* Roast Level Dots (1-5) */}
-            <div className="flex items-center gap-1.5" title={`Roast: ${coffee.roastCategory}`}>
-              <span className="text-[11px] uppercase tracking-wider text-umber/65 font-medium">
-                {coffee.roastCategory}
-              </span>
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((dot) => (
-                  <span
-                    key={dot}
-                    className={`w-2 h-2 rounded-full ${
-                      dot <= coffee.roastLevel ? 'bg-terracotta' : 'bg-espresso/15'
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Bag Illustration Stage — Clickable to launch Origin Portal Takeover */}
-          <div
-            role="button"
-            tabIndex={0}
-            data-cursor="EXPLORE ORIGIN"
-            onClick={() => {
-              soundEngine.playPortalWipe();
-              onOpenPortal(coffee);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                soundEngine.playPortalWipe();
-                onOpenPortal(coffee);
-              }
-            }}
-            className="cursor-pointer relative bg-cream-dark/60 rounded-2xl py-6 px-4 mb-5 flex items-center justify-center border border-espresso/5 group-hover:border-terracotta/30 overflow-hidden transition-colors"
-          >
-            {/* Rising Botanical Aroma Particles on Hover */}
-            <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-              {[0, 1, 2, 3].map((p) => (
-                <motion.span
-                  key={p}
-                  animate={{
-                    y: [20, -65],
-                    x: [0, p % 2 === 0 ? 12 : -12],
-                    opacity: [0, 0.55, 0],
-                    scale: [0.6, 1.25],
-                  }}
-                  transition={{
-                    duration: 2.2 + p * 0.35,
-                    repeat: Infinity,
-                    delay: p * 0.4,
-                    ease: 'easeOut',
-                  }}
-                  style={{ left: `${28 + p * 15}%`, bottom: '18%' }}
-                  className="absolute w-3 h-3 rounded-full bg-terracotta/30 blur-[2px]"
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((dot) => (
+                <span
+                  key={dot}
+                  className={`w-2 h-2 rounded-full ${
+                    dot <= coffee.roastLevel ? 'bg-terracotta' : 'bg-espresso/15'
+                  }`}
                 />
               ))}
             </div>
-
-            <motion.div
-              whileHover={{ y: -6, rotate: -2, scale: 1.04 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 18 }}
-            >
-              <CoffeeBagSVG coffee={coffee} className="w-36 h-44" />
-            </motion.div>
-
-            <span className="absolute top-2.5 left-2.5 text-[10px] font-mono uppercase tracking-wider text-umber/65 bg-cream/90 px-2 py-0.5 rounded-md border border-espresso/10">
-              {coffee.lotCode}
-            </span>
-
-            <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-terracotta bg-espresso text-cream px-2.5 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-              <Maximize2 className="w-2.5 h-2.5 text-terracotta" />
-              <span>Origin Portal</span>
-            </span>
-
-            <span className="absolute bottom-3 right-3 text-[11px] font-medium text-umber/60 bg-cream/90 px-2.5 py-0.5 rounded-full border border-espresso/10">
-              {coffee.weight}
-            </span>
-          </div>
-
-          {/* Title & Origin Metadata */}
-          <div className="flex items-start justify-between gap-3 mb-2">
-            <div>
-              <button
-                type="button"
-                data-cursor="EXPLORE ORIGIN"
-                onClick={() => {
-                  soundEngine.playPortalWipe();
-                  onOpenPortal(coffee);
-                }}
-                className="text-left group/title"
-              >
-                <h3 className="font-serif text-2xl font-medium text-espresso group-hover/title:text-terracotta transition-colors leading-tight inline-flex items-center gap-1">
-                  <span>{coffee.name}</span>
-                  <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/title:opacity-100 text-terracotta transition-opacity" />
-                </h3>
-              </button>
-              <p className="text-xs text-umber/75 mt-1 font-medium">
-                {coffee.origin} • {coffee.elevation} • {coffee.process}
-              </p>
-            </div>
-            <span className="font-serif text-2xl font-semibold text-espresso">
-              ${coffee.price}
-            </span>
-          </div>
-
-          {/* Tasting Notes Pills */}
-          <div className="flex flex-wrap gap-1.5 my-3.5">
-            {coffee.notes.map((note) => (
-              <span
-                key={note}
-                className="px-2.5 py-1 rounded-md bg-sage-light/80 text-sage text-xs font-medium"
-              >
-                {note}
-              </span>
-            ))}
-          </div>
-
-          <p className="text-sm text-umber/80 leading-relaxed mb-5">{coffee.description}</p>
-
-          {/* Animated Tasting-Note Sensory Bars */}
-          <div className="space-y-2.5 p-3.5 rounded-2xl bg-cream-dark/50 border border-espresso/5 mb-5">
-            <TastingBar label="Acidity" value={coffee.sensory.acidity} colorClass="bg-terracotta" />
-            <TastingBar label="Body" value={coffee.sensory.body} colorClass="bg-umber" />
-            <TastingBar label="Sweetness" value={coffee.sensory.sweetness} colorClass="bg-sage" />
           </div>
         </div>
 
-        {/* Grind Selector + Add to Bag + Portal Trigger */}
-        <div className="relative z-10 space-y-3 pt-2 border-t border-espresso/10">
-          <div>
-            <span className="text-[11px] uppercase tracking-wider text-umber/70 font-semibold block mb-2">
-              Grind Preference
-            </span>
-            <div className="grid grid-cols-3 gap-1.5">
-              {GRIND_OPTIONS.map((grind) => {
-                const active = selectedGrind === grind;
-                return (
-                  <button
-                    key={grind}
-                    type="button"
-                    onClick={() => {
-                      soundEngine.playClick();
-                      setSelectedGrind(grind);
-                    }}
-                    className={`py-2 px-2 rounded-xl text-xs font-medium transition-all border ${
-                      active
-                        ? 'bg-espresso text-cream border-espresso shadow-sm'
-                        : 'bg-cream text-umber border-espresso/15 hover:border-espresso/40'
-                    }`}
-                  >
-                    {grind}
-                  </button>
-                );
-              })}
-            </div>
+        {/* Bag Illustration Stage — Clickable to launch Origin Portal Takeover */}
+        <div
+          role="button"
+          tabIndex={0}
+          data-cursor="EXPLORE ORIGIN"
+          onClick={() => {
+            soundEngine.playPortalWipe();
+            onOpenPortal(coffee);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              soundEngine.playPortalWipe();
+              onOpenPortal(coffee);
+            }
+          }}
+          className="cursor-pointer relative bg-cream-dark rounded-2xl py-6 px-4 mb-5 flex items-center justify-center border border-espresso/5 group-hover:border-terracotta/30 overflow-hidden transition-colors"
+        >
+          {/* Subtle Botanical Ring Seal behind Bag */}
+          <div className="pointer-events-none absolute w-36 h-36 rounded-full border border-dashed border-terracotta/25 group-hover:rotate-45 transition-transform duration-700" />
+
+          <div className="relative z-10 transition-transform duration-300 group-hover:-translate-y-1.5 group-hover:scale-105">
+            <CoffeeBagSVG coffee={coffee} className="w-36 h-44" />
           </div>
 
-          <div className="flex items-center gap-2">
-            <motion.button
-              type="button"
-              data-cursor="ADD MICRO-LOT"
-              onClick={handleAdd}
-              whileTap={{ scale: 0.97 }}
-              className={`flex-1 py-3.5 px-4 rounded-full font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-sm ${
-                justAdded
-                  ? 'bg-sage text-cream'
-                  : 'bg-terracotta text-cream hover:bg-terracotta-dark'
-              }`}
-            >
-              <AnimatePresence mode="wait">
-                {justAdded ? (
-                  <motion.span
-                    key="added"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    className="inline-flex items-center gap-1.5"
-                  >
-                    <Check className="w-4 h-4" />
-                    Added to Bag
-                  </motion.span>
-                ) : (
-                  <motion.span
-                    key="add"
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -6 }}
-                    className="inline-flex items-center gap-1.5"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add to Bag — ${coffee.price}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
+          <span className="absolute top-2.5 left-2.5 text-[10px] font-mono uppercase tracking-wider text-umber/70 bg-cream px-2 py-0.5 rounded-md border border-espresso/10">
+            {coffee.lotCode}
+          </span>
 
+          <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-cream bg-espresso px-2.5 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+            <Maximize2 className="w-2.5 h-2.5 text-terracotta" />
+            <span>Origin Portal</span>
+          </span>
+
+          <span className="absolute bottom-3 right-3 text-[11px] font-medium text-umber/65 bg-cream px-2.5 py-0.5 rounded-full border border-espresso/10">
+            {coffee.weight}
+          </span>
+        </div>
+
+        {/* Title & Origin Metadata */}
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div>
             <button
               type="button"
               data-cursor="EXPLORE ORIGIN"
@@ -666,16 +473,129 @@ function CoffeeCard({ coffee, index, onAddToCart, onOpenPortal }) {
                 soundEngine.playPortalWipe();
                 onOpenPortal(coffee);
               }}
-              className="p-3.5 rounded-full border border-espresso/20 text-espresso hover:bg-espresso hover:text-cream transition-colors"
-              title="Launch Full-Screen Origin & Sensory Portal"
-              aria-label={`Open ${coffee.name} sensory portal`}
+              className="text-left group/title"
             >
-              <Maximize2 className="w-4 h-4" />
+              <h3 className="font-serif text-2xl font-medium text-espresso group-hover/title:text-terracotta transition-colors leading-tight inline-flex items-center gap-1">
+                <span>{coffee.name}</span>
+                <ArrowUpRight className="w-4 h-4 opacity-0 group-hover/title:opacity-100 text-terracotta transition-opacity" />
+              </h3>
             </button>
+            <p className="text-xs text-umber/75 mt-1 font-medium">
+              {coffee.origin} • {coffee.elevation} • {coffee.process}
+            </p>
+          </div>
+          <span className="font-serif text-2xl font-semibold text-espresso">
+            ${coffee.price}
+          </span>
+        </div>
+
+        {/* Tasting Notes Pills */}
+        <div className="flex flex-wrap gap-1.5 my-3.5">
+          {coffee.notes.map((note) => (
+            <span
+              key={note}
+              className="px-2.5 py-1 rounded-md bg-sage-light text-sage text-xs font-medium"
+            >
+              {note}
+            </span>
+          ))}
+        </div>
+
+        <p className="text-sm text-umber/80 leading-relaxed mb-5">{coffee.description}</p>
+
+        {/* Animated Tasting-Note Sensory Bars */}
+        <div className="space-y-2.5 p-3.5 rounded-2xl bg-cream-dark/70 border border-espresso/5 mb-5">
+          <TastingBar label="Acidity" value={coffee.sensory.acidity} colorClass="bg-terracotta" />
+          <TastingBar label="Body" value={coffee.sensory.body} colorClass="bg-umber" />
+          <TastingBar label="Sweetness" value={coffee.sensory.sweetness} colorClass="bg-sage" />
+        </div>
+      </div>
+
+      {/* Grind Selector + Add to Bag + Portal Trigger */}
+      <div className="relative z-10 space-y-3 pt-2 border-t border-espresso/10">
+        <div>
+          <span className="text-[11px] uppercase tracking-wider text-umber/70 font-semibold block mb-2">
+            Grind Preference
+          </span>
+          <div className="grid grid-cols-3 gap-1.5">
+            {GRIND_OPTIONS.map((grind) => {
+              const active = selectedGrind === grind;
+              return (
+                <button
+                  key={grind}
+                  type="button"
+                  onClick={() => {
+                    soundEngine.playClick();
+                    setSelectedGrind(grind);
+                  }}
+                  className={`py-2 px-2 rounded-xl text-xs font-medium transition-all border ${
+                    active
+                      ? 'bg-espresso text-cream border-espresso shadow-sm'
+                      : 'bg-cream text-umber border-espresso/15 hover:border-espresso/40'
+                  }`}
+                >
+                  {grind}
+                </button>
+              );
+            })}
           </div>
         </div>
-      </motion.article>
-    </motion.div>
+
+        <div className="flex items-center gap-2">
+          <motion.button
+            type="button"
+            data-cursor="ADD MICRO-LOT"
+            onClick={handleAdd}
+            whileTap={{ scale: 0.97 }}
+            className={`flex-1 py-3.5 px-4 rounded-full font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-sm ${
+              justAdded
+                ? 'bg-sage text-cream'
+                : 'bg-terracotta text-cream hover:bg-terracotta-dark'
+            }`}
+          >
+            <AnimatePresence mode="wait">
+              {justAdded ? (
+                <motion.span
+                  key="added"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="inline-flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  Added to Bag
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="add"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  className="inline-flex items-center gap-1.5"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add to Bag — ${coffee.price}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
+
+          <button
+            type="button"
+            data-cursor="EXPLORE ORIGIN"
+            onClick={() => {
+              soundEngine.playPortalWipe();
+              onOpenPortal(coffee);
+            }}
+            className="p-3.5 rounded-full border border-espresso/20 text-espresso hover:bg-espresso hover:text-cream transition-colors"
+            title="Launch Full-Screen Origin & Sensory Portal"
+            aria-label={`Open ${coffee.name} sensory portal`}
+          >
+            <Maximize2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </motion.article>
   );
 }
 
@@ -774,16 +694,14 @@ function SensoryFlavorMatrix({ coffees, onOpenPortal, onAddToCart }) {
                   }}
                 >
                   {isSelected && (
-                    <motion.circle
+                    <circle
                       cx={x}
                       cy={y}
-                      r="24"
+                      r="22"
                       fill="none"
                       stroke="#C85A32"
                       strokeWidth="1.5"
                       strokeDasharray="4 3"
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 8, repeat: Infinity, ease: 'linear' }}
                     />
                   )}
                   <circle
@@ -934,20 +852,21 @@ export default function CoffeeShop({
               01 // Single-Origin Micro-Lots
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-espresso font-normal tracking-tight">
-              Seasonal Harvest &amp; 3D Flight Explorer
+              Rotary Tasting Wheel &amp; Harvest Grid
             </h2>
             <p className="text-umber/80 mt-3 text-base sm:text-lg">
-              Scroll through our sticky 3D micro-lot flight runway below or filter the full harvest
-              grid. Click any micro-lot to launch its full-screen sensory &amp; roast-curve portal.
+              Scroll through our curved botanical tasting wheel arc below or filter the full
+              6-origin harvest grid. Click any lot to launch its full-screen sensory &amp;
+              roast-curve portal.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 self-start lg:self-auto">
-            {/* View Mode Toggle: 01 // 3D REEL vs 02 // FLAVOR MATRIX */}
+            {/* View Mode Toggle: 01 // ROTARY WHEEL vs 02 // FLAVOR MATRIX */}
             <div className="inline-flex items-center gap-1 p-1.5 rounded-full bg-espresso text-cream text-xs font-mono uppercase tracking-wider">
               <button
                 type="button"
-                data-cursor="3D REEL MODE"
+                data-cursor="ROTARY WHEEL"
                 onClick={() => {
                   soundEngine.playClick();
                   onViewModeChange && onViewModeChange('reel');
@@ -959,7 +878,7 @@ export default function CoffeeShop({
                 }`}
               >
                 <Grid className="w-3.5 h-3.5" />
-                <span>01 // 3D Reel</span>
+                <span>01 // Rotary Arc</span>
               </button>
               <button
                 type="button"
@@ -1012,16 +931,16 @@ export default function CoffeeShop({
           </div>
         </div>
 
-        {/* Sticky Scroll-Scrubbed 3D Micro-Lot Flight Runway (shown in 3D Reel mode) */}
+        {/* Sticky Scroll-Scrubbed Curved Botanical Arc / Rotary Tasting Carousel */}
         {viewMode === 'reel' && (
-          <ScrollLotFlightRunway
+          <CurvedBotanicalArcShowcase
             coffees={COFFEES}
             onOpenPortal={onOpenPortal}
             onAddToCart={onAddToCart}
           />
         )}
 
-        {/* Switch between 3D Micro-Lot Cards and Interactive 2D Flavor Matrix */}
+        {/* Switch between Interactive Filterable Shop Grid and 2D Flavor Matrix */}
         <AnimatePresence mode="wait">
           {viewMode === 'matrix' ? (
             <SensoryFlavorMatrix
@@ -1033,20 +952,16 @@ export default function CoffeeShop({
           ) : (
             <motion.div
               key="coffee-grid"
-              layout
-              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6"
+              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
             >
-              <AnimatePresence mode="popLayout">
-                {filteredCoffees.map((coffee, idx) => (
-                  <CoffeeCard
-                    key={coffee.id}
-                    coffee={coffee}
-                    index={idx}
-                    onAddToCart={onAddToCart}
-                    onOpenPortal={onOpenPortal}
-                  />
-                ))}
-              </AnimatePresence>
+              {filteredCoffees.map((coffee) => (
+                <CoffeeCard
+                  key={coffee.id}
+                  coffee={coffee}
+                  onAddToCart={onAddToCart}
+                  onOpenPortal={onOpenPortal}
+                />
+              ))}
             </motion.div>
           )}
         </AnimatePresence>

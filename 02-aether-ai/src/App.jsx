@@ -14,7 +14,6 @@ import HudOverlay, { SHADER_MODES } from './components/HudOverlay';
 import PortalTransition from './components/PortalTransition';
 import CustomCursor from './components/CustomCursor';
 import {
-  VelocitySkewWrapper,
   ScrollPortalSection,
   ScrollKineticBanner,
 } from './components/ScrollSectionTransition';
@@ -29,19 +28,29 @@ export default function App() {
   const [viewMode, setViewMode] = useState('overview'); // 'overview' | 'reel'
   const [activeSection, setActiveSection] = useState('telemetry');
 
-  // Keep Navbar active section indicator synced with scroll position
+  // Keep Navbar active section indicator synced with scroll position (rAF throttled, zero redundant setState)
   useEffect(() => {
     const sectionIds = ['telemetry', 'reel', 'platform', 'sdk', 'pricing'];
+    let ticking = false;
+
     const handleScroll = () => {
-      const scrollPos = window.scrollY + window.innerHeight * 0.35;
-      for (let i = sectionIds.length - 1; i >= 0; i--) {
-        const el = document.getElementById(sectionIds[i]);
-        if (el && el.offsetTop <= scrollPos) {
-          setActiveSection(sectionIds[i]);
-          break;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const scrollPos = window.scrollY + window.innerHeight * 0.35;
+        let nextSection = sectionIds[0];
+        for (let i = sectionIds.length - 1; i >= 0; i--) {
+          const el = document.getElementById(sectionIds[i]);
+          if (el && el.offsetTop <= scrollPos) {
+            nextSection = sectionIds[i];
+            break;
+          }
         }
-      }
+        setActiveSection((prev) => (prev !== nextSection ? nextSection : prev));
+        ticking = false;
+      });
     };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -61,12 +70,12 @@ export default function App() {
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 260);
+      }, 150);
     }
 
     setTimeout(() => {
       setActivePortal(null);
-    }, 740);
+    }, 450);
   }, []);
 
   const handleOpenModal = (plan = 'Pro') => {
@@ -88,7 +97,7 @@ export default function App() {
     setViewMode(nextView);
     triggerPortal({
       code: 'VIEW MODE // SWITCH',
-      title: nextView === 'reel' ? 'STREAM REEL FOCUS' : 'FULL PLATFORM OVERVIEW',
+      title: nextView === 'reel' ? 'BLADE RACK FOCUS' : 'FULL PLATFORM OVERVIEW',
       targetId: nextView === 'reel' ? 'reel' : 'telemetry',
     });
   };
@@ -115,7 +124,7 @@ export default function App() {
       {/* Real-time WebGL GLSL Neural Tensor Field Background */}
       <NeuralShaderCanvas shaderMode={shaderMode} onFpsUpdate={setFps} />
 
-      {/* Multi-Slice Cybernetic Portal Transition Overlay */}
+      {/* CRT Terminal Scanline & Phosphor Sweep Transition Overlay */}
       <PortalTransition activePortal={activePortal} />
 
       {/* Persistent Peripheral HUD & Shader Switcher */}
@@ -143,40 +152,38 @@ export default function App() {
             />
           ) : (
             <>
-              {/* Section 01: Hero Telemetry wrapped in Scroll Velocity + 3D Portal Unmask */}
-              <VelocitySkewWrapper>
-                <ScrollPortalSection
-                  sectionCode="PORTAL // 01"
-                  sectionLabel="NEURAL TELEMETRY"
-                  accentColor="#22D3EE"
-                  isFirst
-                >
-                  <HeroTelemetry
-                    onOpenModal={() => handleOpenModal('Pro')}
-                    onNavigateReel={() =>
-                      handleNavigatePortal({
-                        id: 'reel',
-                        code: '02',
-                        label: 'ARCHITECTURE REEL',
-                      })
-                    }
-                  />
-                </ScrollPortalSection>
-              </VelocitySkewWrapper>
+              {/* Section 01: Hero Telemetry */}
+              <ScrollPortalSection
+                sectionCode="BLADE // 01"
+                sectionLabel="NEURAL TELEMETRY"
+                accentColor="#22D3EE"
+                isFirst
+              >
+                <HeroTelemetry
+                  onOpenModal={() => handleOpenModal('Pro')}
+                  onNavigateReel={() =>
+                    handleNavigatePortal({
+                      id: 'reel',
+                      code: '02',
+                      label: 'ARCHITECTURE REEL',
+                    })
+                  }
+                />
+              </ScrollPortalSection>
 
               <TrustStrip />
 
-              {/* Scroll-Scrubbed Kinetic Divider 01 -> 02 */}
+              {/* Horizontal Neural Data Stream Divider 01 -> 02 */}
               <ScrollKineticBanner
-                code="TRANSITION // 01 → 02 Z-TUNNEL"
-                primaryText="3D Z-SPACE ARCHITECTURE FLIGHT // DETERMINISTIC CONSENSUS // SUB-5MS EDGE ROUTING"
-                secondaryText="SCROLL TO SCRUB THROUGH 4 VERIFIED PRODUCTION AI CLUSTERS"
+                code="STREAM // 01 → 02 BLADE STACK"
+                primaryText="ISOMETRIC HARDWARE BLADE DECK // DETERMINISTIC CONSENSUS // SUB-5MS EDGE ROUTING"
+                secondaryText="SCROLL TO STACK 4 VERIFIED PRODUCTION AI CLUSTERS"
                 accent="#22D3EE"
               />
 
-              {/* Section 02: Sticky Scroll-Scrubbed 3D Z-Space Architecture Flight */}
+              {/* Section 02: Sticky Isometric Hardware Blade Deck Stack */}
               <ScrollPortalSection
-                sectionCode="PORTAL // 02"
+                sectionCode="BLADE // 02"
                 sectionLabel="ARCHITECTURE REEL"
                 accentColor="#8B5CF6"
                 stickySafe
@@ -187,64 +194,58 @@ export default function App() {
                 />
               </ScrollPortalSection>
 
-              {/* Scroll-Scrubbed Kinetic Divider 02 -> 03 */}
+              {/* Horizontal Neural Data Stream Divider 02 -> 03 */}
               <ScrollKineticBanner
-                code="TRANSITION // 02 → 03 PRIMITIVES"
+                code="STREAM // 02 → 03 PRIMITIVES"
                 primaryText="SEMANTIC VECTOR CACHE // CIRCUIT-BREAKER FAILOVER // OPENTELEMETRY WATERFALLS"
                 secondaryText="MULTI-LAYER FOREGROUND PARALLAX // ZERO RUNTIME OVERHEAD"
                 accent="#8B5CF6"
               />
 
-              {/* Section 03: Bento Grid wrapped in Scroll Velocity + 3D Portal Unmask */}
-              <VelocitySkewWrapper>
-                <ScrollPortalSection
-                  sectionCode="PORTAL // 03"
-                  sectionLabel="CORE PRIMITIVES"
-                  accentColor="#34D399"
-                >
-                  <BentoGrid />
-                </ScrollPortalSection>
-              </VelocitySkewWrapper>
+              {/* Section 03: Bento Grid */}
+              <ScrollPortalSection
+                sectionCode="BLADE // 03"
+                sectionLabel="CORE PRIMITIVES"
+                accentColor="#34D399"
+              >
+                <BentoGrid />
+              </ScrollPortalSection>
 
-              {/* Scroll-Scrubbed Kinetic Divider 03 -> 04 */}
+              {/* Horizontal Neural Data Stream Divider 03 -> 04 */}
               <ScrollKineticBanner
-                code="TRANSITION // 03 → 04 SDK SANDBOX"
+                code="STREAM // 03 → 04 SDK SANDBOX"
                 primaryText="DROP-IN GATEWAY SDK // 100% OPENAI COMPATIBLE // ZERO VENDOR LOCK-IN"
                 secondaryText="TYPESCRIPT • PYTHON • CURL • REAL-TIME EDGE VERIFICATION"
                 accent="#34D399"
               />
 
-              {/* Section 04: SDK Switcher wrapped in Scroll Velocity + 3D Portal Unmask */}
-              <VelocitySkewWrapper>
-                <ScrollPortalSection
-                  sectionCode="PORTAL // 04"
-                  sectionLabel="SDK SANDBOX"
-                  accentColor="#22D3EE"
-                >
-                  <SdkSwitcher />
-                </ScrollPortalSection>
-              </VelocitySkewWrapper>
+              {/* Section 04: SDK Switcher */}
+              <ScrollPortalSection
+                sectionCode="BLADE // 04"
+                sectionLabel="SDK SANDBOX"
+                accentColor="#22D3EE"
+              >
+                <SdkSwitcher />
+              </ScrollPortalSection>
 
-              {/* Scroll-Scrubbed Kinetic Divider 04 -> 05 */}
+              {/* Horizontal Neural Data Stream Divider 04 -> 05 */}
               <ScrollKineticBanner
-                code="TRANSITION // 04 → 05 COMPUTE PRICING"
+                code="STREAM // 04 → 05 COMPUTE PRICING"
                 primaryText="PREDICTABLE TOKEN SCALE // DEDICATED VPC ENCLAVES // SOC2 TYPE II & HIPAA"
                 secondaryText="INSTANT SANDBOX PROVISIONING • 99.99% CONTRACTUAL SLA"
                 accent="#F59E0B"
               />
 
-              {/* Section 05: Pricing Section wrapped in Scroll Velocity + 3D Portal Unmask */}
-              <VelocitySkewWrapper>
-                <ScrollPortalSection
-                  sectionCode="PORTAL // 05"
-                  sectionLabel="COMPUTE PRICING"
-                  accentColor="#8B5CF6"
-                >
-                  <PricingSection
-                    onSelectPlan={(plan) => handleOpenModal(plan)}
-                  />
-                </ScrollPortalSection>
-              </VelocitySkewWrapper>
+              {/* Section 05: Pricing Section */}
+              <ScrollPortalSection
+                sectionCode="BLADE // 05"
+                sectionLabel="COMPUTE PRICING"
+                accentColor="#8B5CF6"
+              >
+                <PricingSection
+                  onSelectPlan={(plan) => handleOpenModal(plan)}
+                />
+              </ScrollPortalSection>
             </>
           )}
         </main>

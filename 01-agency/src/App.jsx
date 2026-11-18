@@ -13,7 +13,6 @@ import Preloader from './components/Preloader';
 import PortalTransition from './components/PortalTransition';
 import HudOverlay from './components/HudOverlay';
 import {
-  VelocitySkewWrapper,
   ScrollSectionPortal,
   ScrollKineticRibbon,
 } from './components/ScrollChoreography';
@@ -46,15 +45,15 @@ export default function App() {
   }, []);
 
   const triggerPortal = useCallback(
-    ({ label = 'PORTAL', sublabel = 'SYNCHRONIZING', accent = '#C8FF32' } = {}) => {
-      setPortalBoost(1.0);
+    ({ label = 'PORTAL', sublabel = 'CINEMA SHUTTER // LOCK', accent = '#C8FF32' } = {}) => {
+      setPortalBoost(0.9);
       setTransitionState({ active: true, label, sublabel, accent });
       setTimeout(() => {
         setPortalBoost(0);
-      }, 520);
+      }, 420);
       setTimeout(() => {
         setTransitionState((prev) => ({ ...prev, active: false }));
-      }, 760);
+      }, 580);
     },
     []
   );
@@ -62,7 +61,7 @@ export default function App() {
   const handleToggleViewMode = useCallback(
     (nextMode) => {
       triggerPortal({
-        label: nextMode === 'stream' ? '3D WORK STREAM' : 'STUDIO FULL VIEW',
+        label: nextMode === 'stream' ? 'CINEMA REEL' : 'STUDIO FULL VIEW',
         sublabel: 'SWITCHING EXPERIENCE TOPOLOGY',
         accent: '#C8FF32',
       });
@@ -73,7 +72,7 @@ export default function App() {
           const workEl = document.querySelector('#work');
           if (workEl) workEl.scrollIntoView({ behavior: 'smooth' });
         }
-      }, 240);
+      }, 200);
     },
     [triggerPortal]
   );
@@ -94,30 +93,23 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen bg-obsidian text-ivory selection:bg-lime selection:text-obsidian overflow-x-hidden">
-      {/* Initial Active Theory Calibration Preloader */}
       <Preloader />
-
-      {/* Custom Magnetic Reticle Cursor */}
       <CustomCursor />
-
-      {/* Multi-Blade Cybernetic Portal Wipe Overlay */}
       <PortalTransition transitionState={transitionState} />
 
-      {/* Fixed 60fps Interactive WebGL2 GLSL Shader Background */}
       <WebGLPortalCanvas
         shaderPreset={shaderPreset}
         portalBoost={portalBoost}
         onTelemetryUpdate={setTelemetry}
       />
 
-      {/* Peripheral Active Theory Telemetry & Shader HUD */}
       <HudOverlay
         telemetry={telemetry}
         shaderPreset={shaderPreset}
         onSelectShader={(id) => {
-          setPortalBoost(0.75);
+          setPortalBoost(0.6);
           setShaderPreset(id);
-          setTimeout(() => setPortalBoost(0), 380);
+          setTimeout(() => setPortalBoost(0), 320);
         }}
         viewMode={viewMode}
         onToggleViewMode={handleToggleViewMode}
@@ -133,77 +125,74 @@ export default function App() {
         onToggleSound={handleToggleSound}
       />
 
-      {/* Real-Time Scroll-Velocity 3D Skew & Foreground Section Transitions */}
-      <VelocitySkewWrapper>
-        <main className="relative z-10">
-          {viewMode === 'stream' ? (
-            <div className="pt-16">
-              <CaseHighlightsSection
-                onOpenInquiry={(data) => handleOpenInquiry(data)}
-                onTriggerPortal={triggerPortal}
-                onSelectShader={setShaderPreset}
-                forceStreamLayout={true}
-              />
-            </div>
-          ) : (
-            <>
-              <HeroSection
-                onOpenInquiry={() => handleOpenInquiry()}
-                onTriggerPortal={triggerPortal}
-                onSelectShader={setShaderPreset}
-              />
+      <main className="relative z-10">
+        {viewMode === 'stream' ? (
+          <div className="pt-16">
+            <CaseHighlightsSection
+              onOpenInquiry={(data) => handleOpenInquiry(data)}
+              onTriggerPortal={triggerPortal}
+              onSelectShader={setShaderPreset}
+              forceStreamLayout={true}
+            />
+          </div>
+        ) : (
+          <>
+            <HeroSection
+              onOpenInquiry={() => handleOpenInquiry()}
+              onTriggerPortal={triggerPortal}
+              onSelectShader={setShaderPreset}
+            />
 
-              <ScrollKineticRibbon
-                topText="SELECTED PORTALS // 3D Z-TUNNEL WORK STREAM //"
-                bottomText="SCROLL DOWN TO FLY THROUGH INTERACTIVE CASE STUDIES //"
-                accent="#C8FF32"
-              />
+            <ScrollKineticRibbon
+              topText="SELECTED PORTALS // WIDESCREEN HORIZONTAL CINEMA REEL //"
+              bottomText="SCROLL DOWN TO GLIDE ACROSS FLAGSHIP WEBGL CASE STUDIES //"
+              accent="#C8FF32"
+            />
 
-              <CaseHighlightsSection
-                onOpenInquiry={(data) => handleOpenInquiry(data)}
-                onTriggerPortal={triggerPortal}
-                onSelectShader={setShaderPreset}
-              />
+            <CaseHighlightsSection
+              onOpenInquiry={(data) => handleOpenInquiry(data)}
+              onTriggerPortal={triggerPortal}
+              onSelectShader={setShaderPreset}
+            />
 
-              <ScrollKineticRibbon
-                topText="CAPABILITIES // FULL-STACK & WEBGL ARCHITECTURE //"
-                bottomText="DESIGN SYSTEMS · EDGE APPS · CUSTOM GLSL SHADERS //"
-                accent="#6366F1"
-              />
+            <ScrollKineticRibbon
+              topText="CAPABILITIES // FULL-STACK & WEBGL ARCHITECTURE //"
+              bottomText="DESIGN SYSTEMS · EDGE APPS · CUSTOM GLSL SHADERS //"
+              accent="#6366F1"
+            />
 
-              <ScrollSectionPortal
-                sectionNumber="02"
-                sectionTag="CAPABILITIES MATRIX"
-                accent="#C8FF32"
-              >
-                <ServicesSection onInquireService={handleInquireService} />
-              </ScrollSectionPortal>
+            <ScrollSectionPortal
+              sectionNumber="02"
+              sectionTag="CAPABILITIES MATRIX"
+              accent="#C8FF32"
+            >
+              <ServicesSection onInquireService={handleInquireService} />
+            </ScrollSectionPortal>
 
-              <ScrollKineticRibbon
-                topText="ENGINEERING CADENCE // ZERO HANDOFF FRICTION //"
-                bottomText="DISCOVERY · ARCHITECTURE · CRAFT & MOTION · LAUNCH //"
-                accent="#00EBFF"
-              />
+            <ScrollKineticRibbon
+              topText="ENGINEERING CADENCE // ZERO HANDOFF FRICTION //"
+              bottomText="DISCOVERY · ARCHITECTURE · CRAFT & MOTION · LAUNCH //"
+              accent="#00EBFF"
+            />
 
-              <ScrollSectionPortal
-                sectionNumber="03"
-                sectionTag="EXECUTION VELOCITY"
-                accent="#6366F1"
-              >
-                <ProcessSection />
-              </ScrollSectionPortal>
+            <ScrollSectionPortal
+              sectionNumber="03"
+              sectionTag="EXECUTION VELOCITY"
+              accent="#6366F1"
+            >
+              <ProcessSection />
+            </ScrollSectionPortal>
 
-              <ScrollSectionPortal
-                sectionNumber="04"
-                sectionTag="INVESTMENT TELEMETRY"
-                accent="#C8FF32"
-              >
-                <ScopeEstimatorSection onLockEstimate={(data) => handleOpenInquiry(data)} />
-              </ScrollSectionPortal>
-            </>
-          )}
-        </main>
-      </VelocitySkewWrapper>
+            <ScrollSectionPortal
+              sectionNumber="04"
+              sectionTag="INVESTMENT TELEMETRY"
+              accent="#C8FF32"
+            >
+              <ScopeEstimatorSection onLockEstimate={(data) => handleOpenInquiry(data)} />
+            </ScrollSectionPortal>
+          </>
+        )}
+      </main>
 
       <div className="relative z-10">
         <Footer onOpenInquiry={() => handleOpenInquiry()} />

@@ -10,16 +10,14 @@ const VERTEX_SHADER = `
 `;
 
 const FRAGMENT_SHADER = `
-  precision mediump float;
+  precision lowp float;
   varying vec2 v_uv;
   uniform vec2 u_resolution;
   uniform float u_time;
   uniform vec2 u_mouse;
-  uniform float u_velocity;
   uniform float u_scroll;
   uniform float u_mode; // 0.0 = DAWN MONOLITH, 1.0 = ZENITH TIMBER, 2.0 = NOCTURNE CONCRETE
 
-  // 2D Simplex-like hash & noise for architectural limestone & caustic refraction
   float hash(vec2 p) {
     p = fract(p * vec2(123.34, 456.21));
     p += dot(p, p + 45.32);
@@ -37,15 +35,11 @@ const FRAGMENT_SHADER = `
     return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
   }
 
+  // Lightweight 2-octave fbm for 60/120fps performance
   float fbm(vec2 p) {
-    float v = 0.0;
-    float a = 0.5;
-    mat2 rot = mat2(0.8, -0.6, 0.6, 0.8);
-    for (int i = 0; i < 4; i++) {
-      v += a * noise(p);
-      p = rot * p * 2.02;
-      a *= 0.5;
-    }
+    float v = 0.5 * noise(p);
+    p = p * 2.02 + vec2(1.7, 9.2);
+    v += 0.25 * noise(p);
     return v;
   }
 
@@ -55,63 +49,39 @@ const FRAGMENT_SHADER = `
     vec2 p = (uv - 0.5) * vec2(aspect, 1.0);
     vec2 m = (u_mouse - 0.5) * vec2(aspect, 1.0);
 
-    // Liquid stone ripple displacement around cursor
     float dist = length(p - m);
-    float ripple = sin(dist * 28.0 - u_time * 3.2) * exp(-dist * 4.5) * (0.018 + u_velocity * 0.04);
-    vec2 displacedUv = uv + normalize(p - m + 0.0001) * ripple;
 
-    // Architectural louver / sun-slat caustic bands shifted by scroll & mouse solar azimuth
-    float solarAngle = (u_mouse.x - 0.5) * 0.65 + u_scroll * 0.35;
-    vec2 sunCoord = vec2(
-      displacedUv.x * cos(solarAngle) - displacedUv.y * sin(solarAngle),
-      displacedUv.x * sin(solarAngle) + displacedUv.y * cos(solarAngle)
-    );
+    // Architectural sun-slat caustic bands shifted by scroll & mouse solar azimuth
+    float solarAngle = (u_mouse.x - 0.5) * 0.45 + u_scroll * 0.25;
+    float c = cos(solarAngle);
+    float s = sin(solarAngle);
+    vec2 sunCoord = vec2(uv.x * c - uv.y * s, uv.x * s + uv.y * c);
 
-    float louverPattern = sin((sunCoord.x * 18.0 + u_time * 0.18) + fbm(sunCoord * 3.5 + u_time * 0.08) * 2.2);
-    float causticBeam = smoothstep(-0.2, 0.85, louverPattern) * smoothstep(1.1, 0.15, length(p - m * 0.6));
+    float louverPattern = sin((sunCoord.x * 16.0 + u_time * 0.14) + fbm(sunCoord * 3.0) * 1.8);
+    float causticBeam = smoothstep(-0.2, 0.85, louverPattern) * smoothstep(1.1, 0.15, dist);
 
-    // Fine architectural travertine / plaster grain
-    float grain = fbm(displacedUv * 9.0 + vec2(u_time * 0.04, -u_scroll * 0.5));
-    float microGrain = (hash(uv * u_resolution * 0.5 + u_time) - 0.5) * 0.022;
+    float grain = fbm(uv * 6.0 + vec2(u_time * 0.02, -u_scroll * 0.3));
 
-    // Palette definitions per lighting preset
     // 0: DAWN MONOLITH (Warm Alabaster, Limestone, Bronze Sunbeam)
-    vec3 bgDawn = vec3(0.968, 0.960, 0.941);       // #F7F5F0
-    vec3 shadowDawn = vec3(0.918, 0.902, 0.875);   // #EAE6DF
-    vec3 sunDawn = vec3(0.750, 0.610, 0.420);      // Warm Bronze Caustic
-
-    // 1: ZENITH TIMBER (Hinoki Gold, Warm Sand, Deep Ochre Light)
-    vec3 bgZenith = vec3(0.949, 0.929, 0.894);     // Warm Hinoki Alabaster
-    vec3 shadowZenith = vec3(0.878, 0.843, 0.788);
-    vec3 sunZenith = vec3(0.680, 0.500, 0.290);
-
-    // 2: NOCTURNE CONCRETE ( Basalt / Obsidian / Warm Bronze Moonlight )
-    vec3 bgNocturne = vec3(0.925, 0.918, 0.902);   // Cool Architectural Concrete
-    vec3 shadowNocturne = vec3(0.845, 0.835, 0.815);
-    vec3 sunNocturne = vec3(0.540, 0.460, 0.360);
-
-    vec3 baseCol = bgDawn;
-    vec3 shadowCol = shadowDawn;
-    vec3 sunCol = sunDawn;
+    vec3 baseCol = vec3(0.968, 0.960, 0.941);
+    vec3 shadowCol = vec3(0.918, 0.902, 0.875);
+    vec3 sunCol = vec3(0.750, 0.610, 0.420);
 
     if (u_mode > 0.5 && u_mode < 1.5) {
-      baseCol = bgZenith;
-      shadowCol = shadowZenith;
-      sunCol = sunZenith;
+      baseCol = vec3(0.949, 0.929, 0.894);
+      shadowCol = vec3(0.878, 0.843, 0.788);
+      sunCol = vec3(0.680, 0.500, 0.290);
     } else if (u_mode >= 1.5) {
-      baseCol = bgNocturne;
-      shadowCol = shadowNocturne;
-      sunCol = sunNocturne;
+      baseCol = vec3(0.925, 0.918, 0.902);
+      shadowCol = vec3(0.845, 0.835, 0.815);
+      sunCol = vec3(0.540, 0.460, 0.360);
     }
 
     vec3 col = mix(shadowCol, baseCol, grain * 0.75 + 0.25);
-    col = mix(col, sunCol, causticBeam * 0.13);
+    col = mix(col, sunCol, causticBeam * 0.12);
 
-    // Subtle cursor caustic spotlight halo
-    float halo = exp(-dist * 3.8) * (0.09 + u_velocity * 0.12);
+    float halo = exp(-dist * 3.6) * 0.08;
     col += sunCol * halo;
-
-    col += microGrain;
 
     gl_FragColor = vec4(col, 1.0);
   }
@@ -135,7 +105,14 @@ export default function ArchitecturalShaderCanvas({ lightingMode = 0, onTelemetr
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    let gl = canvas.getContext('webgl', { alpha: false, antialias: false, powerPreference: 'high-performance' });
+    let gl = canvas.getContext('webgl', {
+      alpha: false,
+      antialias: false,
+      depth: false,
+      stencil: false,
+      preserveDrawingBuffer: false,
+      powerPreference: 'high-performance',
+    });
     let program = null;
     let uniforms = {};
 
@@ -177,7 +154,6 @@ export default function ArchitecturalShaderCanvas({ lightingMode = 0, onTelemetr
             u_resolution: gl.getUniformLocation(program, 'u_resolution'),
             u_time: gl.getUniformLocation(program, 'u_time'),
             u_mouse: gl.getUniformLocation(program, 'u_mouse'),
-            u_velocity: gl.getUniformLocation(program, 'u_velocity'),
             u_scroll: gl.getUniformLocation(program, 'u_scroll'),
             u_mode: gl.getUniformLocation(program, 'u_mode'),
           };
@@ -192,7 +168,8 @@ export default function ArchitecturalShaderCanvas({ lightingMode = 0, onTelemetr
     const ctx2d = !gl ? canvas.getContext('2d') : null;
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      // Cap DPR at 0.75 for silky-smooth 60/120fps fill-rate performance
+      const dpr = 0.75;
       canvas.width = Math.floor(window.innerWidth * dpr);
       canvas.height = Math.floor(window.innerHeight * dpr);
       if (gl) {
@@ -201,7 +178,7 @@ export default function ArchitecturalShaderCanvas({ lightingMode = 0, onTelemetr
     };
 
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', resize, { passive: true });
 
     const mouse = { x: 0.65, y: 0.35, targetX: 0.65, targetY: 0.35, vel: 0 };
     let scrollNorm = 0;
@@ -211,7 +188,7 @@ export default function ArchitecturalShaderCanvas({ lightingMode = 0, onTelemetr
       const ny = 1.0 - e.clientY / Math.max(window.innerHeight, 1);
       const dx = nx - mouse.targetX;
       const dy = ny - mouse.targetY;
-      mouse.vel = Math.min(1.0, mouse.vel + Math.hypot(dx, dy) * 3.5);
+      mouse.vel = Math.min(1.0, mouse.vel + Math.hypot(dx, dy) * 2.5);
       mouse.targetX = nx;
       mouse.targetY = ny;
     };
@@ -226,45 +203,32 @@ export default function ArchitecturalShaderCanvas({ lightingMode = 0, onTelemetr
 
     let rafId;
     const startTime = performance.now();
-    let frameCount = 0;
+    let lastTelemetryTime = 0;
 
     const render = (now) => {
       const elapsed = (now - startTime) * 0.001;
-      mouse.x += (mouse.targetX - mouse.x) * 0.07;
-      mouse.y += (mouse.targetY - mouse.y) * 0.07;
-      mouse.vel *= 0.92;
+      mouse.x += (mouse.targetX - mouse.x) * 0.08;
+      mouse.y += (mouse.targetY - mouse.y) * 0.08;
+      mouse.vel *= 0.9;
 
       if (gl && program) {
         gl.uniform2f(uniforms.u_resolution, canvas.width, canvas.height);
         gl.uniform1f(uniforms.u_time, elapsed);
         gl.uniform2f(uniforms.u_mouse, mouse.x, mouse.y);
-        gl.uniform1f(uniforms.u_velocity, mouse.vel);
         gl.uniform1f(uniforms.u_scroll, scrollNorm);
         gl.uniform1f(uniforms.u_mode, modeRef.current);
         gl.drawArrays(gl.TRIANGLES, 0, 6);
       } else if (ctx2d) {
-        // Graceful 2D atmospheric caustic fallback
         const w = canvas.width;
         const h = canvas.height;
-        ctx2d.fillStyle = modeRef.current === 1 ? '#F2EDE4' : modeRef.current === 2 ? '#ECEAE6' : '#F7F5F0';
-        ctx2d.fillRect(0, 0, w, h);
-
-        const grad = ctx2d.createRadialGradient(
-          mouse.x * w,
-          (1 - mouse.y) * h,
-          10,
-          mouse.x * w,
-          (1 - mouse.y) * h,
-          Math.max(w, h) * 0.55
-        );
-        grad.addColorStop(0, 'rgba(154, 123, 79, 0.14)');
-        grad.addColorStop(1, 'rgba(247, 245, 240, 0)');
-        ctx2d.fillStyle = grad;
+        ctx2d.fillStyle =
+          modeRef.current === 1 ? '#F2EDE4' : modeRef.current === 2 ? '#ECEAE6' : '#F7F5F0';
         ctx2d.fillRect(0, 0, w, h);
       }
 
-      frameCount++;
-      if (frameCount % 6 === 0 && onTelemetryUpdate) {
+      // Throttle telemetry React state updates to once per 1000ms to prevent scroll/render lag
+      if (onTelemetryUpdate && now - lastTelemetryTime > 1000) {
+        lastTelemetryTime = now;
         onTelemetryUpdate({
           mouseX: mouse.x,
           mouseY: mouse.y,

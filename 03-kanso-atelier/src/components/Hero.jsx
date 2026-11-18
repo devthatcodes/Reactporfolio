@@ -27,12 +27,10 @@ export default function Hero({ onNavigatePortal }) {
     offset: ['start start', 'end start'],
   });
 
-  const titleParallaxY = useTransform(scrollYProgress, [0, 1], [0, -110]);
-  const copyParallaxY = useTransform(scrollYProgress, [0, 1], [0, -55]);
-  const monolithParallaxY = useTransform(scrollYProgress, [0, 1], [0, 85]);
-  const monolithRotateY = useTransform(scrollYProgress, [0, 1], [0, -14]);
-  const monolithRotateX = useTransform(scrollYProgress, [0, 1], [0, 10]);
-  const plaqueParallaxY = useTransform(scrollYProgress, [0, 1], [0, -145]);
+  const titleParallaxY = useTransform(scrollYProgress, [0, 1], [0, -55]);
+  const copyParallaxY = useTransform(scrollYProgress, [0, 1], [0, -30]);
+  const monolithParallaxY = useTransform(scrollYProgress, [0, 1], [0, 45]);
+  const plaqueParallaxY = useTransform(scrollYProgress, [0, 1], [0, -70]);
 
   const handleMonolithMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -150,17 +148,13 @@ export default function Hero({ onNavigatePortal }) {
           </motion.div>
         </div>
 
-        {/* Right Column: Interactive Solar Monolith & Caustic Raytracer Study with 3D Scroll Pitch */}
+        {/* Right Column: Interactive Solar Monolith & Caustic Raytracer Study */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
           style={{
             y: monolithParallaxY,
-            rotateY: monolithRotateY,
-            rotateX: monolithRotateX,
-            transformPerspective: 1400,
-            transformStyle: 'preserve-3d',
           }}
           className="lg:col-span-5 relative will-change-transform"
         >
@@ -179,7 +173,7 @@ export default function Hero({ onNavigatePortal }) {
           <div
             onMouseMove={handleMonolithMove}
             data-cursor="STEER SOLAR AXIS"
-            className="relative bg-stone/90 backdrop-blur-sm border border-charcoal/15 p-6 sm:p-10 aspect-[4/5] flex items-center justify-center overflow-hidden cursor-crosshair shadow-lg"
+            className="relative bg-stone/95 border border-charcoal/15 p-6 sm:p-10 aspect-[4/5] flex items-center justify-center overflow-hidden cursor-crosshair shadow-lg"
           >
             {/* Dynamic cursor-steered warm sunbeam gradient */}
             <div

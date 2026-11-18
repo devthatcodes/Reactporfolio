@@ -46,7 +46,7 @@ export default function CartDrawer({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="fixed inset-0 bg-espresso/45 backdrop-blur-sm"
+            className="fixed inset-0 bg-espresso/60"
           />
 
           {/* Slide-over Panel */}

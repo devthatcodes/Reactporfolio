@@ -52,7 +52,7 @@ export default function SensoryHud({
   return (
     <div className="fixed bottom-4 left-4 right-4 z-30 pointer-events-none hidden lg:flex items-center justify-between gap-4">
       {/* Left Telemetry Cluster: Thermal Shader Mode + TDS + Velocity */}
-      <div className="pointer-events-auto inline-flex items-center gap-3 px-4 py-2 rounded-full bg-espresso/90 text-cream backdrop-blur-md border border-cream/15 shadow-lg text-[11px] font-mono tracking-wider uppercase">
+      <div className="pointer-events-auto inline-flex items-center gap-3 px-4 py-2 rounded-full bg-espresso text-cream border border-cream/15 shadow-lg text-[11px] font-mono tracking-wider uppercase">
         <button
           type="button"
           data-cursor="THERMAL SHIFT"
@@ -94,7 +94,7 @@ export default function SensoryHud({
       </div>
 
       {/* Right Quick Portal Jump Matrix */}
-      <div className="pointer-events-auto inline-flex items-center gap-1.5 p-1.5 rounded-full bg-espresso/90 text-cream backdrop-blur-md border border-cream/15 shadow-lg text-[11px] font-mono tracking-wider uppercase">
+      <div className="pointer-events-auto inline-flex items-center gap-1.5 p-1.5 rounded-full bg-espresso text-cream border border-cream/15 shadow-lg text-[11px] font-mono tracking-wider uppercase">
         <span className="px-2.5 py-1 text-cream/45 inline-flex items-center gap-1.5">
           <Compass className="w-3.5 h-3.5 text-terracotta" />
           <span>PORTALS</span>

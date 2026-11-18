@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 const PILLARS = [
   {
@@ -52,32 +52,14 @@ const PILLARS = [
 ];
 
 function PillarParallaxCard({ pillar, index, scrollYProgress }) {
-  // Differential column speeds & staggered 3D flip-in
-  const yStart = 90 + index * 45;
-  const yEnd = -35 - index * 25;
-
-  const y = useTransform(scrollYProgress, [0, 0.48, 1], [yStart, 0, yEnd]);
-  const rotateX = useTransform(scrollYProgress, [0.05, 0.42, 0.78, 1], [28, 0, 0, -16]);
-  const rotateY = useTransform(
-    scrollYProgress,
-    [0.05, 0.42, 0.78, 1],
-    [(index - 1) * -18, 0, 0, (index - 1) * 12]
-  );
-  const scale = useTransform(scrollYProgress, [0.05, 0.42, 0.8, 1], [0.88, 1, 1, 0.93]);
-  const opacity = useTransform(scrollYProgress, [0.04, 0.3, 0.85, 0.98], [0, 1, 1, 0.25]);
+  const yStart = 36 + index * 18;
+  const y = useTransform(scrollYProgress, [0, 0.55], [yStart, 0]);
+  const opacity = useTransform(scrollYProgress, [0.05, 0.45], [0, 1]);
 
   return (
     <motion.article
-      style={{
-        y,
-        rotateX,
-        rotateY,
-        scale,
-        opacity,
-        transformPerspective: 1400,
-        transformStyle: 'preserve-3d',
-      }}
-      className="relative bg-alabaster/95 border border-charcoal/15 p-8 sm:p-10 flex flex-col justify-between gap-8 shadow-[0_22px_50px_rgba(28,27,25,0.09)] hover:border-bronze/60 transition-colors will-change-transform"
+      style={{ y, opacity }}
+      className="relative bg-alabaster border border-charcoal/15 p-8 sm:p-10 flex flex-col justify-between gap-8 hover:border-bronze/60 transition-colors will-change-transform"
     >
       {/* Top CAD Datum Header */}
       <div className="flex items-center justify-between text-[9px] font-mono uppercase tracking-[0.22em] text-taupe border-b border-charcoal/10 pb-3">
@@ -116,36 +98,31 @@ export default function Philosophy() {
   const studioRef = useRef(null);
   const pillarsRef = useRef(null);
 
-  const { scrollYProgress: rawStudioProgress } = useScroll({
+  const { scrollYProgress: studioProgress } = useScroll({
     target: studioRef,
     offset: ['start end', 'end start'],
   });
-  const studioProgress = useSpring(rawStudioProgress, { stiffness: 160, damping: 28 });
 
-  const leftColY = useTransform(studioProgress, [0, 0.5, 1], [65, 0, -55]);
-  const rightCol1Y = useTransform(studioProgress, [0, 0.5, 1], [110, 0, -35]);
-  const rightCol2Y = useTransform(studioProgress, [0, 0.5, 1], [155, 0, -75]);
-  const studioRotateX = useTransform(studioProgress, [0, 0.35, 0.75, 1], [14, 0, 0, -12]);
+  const leftColY = useTransform(studioProgress, [0, 0.5, 1], [30, 0, -20]);
+  const rightCol1Y = useTransform(studioProgress, [0, 0.5, 1], [45, 0, -15]);
+  const rightCol2Y = useTransform(studioProgress, [0, 0.5, 1], [65, 0, -30]);
 
-  const { scrollYProgress: rawPillarsProgress } = useScroll({
+  const { scrollYProgress: pillarsProgress } = useScroll({
     target: pillarsRef,
     offset: ['start end', 'end start'],
   });
-  const pillarsProgress = useSpring(rawPillarsProgress, { stiffness: 160, damping: 28 });
-
-  const headerParallaxY = useTransform(pillarsProgress, [0, 0.5, 1], [50, 0, -45]);
 
   return (
     <>
-      {/* 01 Studio Overview Strip with Differential Column Scroll Parallax */}
+      {/* 01 Studio Overview Strip with Pure GPU Column Parallax */}
       <section
         ref={studioRef}
         id="studio"
-        className="relative z-10 py-20 md:py-28 border-t border-charcoal/10 bg-alabaster/85 backdrop-blur-[2px] overflow-hidden"
+        className="relative z-10 py-20 md:py-28 border-t border-charcoal/10 bg-alabaster/90 overflow-hidden"
       >
-        <div className="max-w-[1360px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start [perspective:1400px]">
+        <div className="max-w-[1360px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           <motion.div
-            style={{ y: leftColY, rotateX: studioRotateX }}
+            style={{ y: leftColY }}
             className="lg:col-span-4 will-change-transform"
           >
             <div className="flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-taupe mb-4">
@@ -164,8 +141,8 @@ export default function Philosophy() {
 
           <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-8 text-sm leading-relaxed text-taupe font-light">
             <motion.div
-              style={{ y: rightCol1Y, rotateX: studioRotateX }}
-              className="p-6 bg-stone/70 border border-charcoal/10 shadow-sm will-change-transform"
+              style={{ y: rightCol1Y }}
+              className="p-6 bg-stone/80 border border-charcoal/10 will-change-transform"
             >
               <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-bronze mb-2">
                 01.A // TIMBER &amp; MASONRY
@@ -178,8 +155,8 @@ export default function Philosophy() {
             </motion.div>
 
             <motion.div
-              style={{ y: rightCol2Y, rotateX: studioRotateX }}
-              className="p-6 bg-stone/70 border border-charcoal/10 shadow-sm will-change-transform"
+              style={{ y: rightCol2Y }}
+              className="p-6 bg-stone/80 border border-charcoal/10 will-change-transform"
             >
               <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-bronze mb-2">
                 01.B // BESPOKE COMMISSIONS
@@ -194,17 +171,14 @@ export default function Philosophy() {
         </div>
       </section>
 
-      {/* 03 Philosophy / Ethos Strip with 3D Card Flip-In & Column Parallax */}
+      {/* 03 Philosophy / Ethos Strip */}
       <section
         ref={pillarsRef}
         id="philosophy"
-        className="relative z-10 py-24 md:py-32 bg-stone/85 backdrop-blur-[2px] border-y border-charcoal/10 overflow-hidden"
+        className="relative z-10 py-24 md:py-32 bg-stone/90 border-y border-charcoal/10 overflow-hidden"
       >
         <div className="max-w-[1360px] mx-auto px-6 md:px-12">
-          <motion.div
-            style={{ y: headerParallaxY }}
-            className="flex flex-col md:flex-row md:items-end justify-between pb-12 border-b border-charcoal/10 gap-6 will-change-transform"
-          >
+          <div className="flex flex-col md:flex-row md:items-end justify-between pb-12 border-b border-charcoal/10 gap-6">
             <div>
               <div className="flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-taupe mb-3">
                 <span className="font-mono text-bronze">03</span>
@@ -218,9 +192,9 @@ export default function Philosophy() {
               Every line drawn in our studio is tested against permanence, climate, and the quiet
               rituals of daily life.
             </p>
-          </motion.div>
+          </div>
 
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 [perspective:1600px]">
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
             {PILLARS.map((pillar, idx) => (
               <PillarParallaxCard
                 key={pillar.number}

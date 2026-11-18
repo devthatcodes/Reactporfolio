@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Check, ArrowRight, Compass } from 'lucide-react';
 
 const TYPOLOGIES = ['Residential', 'Cultural', 'Hospitality', 'Interior'];
@@ -15,20 +15,14 @@ export default function ContactSection() {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const { scrollYProgress: rawProgress } = useScroll({
+  const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ['start end', 'end start'],
   });
 
-  const smoothProgress = useSpring(rawProgress, { stiffness: 160, damping: 30 });
-
-  // Differential scroll parallax for Left Studio Info vs Right Commission Dossier Card
-  const leftColumnY = useTransform(smoothProgress, [0, 0.5, 1], [80, 0, -50]);
-  const rightCardY = useTransform(smoothProgress, [0, 0.48, 1], [140, 0, -75]);
-  const rightCardRotateX = useTransform(smoothProgress, [0.05, 0.42, 0.85, 1], [22, 0, 0, -10]);
-  const rightCardRotateY = useTransform(smoothProgress, [0.05, 0.42, 0.85, 1], [-14, 0, 0, 8]);
-  const rightCardScale = useTransform(smoothProgress, [0.05, 0.42, 0.85, 1], [0.9, 1, 1, 0.95]);
-  const plaqueParallaxY = useTransform(smoothProgress, [0, 0.5, 1], [110, 0, -110]);
+  // Pure GPU-composited vertical parallax
+  const leftColumnY = useTransform(scrollYProgress, [0, 0.5, 1], [30, 0, -20]);
+  const rightCardY = useTransform(scrollYProgress, [0, 0.5, 1], [50, 0, -30]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -51,10 +45,10 @@ export default function ContactSection() {
     <section
       ref={sectionRef}
       id="contact"
-      className="relative z-10 py-24 md:py-32 bg-alabaster/85 backdrop-blur-[2px] border-t border-charcoal/10 overflow-hidden"
+      className="relative z-10 py-24 md:py-32 bg-alabaster/90 border-t border-charcoal/10 overflow-hidden"
     >
-      <div className="max-w-[1360px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-16 items-start [perspective:1600px]">
-        {/* Left Column: Studio Info with Scroll Parallax */}
+      <div className="max-w-[1360px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-16 items-start">
+        {/* Left Column: Studio Info */}
         <motion.div
           style={{ y: leftColumnY }}
           className="lg:col-span-5 space-y-10 will-change-transform"
@@ -74,14 +68,14 @@ export default function ContactSection() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-6 border-t border-charcoal/10 text-xs leading-relaxed">
-            <div className="p-5 bg-stone/70 border border-charcoal/10 space-y-2">
+            <div className="p-5 bg-stone/80 border border-charcoal/10 space-y-2">
               <p className="uppercase tracking-[0.2em] text-bronze font-mono">Kyoto Atelier</p>
               <p className="text-charcoal font-medium">Nakagyo-ku, Yanaginobanba</p>
               <p className="text-taupe">Kyoto 604-8006, Japan</p>
               <p className="text-taupe font-mono pt-1">+81 75 555 0148</p>
             </div>
 
-            <div className="p-5 bg-stone/70 border border-charcoal/10 space-y-2">
+            <div className="p-5 bg-stone/80 border border-charcoal/10 space-y-2">
               <p className="uppercase tracking-[0.2em] text-bronze font-mono">Copenhagen Atelier</p>
               <p className="text-charcoal font-medium">Bredgade 45, 2. sal</p>
               <p className="text-taupe">1260 København K, Denmark</p>
@@ -100,28 +94,18 @@ export default function ContactSection() {
           </div>
         </motion.div>
 
-        {/* Right Column: Minimalist Commission Dossier Form with 3D Scroll Flip-In */}
+        {/* Right Column: Minimalist Commission Dossier Form */}
         <motion.div
-          style={{
-            y: rightCardY,
-            rotateX: rightCardRotateX,
-            rotateY: rightCardRotateY,
-            scale: rightCardScale,
-            transformPerspective: 1600,
-            transformStyle: 'preserve-3d',
-          }}
+          style={{ y: rightCardY }}
           className="lg:col-span-7 relative will-change-transform"
         >
-          {/* Floating Parallax Telemetry Stamp */}
-          <motion.div
-            style={{ y: plaqueParallaxY }}
-            className="hidden sm:flex items-center gap-2.5 absolute -top-5 right-6 z-20 px-4 py-1.5 bg-charcoal text-alabaster border border-bronze/60 text-[9px] font-mono uppercase tracking-[0.22em] shadow-xl"
-          >
+          {/* Telemetry Stamp */}
+          <div className="hidden sm:flex items-center gap-2.5 absolute -top-4 right-6 z-20 px-4 py-1.5 bg-charcoal text-alabaster border border-bronze/60 text-[9px] font-mono uppercase tracking-[0.22em]">
             <Compass className="w-3.5 h-3.5 text-bronze" />
             <span>DOSSIER INTAKE // 2025–2026 COMMISSIONS</span>
-          </motion.div>
+          </div>
 
-          <div className="bg-stone border border-charcoal/15 p-7 sm:p-10 md:p-12 shadow-[0_28px_70px_rgba(28,27,25,0.12)]">
+          <div className="bg-stone border border-charcoal/15 p-7 sm:p-10 md:p-12">
             <AnimatePresence mode="wait">
               {submitted ? (
                 <motion.div

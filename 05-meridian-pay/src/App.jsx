@@ -13,7 +13,6 @@ import TelemetryHud from './components/TelemetryHud';
 import PortalTransition from './components/PortalTransition';
 import CustomCursor from './components/CustomCursor';
 import {
-  VelocitySkewWrapper,
   ScrollPortalSection,
   ScrollQuantumTicker,
 } from './components/ScrollLiquidityTransition';
@@ -32,11 +31,11 @@ export default function App() {
     setPulseTrigger((c) => c + 1);
   }, []);
 
-  const triggerPortal = useCallback((label, sublabel = 'QUANTUM PORTAL VECTOR // ROUTING') => {
+  const triggerPortal = useCallback((label, sublabel = 'VAULT SEAL ENGAGED') => {
     setPortalState({ active: true, label, sublabel });
     setTimeout(() => {
       setPortalState((prev) => ({ ...prev, active: false }));
-    }, 680);
+    }, 460);
   }, []);
 
   const handleNavigatePortal = useCallback(
@@ -51,7 +50,7 @@ export default function App() {
           const el = document.querySelector(href);
           if (el) el.scrollIntoView({ behavior: 'smooth' });
         }
-      }, 240);
+      }, 160);
     },
     [triggerPortal, triggerShaderPulse]
   );
@@ -59,21 +58,28 @@ export default function App() {
   useEffect(() => {
     const sections = [
       { id: 'top', label: '01 // LIQUIDITY STREAM' },
-      { id: 'corridors', label: '02 // CORRIDOR CASE REEL' },
+      { id: 'corridors', label: '02 // CORRIDOR LEDGER' },
       { id: 'cards', label: '03 // HOLOGRAPHIC METAL CARD' },
       { id: 'workflows', label: '04 // WORKFLOW ENGINE' },
       { id: 'security', label: '05 // ZK-SECURITY MESH' },
     ];
 
+    let ticking = false;
     const onScroll = () => {
-      const scrollPos = window.scrollY + window.innerHeight * 0.35;
-      for (let i = sections.length - 1; i >= 0; i--) {
-        const el = document.getElementById(sections[i].id);
-        if (el && el.offsetTop <= scrollPos) {
-          setActiveSection(sections[i].label);
-          break;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const scrollPos = window.scrollY + window.innerHeight * 0.35;
+        for (let i = sections.length - 1; i >= 0; i--) {
+          const el = document.getElementById(sections[i].id);
+          if (el && el.offsetTop <= scrollPos) {
+            const nextLabel = sections[i].label;
+            setActiveSection((prev) => (prev === nextLabel ? prev : nextLabel));
+            break;
+          }
         }
-      }
+        ticking = false;
+      });
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -93,10 +99,10 @@ export default function App() {
       {/* Custom Magnetic Reticle Cursor */}
       <CustomCursor />
 
-      {/* Full-Screen Multi-Slice Portal Curtain Transition */}
+      {/* Interlocking Left/Right Titanium Vault Doors Transition */}
       <PortalTransition transitionState={portalState} />
 
-      {/* Real-Time WebGL Global Liquidity Field & Quantum Wave Shader */}
+      {/* Real-Time WebGL Global Liquidity Field & Quantum Wave Shader (DPR 0.75 Locked 60fps) */}
       <LiquidityShaderCanvas
         networkMode={networkMode}
         pulseTrigger={pulseTrigger}
@@ -123,75 +129,72 @@ export default function App() {
       />
 
       <main className="flex-1 relative z-10 overflow-x-clip">
-        <VelocitySkewWrapper>
-          <ScrollPortalSection
-            sectionIndex="01"
-            portalLabel="QUANTUM FX STREAM"
-            accentColor="#10B981"
-            isFirst
-          >
-            <HeroSection
-              onOpenAccount={openAccountModal}
-              networkMode={networkMode}
-              onSelectNetworkMode={(id) => {
-                setNetworkMode(id);
-                triggerShaderPulse();
-              }}
-              onShaderPulse={triggerShaderPulse}
-            />
-          </ScrollPortalSection>
-
-          <ScrollQuantumTicker
-            primaryText="ATOMIC SETTLEMENT // ZERO CORRESPONDENT HOPS // 38MS FINALITY"
-            secondaryText="JPY ⇄ GBP 0.005194 · USD ⇄ EUR 0.9214 · USDC ⇄ SEPA 1.0000 · T-BILL REPO 4.85% APY"
-            accent="#10B981"
+        <ScrollPortalSection
+          sectionIndex="01"
+          portalLabel="QUANTUM FX STREAM"
+          accentColor="#10B981"
+          isFirst
+        >
+          <HeroSection
+            onOpenAccount={openAccountModal}
+            networkMode={networkMode}
+            onSelectNetworkMode={(id) => {
+              setNetworkMode(id);
+              triggerShaderPulse();
+            }}
+            onShaderPulse={triggerShaderPulse}
           />
+        </ScrollPortalSection>
 
-          <ScrollPortalSection
-            sectionIndex="02"
-            portalLabel="3D CORRIDOR FLIGHT TUNNEL"
-            accentColor="#06B6D4"
-            isTallTunnel
-          >
-            <CorridorReel onTriggerPortal={triggerPortal} onShaderPulse={triggerShaderPulse} />
-          </ScrollPortalSection>
+        <ScrollQuantumTicker
+          primaryText="ATOMIC SETTLEMENT // ZERO CORRESPONDENT HOPS // 38MS FINALITY"
+          secondaryText="JPY ⇄ GBP 0.005194 · USD ⇄ EUR 0.9214 · USDC ⇄ SEPA 1.0000 · T-BILL REPO 4.85% APY"
+          accent="#10B981"
+        />
 
-          <ScrollQuantumTicker
-            primaryText="PROGRAMMABLE TITANIUM // CRYPTOGRAPHIC SPEND GUARDRAILS // 0% FX MARKUP"
-            secondaryText="VISA INFINITE INSTITUTIONAL · MASTERCARD WORLD ELITE · <180MS NODE ENFORCEMENT"
-            accent="#06B6D4"
-          />
+        <ScrollPortalSection
+          sectionIndex="02"
+          portalLabel="SPLIT-SCREEN SETTLEMENT LEDGER"
+          accentColor="#06B6D4"
+        >
+          <CorridorReel onTriggerPortal={triggerPortal} onShaderPulse={triggerShaderPulse} />
+        </ScrollPortalSection>
 
-          <ScrollPortalSection
-            sectionIndex="03"
-            portalLabel="HOLOGRAPHIC CARD ORBIT"
-            accentColor="#3B82F6"
-          >
-            <VirtualCardShowcase onShaderPulse={triggerShaderPulse} />
-          </ScrollPortalSection>
+        <ScrollQuantumTicker
+          primaryText="PROGRAMMABLE TITANIUM // CRYPTOGRAPHIC SPEND GUARDRAILS // 0% FX MARKUP"
+          secondaryText="VISA INFINITE INSTITUTIONAL · MASTERCARD WORLD ELITE · <180MS NODE ENFORCEMENT"
+          accent="#06B6D4"
+        />
 
-          <ScrollQuantumTicker
-            primaryText="AUTONOMOUS TREASURY OS // OVERNIGHT T-BILL REPO // ZK-EXPENSE QUORUMS"
-            secondaryText="SEPA INSTANT RT1 · BOJ ZENGIN ATOMIC · CHAPS DIRECT · FEDWIRE T+0 RECALL"
-            accent="#10B981"
-          />
+        <ScrollPortalSection
+          sectionIndex="03"
+          portalLabel="HOLOGRAPHIC CARD ORBIT"
+          accentColor="#3B82F6"
+        >
+          <VirtualCardShowcase onShaderPulse={triggerShaderPulse} />
+        </ScrollPortalSection>
 
-          <ScrollPortalSection
-            sectionIndex="04"
-            portalLabel="AUTONOMOUS WORKFLOW ENGINE"
-            accentColor="#10B981"
-          >
-            <WorkflowTabs onShaderPulse={triggerShaderPulse} />
-          </ScrollPortalSection>
+        <ScrollQuantumTicker
+          primaryText="AUTONOMOUS TREASURY OS // OVERNIGHT T-BILL REPO // ZK-EXPENSE QUORUMS"
+          secondaryText="SEPA INSTANT RT1 · BOJ ZENGIN ATOMIC · CHAPS DIRECT · FEDWIRE T+0 RECALL"
+          accent="#10B981"
+        />
 
-          <ScrollPortalSection
-            sectionIndex="05"
-            portalLabel="SOVEREIGN ZK-SECURITY MESH"
-            accentColor="#06B6D4"
-          >
-            <SecurityGrid onOpenAccount={openAccountModal} />
-          </ScrollPortalSection>
-        </VelocitySkewWrapper>
+        <ScrollPortalSection
+          sectionIndex="04"
+          portalLabel="AUTONOMOUS WORKFLOW ENGINE"
+          accentColor="#10B981"
+        >
+          <WorkflowTabs onShaderPulse={triggerShaderPulse} />
+        </ScrollPortalSection>
+
+        <ScrollPortalSection
+          sectionIndex="05"
+          portalLabel="SOVEREIGN ZK-SECURITY MESH"
+          accentColor="#06B6D4"
+        >
+          <SecurityGrid onOpenAccount={openAccountModal} />
+        </ScrollPortalSection>
       </main>
 
       <Footer />

@@ -22,19 +22,16 @@ export default function TastingRoomAndSub() {
   });
   const smoothTasting = useSpring(tastingScroll, { damping: 32, stiffness: 220 });
 
-  const archCardY = useTransform(smoothTasting, [0, 0.5, 1], [85, 0, -75]);
-  const archCardRotateY = useTransform(smoothTasting, [0, 0.5, 1], [14, 0, -12]);
-  const archCardRotateX = useTransform(smoothTasting, [0, 0.5, 1], [10, 0, -8]);
-  const sunParallaxY = useTransform(smoothTasting, [0, 1], [28, -28]);
-  const infoColY = useTransform(smoothTasting, [0, 0.5, 1], [125, 0, -95]);
+  const archCardY = useTransform(smoothTasting, [0, 0.5, 1], [40, 0, -35]);
+  const sunParallaxY = useTransform(smoothTasting, [0, 1], [24, -24]);
+  const infoColY = useTransform(smoothTasting, [0, 0.5, 1], [60, 0, -45]);
 
   const { scrollYProgress: subScroll } = useScroll({
     target: subRef,
     offset: ['start end', 'end start'],
   });
   const smoothSub = useSpring(subScroll, { damping: 32, stiffness: 220 });
-  const subScale = useTransform(smoothSub, [0, 0.45, 1], [0.88, 1, 0.94]);
-  const subRotateX = useTransform(smoothSub, [0, 0.45, 1], [15, 0, -10]);
+  const subScale = useTransform(smoothSub, [0, 0.45, 1], [0.95, 1, 0.98]);
   const ringRotate = useTransform(smoothSub, [0, 1], [0, 160]);
 
   const basePricePerBag = 21;
@@ -54,17 +51,14 @@ export default function TastingRoomAndSub() {
         ref={tastingRef}
         id="tasting-room"
         className="py-16 sm:py-24 border-b border-espresso/10 overflow-hidden"
-        style={{ perspective: '1600px' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* Architectural Tasting Bar SVG with 3D Scroll Tilt */}
+            {/* Architectural Tasting Bar SVG with GPU Scroll Parallax */}
             <motion.div
               style={{
                 y: archCardY,
-                rotateY: archCardRotateY,
-                rotateX: archCardRotateX,
-                transformStyle: 'preserve-3d',
+                willChange: 'transform',
               }}
               className="lg:col-span-6"
             >
@@ -223,19 +217,17 @@ export default function TastingRoomAndSub() {
         </div>
       </section>
 
-      {/* Subscription Banner with 3D Scroll Perspective */}
+      {/* Subscription Banner with GPU Scroll Scale */}
       <section
         ref={subRef}
         id="subscribe"
         className="py-16 sm:py-24"
-        style={{ perspective: '1600px' }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             style={{
               scale: subScale,
-              rotateX: subRotateX,
-              transformStyle: 'preserve-3d',
+              willChange: 'transform',
             }}
             className="relative rounded-3xl bg-espresso text-cream p-8 sm:p-12 lg:p-14 overflow-hidden shadow-editorial"
           >

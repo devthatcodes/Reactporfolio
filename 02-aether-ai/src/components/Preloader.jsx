@@ -14,7 +14,7 @@ export default function Preloader({ onComplete }) {
 
   useEffect(() => {
     const start = performance.now();
-    const duration = 1150;
+    const duration = 900;
 
     const tick = (now) => {
       const elapsed = now - start;
@@ -27,7 +27,7 @@ export default function Preloader({ onComplete }) {
         setTimeout(() => {
           setVisible(false);
           if (onComplete) onComplete();
-        }, 280);
+        }, 200);
       }
     };
 
@@ -45,43 +45,29 @@ export default function Preloader({ onComplete }) {
       {visible && (
         <motion.div
           key="aether-preloader"
-          exit={{ opacity: 0, transition: { duration: 0.45, delay: 0.35 } }}
-          className="fixed inset-0 z-[100] flex flex-col justify-between overflow-hidden bg-[#09090B] p-6 sm:p-12"
+          initial={{ scaleY: 1, opacity: 1 }}
+          exit={{
+            scaleY: 0,
+            opacity: 0,
+            transition: { duration: 0.38, ease: [0.22, 1, 0.36, 1] },
+          }}
+          style={{ transformOrigin: 'center center' }}
+          className="fixed inset-0 z-[100] flex flex-col justify-between overflow-hidden border-y border-cyan-400/50 bg-[#09090B] p-6 sm:p-12 will-change-transform"
         >
-          {/* Multi-slice curtain panels that slide away on exit */}
-          <div className="pointer-events-none absolute inset-0 flex">
-            {[0, 1, 2, 3, 4].map((slice) => (
-              <motion.div
-                key={slice}
-                initial={{ scaleY: 1 }}
-                exit={{
-                  scaleY: 0,
-                  transition: {
-                    duration: 0.55,
-                    delay: slice * 0.05,
-                    ease: [0.22, 1, 0.36, 1],
-                  },
-                }}
-                style={{ originY: slice % 2 === 0 ? 0 : 1 }}
-                className="h-full flex-1 border-r border-zinc-800/40 bg-[#09090B]"
-              />
-            ))}
-          </div>
-
           {/* Top Bar */}
           <div className="relative z-10 flex items-center justify-between font-mono text-[11px] uppercase tracking-[0.2em] text-zinc-400">
             <div className="flex items-center gap-2.5">
-              <span className="h-2 w-2 animate-ping rounded-full bg-cyan-400" />
+              <span className="h-2 w-2 rounded-full bg-cyan-400" />
               <span className="text-cyan-400">AETHER // OS v2.4</span>
             </div>
-            <span>BOOT SEQUENCE // ACTIVE THEORY CALIBRATION</span>
+            <span>BOOT SEQUENCE // CRT SCANLINE SYNC</span>
           </div>
 
           {/* Center Counter & Diagnostics */}
           <div className="relative z-10 my-auto mx-auto w-full max-w-2xl">
             <div className="flex items-baseline justify-between">
               <span className="font-mono text-xs uppercase tracking-[0.25em] text-zinc-500">
-                NEURAL SHADER & TELEMETRY ALLOCATION
+                NEURAL SHADER &amp; TELEMETRY ALLOCATION
               </span>
               <span className="font-mono text-5xl font-black tracking-tighter text-[#FAFAFA] sm:text-7xl">
                 {String(progress).padStart(3, '0')}
@@ -89,19 +75,22 @@ export default function Preloader({ onComplete }) {
               </span>
             </div>
 
-            {/* Progress Track */}
+            {/* Progress Track (GPU scaleX) */}
             <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-zinc-900">
-              <motion.div
-                style={{ width: `${progress}%` }}
-                className="h-full bg-gradient-to-r from-[#22D3EE] via-[#8B5CF6] to-[#34D399] shadow-[0_0_20px_#22D3EE]"
+              <div
+                style={{
+                  transform: `scaleX(${progress / 100})`,
+                  transformOrigin: 'left center',
+                }}
+                className="h-full w-full bg-gradient-to-r from-[#22D3EE] via-[#8B5CF6] to-[#34D399] will-change-transform"
               />
             </div>
 
             {/* Diagnostic Log Feed */}
-            <div className="mt-6 space-y-1.5 rounded-xl border border-zinc-800/80 bg-[#111115]/90 p-4 font-mono text-[11px]">
+            <div className="mt-6 space-y-1.5 rounded-xl border border-zinc-800/80 bg-[#090D16]/95 p-4 font-mono text-[11px]">
               {BOOT_LOGS.slice(0, activeLogCount).map((line) => (
                 <div key={line} className="flex items-center justify-between text-zinc-300">
-                  <span className="truncate">{line}</span>
+                  <span className="truncate">&gt; {line}</span>
                   <span className="ml-3 text-emerald-400">[OK]</span>
                 </div>
               ))}

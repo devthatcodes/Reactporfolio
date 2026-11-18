@@ -77,21 +77,12 @@ export default function SdkSwitcher() {
     offset: ['start end', 'end start'],
   });
 
-  const smoothScroll = useSpring(scrollYProgress, {
-    stiffness: 150,
-    damping: 28,
-    mass: 0.25,
-  });
+  // Left copy column scroll parallax (pure GPU y)
+  const leftY = useTransform(scrollYProgress, [0, 0.5, 1], [30, 0, -25]);
 
-  // Left copy column scroll parallax
-  const leftY = useTransform(smoothScroll, [0, 0.5, 1], [60, 0, -50]);
-  const leftRotateY = useTransform(smoothScroll, [0, 0.4, 1], [12, 0, -8]);
-
-  // Right 3D code terminal scroll parallax (opposite depth vector)
-  const rightY = useTransform(smoothScroll, [0, 0.45, 1], [120, 0, -95]);
-  const rightRotateX = useTransform(smoothScroll, [0, 0.38, 0.78, 1], [20, 0, 0, -14]);
-  const rightRotateY = useTransform(smoothScroll, [0, 0.4, 0.78, 1], [-16, 0, 0, 10]);
-  const rightScale = useTransform(smoothScroll, [0, 0.35, 0.8, 1], [0.88, 1, 1, 0.92]);
+  // Right code terminal scroll parallax (pure GPU y & scale)
+  const rightY = useTransform(scrollYProgress, [0, 0.45, 1], [50, 0, -40]);
+  const rightScale = useTransform(scrollYProgress, [0, 0.3, 0.85, 1], [0.96, 1, 1, 0.97]);
 
   const handleCopy = () => {
     playClick();
@@ -142,8 +133,6 @@ export default function SdkSwitcher() {
           <motion.div
             style={{
               y: leftY,
-              rotateY: leftRotateY,
-              transformStyle: 'preserve-3d',
             }}
             className="lg:col-span-5 will-change-transform"
           >
@@ -176,14 +165,11 @@ export default function SdkSwitcher() {
             </ul>
           </motion.div>
 
-          {/* Right Interactive 3D Code Block with Counter-Parallax */}
+          {/* Right Interactive Code Block with Counter-Parallax */}
           <motion.div
             style={{
               y: rightY,
-              rotateX: rightRotateX,
-              rotateY: rightRotateY,
               scale: rightScale,
-              transformStyle: 'preserve-3d',
             }}
             className="lg:col-span-7 will-change-transform"
           >
@@ -192,9 +178,8 @@ export default function SdkSwitcher() {
               onMouseLeave={() => setTilt({ rx: 0, ry: 0 })}
               style={{
                 transform: `perspective(1100px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
-                transformStyle: 'preserve-3d',
               }}
-              className="overflow-hidden rounded-2xl border border-[#27272A] bg-[#111115]/95 shadow-[0_30px_80px_rgba(0,0,0,0.85)] backdrop-blur-xl transition-colors duration-200 hover:border-cyan-400/50"
+              className="overflow-hidden rounded-2xl border border-[#27272A] bg-[#090D16]/95 shadow-[0_30px_80px_rgba(0,0,0,0.85)] transition-colors duration-200 hover:border-cyan-400/50"
             >
               {/* Header Bar with Framer Motion layoutId tabs */}
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#27272A] bg-[#09090B]/80 px-4 py-3">

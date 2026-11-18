@@ -12,7 +12,6 @@ import SpatialHud from './components/SpatialHud';
 import PortalTransition from './components/PortalTransition';
 import CustomCursor from './components/CustomCursor';
 import {
-  VelocitySkewWrapper,
   ScrollShutterSection,
   ScrollArchitecturalMarquee,
 } from './components/ScrollArchitectureTransition';
@@ -34,20 +33,26 @@ export default function App() {
     code: '',
   });
 
-  // Track active scroll section for Spatial HUD telemetry
+  // Track active scroll section without calling setState unless label actually changes
   useEffect(() => {
+    let ticking = false;
     const updateSection = () => {
-      const y = window.scrollY;
-      const vh = window.innerHeight;
-      if (y < vh * 0.6) {
-        setActiveSectionLabel('00 // HELIODON ORIGIN');
-      } else if (y < vh * 2.1) {
-        setActiveSectionLabel('01 // STUDIO & ETHOS');
-      } else if (y < vh * 5.8) {
-        setActiveSectionLabel('02 // 3D MONOGRAPH RUNWAY');
-      } else {
-        setActiveSectionLabel('04 // COMMISSION DOSSIER');
-      }
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        const vh = window.innerHeight;
+        let nextLabel = '04 // COMMISSION DOSSIER';
+        if (y < vh * 0.7) {
+          nextLabel = '00 // HELIODON ORIGIN';
+        } else if (y < vh * 2.1) {
+          nextLabel = '01 // STUDIO & ETHOS';
+        } else if (y < vh * 5.2) {
+          nextLabel = '02 // SPLIT-SCREEN MONOGRAPHS';
+        }
+        setActiveSectionLabel((prev) => (prev === nextLabel ? prev : nextLabel));
+        ticking = false;
+      });
     };
     window.addEventListener('scroll', updateSection, { passive: true });
     return () => window.removeEventListener('scroll', updateSection);
@@ -58,16 +63,16 @@ export default function App() {
       active: true,
       title: config.title || 'KANSO ATELIER',
       subtitle: config.subtitle || '',
-      code: config.code || 'PORTAL // TRANSITION',
+      code: config.code || 'MA // SPATIAL INTERVAL',
     });
 
     setTimeout(() => {
       if (onMidpoint) onMidpoint();
-    }, 300);
+    }, 210);
 
     setTimeout(() => {
       setTransitionState((prev) => ({ ...prev, active: false }));
-    }, 760);
+    }, 480);
   }, []);
 
   const handleNavigatePortal = useCallback(
@@ -109,19 +114,19 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen bg-alabaster text-charcoal flex flex-col selection:bg-bronze selection:text-alabaster">
-      {/* Active Theory Calibration Preloader */}
+      {/* Calibration Preloader */}
       <Preloader />
 
       {/* Custom Magnetic Reticle Cursor */}
       <CustomCursor />
 
-      {/* Real-Time WebGL Caustic Light & Liquid Stone Shader */}
+      {/* Lightweight 0.75 DPR WebGL Caustic Light & Limestone Shader */}
       <ArchitecturalShaderCanvas
         lightingMode={lightingMode}
         onTelemetryUpdate={setTelemetry}
       />
 
-      {/* Multi-Blade Architectural Portal Shutter Transition */}
+      {/* Horizontal Shoji Sliding Doors Transition (480ms GPU translateX) */}
       <PortalTransition transitionState={transitionState} />
 
       {/* Persistent Peripheral Spatial HUD & Shader Mode Switcher */}
@@ -135,16 +140,14 @@ export default function App() {
       <Header onNavigatePortal={handleNavigatePortal} />
 
       <main className="flex-1 relative z-10">
-        {/* 00 // HERO SECTION WITH 3D SHUTTER FOLD & VELOCITY SKEW */}
+        {/* 00 // HERO SECTION */}
         <ScrollShutterSection
           isHero
           sectionCode="00 // HELIODON ORIGIN"
           datumLabel="SOLAR MONOLITH // ELEV +0.00M"
           coordinates="35.0116° N · 55.6761° N"
         >
-          <VelocitySkewWrapper intensity={0.9}>
-            <Hero onNavigatePortal={handleNavigatePortal} />
-          </VelocitySkewWrapper>
+          <Hero onNavigatePortal={handleNavigatePortal} />
         </ScrollShutterSection>
 
         {/* SCROLL-SCRUBBED KINETIC CAD DIVIDER 01 */}
@@ -154,25 +157,23 @@ export default function App() {
           secondaryText="SECTION A–A // KYOTO TIMBER JOINERY // COPENHAGEN MASONRY // 1:100 ARCHITECTURAL DATUM"
         />
 
-        {/* 01 & 03 // STUDIO & ARCHITECTURAL ETHOS WITH SHUTTER APERTURE & COLUMN PARALLAX */}
+        {/* 01 & 03 // STUDIO & ARCHITECTURAL ETHOS */}
         <ScrollShutterSection
           sectionCode="01 // STUDIO & ETHOS"
           datumLabel="THREE PILLARS OF FORM // ELEV +4.20M"
           coordinates="KYOTO · COPENHAGEN"
         >
-          <VelocitySkewWrapper intensity={0.95}>
-            <Philosophy />
-          </VelocitySkewWrapper>
+          <Philosophy />
         </ScrollShutterSection>
 
         {/* SCROLL-SCRUBBED KINETIC CAD DIVIDER 02 */}
         <ScrollArchitecturalMarquee
           indexTag="DATUM TRANSITION // 01 → 02"
-          primaryText="SELECTED ARCHITECTURAL MONOGRAPHS · 3D SPATIAL RUNWAY · BUILT & ONGOING WORKS"
+          primaryText="SELECTED ARCHITECTURAL MONOGRAPHS · SPLIT-SCREEN ARCHIVE · BUILT & ONGOING WORKS"
           secondaryText="SOLAR HELIODON ACTIVE // HINOKI CYPRESS // KOLUMBA BRICK // YAKISUGI CEDAR // BOARD-FORMED CONCRETE"
         />
 
-        {/* 02 // STICKY 3D SPATIAL RUNWAY + ARCHIVE MATRIX */}
+        {/* 02 // EDITORIAL SPLIT-SCREEN STICKY MONOGRAPH SHOWCASE */}
         <PortfolioGallery onSelectProject={handleSelectProject} />
 
         {/* SCROLL-SCRUBBED KINETIC CAD DIVIDER 03 */}
@@ -182,15 +183,13 @@ export default function App() {
           secondaryText="INQUIRIES OPEN 2025–2026 // NAKAGYO-KU KYOTO // BREDGADE COPENHAGEN // GLOBAL SITE ANALYSIS"
         />
 
-        {/* 04 // COMMISSION DOSSIER & INQUIRIES WITH 3D SHUTTER REVEAL */}
+        {/* 04 // COMMISSION DOSSIER & INQUIRIES */}
         <ScrollShutterSection
           sectionCode="04 // COMMISSION DOSSIER"
           datumLabel="INQUIRY INTAKE // ELEV +8.40M"
           coordinates="35.0116° N · 135.7681° E"
         >
-          <VelocitySkewWrapper intensity={0.85}>
-            <ContactSection />
-          </VelocitySkewWrapper>
+          <ContactSection />
         </ScrollShutterSection>
       </main>
 

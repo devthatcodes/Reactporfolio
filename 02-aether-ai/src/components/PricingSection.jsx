@@ -74,35 +74,18 @@ function PricingCard({ tier, idx, annual, onSelectPlan }) {
     offset: ['start end', 'end start'],
   });
 
-  const smoothScroll = useSpring(scrollYProgress, {
-    stiffness: 150,
-    damping: 26,
-    mass: 0.25,
-  });
-
-  // Center card (idx === 1) rises faster and sits closer in 3D space
+  // Center card (idx === 1) rises slightly faster in depth (pure GPU y & scale)
   const isCenter = idx === 1;
-  const sideOffset = idx === 0 ? -1 : idx === 2 ? 1 : 0;
 
   const y = useTransform(
-    smoothScroll,
+    scrollYProgress,
     [0, 0.42, 1],
-    [isCenter ? 130 : 75, isCenter ? -10 : 0, isCenter ? -90 : -45]
-  );
-  const rotateX = useTransform(
-    smoothScroll,
-    [0, 0.36, 0.78, 1],
-    [22, 0, 0, -14]
-  );
-  const rotateY = useTransform(
-    smoothScroll,
-    [0, 0.38, 0.78, 1],
-    [sideOffset * -15, 0, 0, sideOffset * 8]
+    [isCenter ? 55 : 35, isCenter ? -6 : 0, isCenter ? -35 : -20]
   );
   const scale = useTransform(
-    smoothScroll,
-    [0, 0.36, 0.8, 1],
-    [0.86, isCenter ? 1.03 : 1, isCenter ? 1.03 : 1, 0.92]
+    scrollYProgress,
+    [0, 0.3, 0.85, 1],
+    [0.95, isCenter ? 1.02 : 1, isCenter ? 1.02 : 1, 0.97]
   );
 
   const price = annual ? tier.annualPrice : tier.monthlyPrice;
@@ -112,8 +95,8 @@ function PricingCard({ tier, idx, annual, onSelectPlan }) {
     const px = (e.clientX - rect.left) / rect.width;
     const py = (e.clientY - rect.top) / rect.height;
     setTilt({
-      rx: (0.5 - py) * 9,
-      ry: (px - 0.5) * 9,
+      rx: (0.5 - py) * 6,
+      ry: (px - 0.5) * 6,
       gx: px * 100,
       gy: py * 100,
     });
@@ -124,11 +107,7 @@ function PricingCard({ tier, idx, annual, onSelectPlan }) {
       ref={cardRef}
       style={{
         y,
-        rotateX,
-        rotateY,
         scale,
-        transformPerspective: 1200,
-        transformStyle: 'preserve-3d',
       }}
       className="will-change-transform h-full"
     >
@@ -138,12 +117,11 @@ function PricingCard({ tier, idx, annual, onSelectPlan }) {
         onMouseLeave={() => setTilt({ rx: 0, ry: 0, gx: 50, gy: 50 })}
         style={{
           transform: `perspective(1000px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
-          transformStyle: 'preserve-3d',
         }}
-        className={`group relative flex h-full flex-col justify-between rounded-2xl border p-7 backdrop-blur-md transition-colors duration-200 ${
+        className={`group relative flex h-full flex-col justify-between rounded-2xl border p-7 transition-colors duration-200 ${
           tier.popular
-            ? 'border-cyan-400/60 bg-[#111115]/95 shadow-[0_25px_70px_rgba(34,211,238,0.14)]'
-            : 'border-[#27272A] bg-[#111115]/85 hover:border-cyan-400/40'
+            ? 'border-cyan-400/60 bg-[#090D16]/95 shadow-[0_25px_70px_rgba(34,211,238,0.14)]'
+            : 'border-[#27272A] bg-[#090D16]/90 hover:border-cyan-400/40'
         }`}
       >
         {/* Cursor Spotlight */}

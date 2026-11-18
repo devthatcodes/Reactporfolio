@@ -42,7 +42,7 @@ const FRAGMENT_SHADER = `
     float v = 0.0;
     float a = 0.5;
     mat2 rot = mat2(0.80, -0.60, 0.60, 0.80);
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 3; i++) {
       v += a * noise(p);
       p = rot * p * 2.03 + vec2(0.12 * u_time, -0.08 * u_time);
       a *= 0.5;
@@ -214,7 +214,7 @@ export default function RoastShaderCanvas({
     }
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      const dpr = 0.75;
       const width = Math.floor(window.innerWidth * dpr);
       const height = Math.floor(window.innerHeight * dpr);
       if (canvas.width !== width || canvas.height !== height) {

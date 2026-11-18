@@ -1,52 +1,10 @@
 import React, { useRef } from 'react';
-import {
-  motion,
-  useScroll,
-  useVelocity,
-  useSpring,
-  useTransform,
-  useMotionTemplate,
-} from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 
 /**
- * Applies real-time scroll-velocity 3D tilt, skewY, and vertical tension
- * to foreground content — giving the entire page Active Theory inertia physics.
- */
-export function VelocitySkewWrapper({ children }) {
-  const { scrollY } = useScroll();
-  const scrollVelocity = useVelocity(scrollY);
-
-  const smoothVelocity = useSpring(scrollVelocity, {
-    damping: 38,
-    stiffness: 320,
-    mass: 0.5,
-  });
-
-  const skewY = useTransform(smoothVelocity, [-2400, 0, 2400], [-4.2, 0, 4.2]);
-  const rotateX = useTransform(smoothVelocity, [-2400, 0, 2400], [5.5, 0, -5.5]);
-  const scaleY = useTransform(smoothVelocity, [-2400, 0, 2400], [1.025, 1, 1.025]);
-
-  return (
-    <motion.div
-      style={{
-        skewY,
-        rotateX,
-        scaleY,
-        transformPerspective: 1600,
-        transformOrigin: 'center center',
-      }}
-      className="will-change-transform"
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-/**
- * Wraps a major foreground section with scroll-linked 3D entry/exit choreography:
- * - Unclips from a cybernetic rounded aperture on entry
- * - Rises from 3D Z-space (scale + rotateX + y)
- * - Recedes into 3D depth as the next section scrolls over it
+ * Pure GPU-composited Section Reveal for 01-agency (Vespera Digital):
+ * Uses ONLY translate3d (y), scale, and opacity + scaleX laser bar.
+ * Zero clip-path, zero blur, zero full-page wrapper — locked 60/120fps.
  */
 export function ScrollSectionPortal({
   children,
@@ -60,38 +18,16 @@ export function ScrollSectionPortal({
     offset: ['start end', 'end start'],
   });
 
-  const smoothProgress = useSpring(scrollYProgress, {
-    damping: 34,
-    stiffness: 240,
-    mass: 0.4,
-  });
-
-  // Entry (0 -> 0.24) and Exit (0.76 -> 1.0)
-  const scale = useTransform(smoothProgress, [0, 0.22, 0.78, 1], [0.84, 1, 1, 0.87]);
-  const rotateX = useTransform(smoothProgress, [0, 0.22, 0.78, 1], [18, 0, 0, -15]);
-  const y = useTransform(smoothProgress, [0, 0.22, 0.78, 1], [110, 0, 0, -95]);
-  const opacity = useTransform(smoothProgress, [0, 0.16, 0.82, 1], [0.05, 1, 1, 0.12]);
-
-  // Dynamic clip-path aperture that opens as you scroll into the section
-  const insetY = useTransform(smoothProgress, [0, 0.22, 0.82, 1], [12, 0, 0, 8]);
-  const insetX = useTransform(smoothProgress, [0, 0.22, 0.82, 1], [5, 0, 0, 4]);
-  const radius = useTransform(smoothProgress, [0, 0.22, 0.82, 1], [32, 0, 0, 24]);
-  const clipPath = useMotionTemplate`inset(${insetY}% ${insetX}% ${insetY}% ${insetX}% round ${radius}px)`;
-
-  // Top laser scanline progress bar linked to section scroll
-  const beamWidth = useTransform(smoothProgress, [0.05, 0.5, 0.95], ['0%', '100%', '100%']);
+  // Direct GPU transforms without nested spring lag or clip-path repaints
+  const y = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [56, 0, 0, -48]);
+  const scale = useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0.95, 1, 1, 0.96]);
+  const opacity = useTransform(scrollYProgress, [0, 0.16, 0.84, 1], [0.15, 1, 1, 0.2]);
+  const beamScaleX = useTransform(scrollYProgress, [0.05, 0.45], [0, 1]);
 
   return (
-    <div ref={ref} className="relative" style={{ perspective: '1600px' }}>
+    <div ref={ref} className="relative">
       <motion.div
-        style={{
-          scale,
-          rotateX,
-          y,
-          opacity,
-          clipPath,
-          transformStyle: 'preserve-3d',
-        }}
+        style={{ y, scale, opacity }}
         className="relative will-change-transform"
       >
         {/* Scroll-Scrubbed Section Gate Header */}
@@ -100,18 +36,22 @@ export function ScrollSectionPortal({
             <div className="flex items-center gap-2">
               <span
                 className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: accent, boxShadow: `0 0 10px ${accent}` }}
+                style={{ backgroundColor: accent }}
               />
               <span>
                 SECTOR {sectionNumber} // {sectionTag}
               </span>
             </div>
-            <span>SCROLL TELEMETRY // ACTIVE</span>
+            <span>GPU COMPOSITOR // 60FPS</span>
           </div>
           <div className="w-full h-[1px] bg-ivory/10 relative overflow-hidden">
             <motion.div
-              style={{ width: beamWidth, backgroundColor: accent }}
-              className="h-full shadow-[0_0_12px_#C8FF32]"
+              style={{
+                scaleX: beamScaleX,
+                transformOrigin: 'left',
+                backgroundColor: accent,
+              }}
+              className="w-full h-full will-change-transform"
             />
           </div>
         </div>
@@ -123,11 +63,10 @@ export function ScrollSectionPortal({
 }
 
 /**
- * Scroll-scrubbed dual-direction kinetic typography & portal aperture divider
- * between foreground sections.
+ * Pure GPU-accelerated horizontal cinema ticker between sections.
  */
 export function ScrollKineticRibbon({
-  topText = 'ACTIVE PORTAL STREAM // 60FPS WEBGL CHOREOGRAPHY //',
+  topText = 'ACTIVE PORTAL STREAM // WIDESCREEN HORIZONTAL REEL //',
   bottomText = 'VESPERA DIGITAL LAB // SUB-SECOND EDGE ARCHITECTURE //',
   accent = '#C8FF32',
 }) {
@@ -137,48 +76,44 @@ export function ScrollKineticRibbon({
     offset: ['start end', 'end start'],
   });
 
-  const xLeft = useTransform(scrollYProgress, [0, 1], ['8%', '-22%']);
-  const xRight = useTransform(scrollYProgress, [0, 1], ['-22%', '8%']);
-  const rotateReticle = useTransform(scrollYProgress, [0, 1], [0, 270]);
-  const scaleGate = useTransform(scrollYProgress, [0, 0.5, 1], [0.7, 1.15, 0.7]);
+  const xLeft = useTransform(scrollYProgress, [0, 1], ['4%', '-14%']);
+  const xRight = useTransform(scrollYProgress, [0, 1], ['-14%', '4%']);
 
   return (
     <div
       ref={ref}
-      className="relative py-10 sm:py-14 overflow-hidden select-none border-y border-ivory/10 bg-obsidian/55 backdrop-blur-sm"
+      className="relative py-8 sm:py-10 overflow-hidden select-none border-y border-ivory/10 bg-[#0A0A0C]/90"
     >
-      {/* Top Scroll-Linked Kinetic Line */}
       <motion.div
         style={{ x: xLeft }}
-        className="flex items-center gap-8 whitespace-nowrap will-change-transform mb-3"
+        className="flex items-center gap-8 whitespace-nowrap will-change-transform mb-2"
       >
-        {[0, 1, 2, 3].map((i) => (
+        {[0, 1, 2].map((i) => (
           <div key={i} className="flex items-center gap-8">
-            <span className="font-display font-bold text-3xl sm:text-5xl lg:text-6xl tracking-tighter uppercase text-ivory/15">
+            <span className="font-display font-bold text-2xl sm:text-4xl lg:text-5xl tracking-tighter uppercase text-ivory/15">
               {topText}
             </span>
-            <motion.span
-              style={{ rotate: rotateReticle, scale: scaleGate, borderColor: accent }}
-              className="w-5 h-5 border-2 inline-block shrink-0"
+            <span
+              style={{ borderColor: accent }}
+              className="w-4 h-4 border rotate-45 inline-block shrink-0"
             />
           </div>
         ))}
       </motion.div>
 
-      {/* Bottom Opposite Scroll-Linked Kinetic Line */}
       <motion.div
         style={{ x: xRight }}
         className="flex items-center gap-8 whitespace-nowrap will-change-transform"
       >
-        {[0, 1, 2, 3].map((i) => (
+        {[0, 1, 2].map((i) => (
           <div key={i} className="flex items-center gap-8">
             <span
-              className="font-mono text-xs sm:text-sm uppercase tracking-[0.35em]"
+              className="font-mono text-xs uppercase tracking-[0.32em]"
               style={{ color: accent }}
             >
               {bottomText}
             </span>
-            <span className="w-2 h-2 rounded-full bg-ivory/30 inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full bg-ivory/30 inline-block" />
           </div>
         ))}
       </motion.div>

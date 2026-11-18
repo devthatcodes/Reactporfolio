@@ -65,20 +65,13 @@ export default function HeroTelemetry({ onOpenModal, onNavigateReel }) {
     offset: ['start start', 'end start'],
   });
 
-  const smoothScroll = useSpring(scrollYProgress, {
-    stiffness: 160,
-    damping: 28,
-    mass: 0.25,
-  });
+  // Foreground scroll-driven separation using pure GPU y, scale, opacity
+  const copyY = useTransform(scrollYProgress, [0, 1], [0, -70]);
+  const copyScale = useTransform(scrollYProgress, [0, 0.75], [1, 0.95]);
+  const copyOpacity = useTransform(scrollYProgress, [0, 0.75], [1, 0.35]);
 
-  // Foreground scroll-driven 3D separation between hero copy and 3D telemetry deck
-  const copyY = useTransform(smoothScroll, [0, 1], [0, -130]);
-  const copyScale = useTransform(smoothScroll, [0, 0.75], [1, 0.88]);
-  const copyOpacity = useTransform(smoothScroll, [0, 0.65], [1, 0.12]);
-
-  const deckRotateX = useTransform(smoothScroll, [0, 0.35, 1], [14, 0, -18]);
-  const deckScale = useTransform(smoothScroll, [0, 0.35, 1], [0.94, 1.04, 0.88]);
-  const deckY = useTransform(smoothScroll, [0, 0.35, 1], [0, -24, -110]);
+  const deckScale = useTransform(scrollYProgress, [0, 0.4, 1], [0.98, 1, 0.96]);
+  const deckY = useTransform(scrollYProgress, [0, 0.4, 1], [0, -16, -50]);
 
   useEffect(() => {
     setThroughput(REGIONS[region].throughput);
@@ -225,13 +218,11 @@ export default function HeroTelemetry({ onOpenModal, onNavigateReel }) {
           </motion.div>
         </motion.div>
 
-        {/* Interactive 3D Tilt + Scroll-Scrubbed Telemetry Deck */}
+        {/* Interactive Scroll-Scrubbed Telemetry Deck */}
         <motion.div
           style={{
-            rotateX: deckRotateX,
             scale: deckScale,
             y: deckY,
-            transformStyle: 'preserve-3d',
           }}
           className="mx-auto mt-14 max-w-5xl will-change-transform"
         >
@@ -240,9 +231,8 @@ export default function HeroTelemetry({ onOpenModal, onNavigateReel }) {
             onMouseLeave={() => setTilt({ rx: 0, ry: 0 })}
             style={{
               transform: `perspective(1200px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
-              transformStyle: 'preserve-3d',
             }}
-            className="rounded-2xl border border-[#27272A] bg-[#111115]/90 p-4 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.85)] backdrop-blur-xl transition-transform duration-200 sm:p-6"
+            className="rounded-2xl border border-[#27272A] bg-[#090D16]/95 p-4 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.85)] transition-transform duration-200 sm:p-6"
           >
             {/* Telemetry Top Bar */}
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-[#27272A] pb-4">

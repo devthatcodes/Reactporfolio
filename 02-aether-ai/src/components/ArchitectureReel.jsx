@@ -3,9 +3,7 @@ import {
   motion,
   AnimatePresence,
   useScroll,
-  useSpring,
   useTransform,
-  useMotionValueEvent,
 } from 'framer-motion';
 import {
   ArrowUpRight,
@@ -16,8 +14,8 @@ import {
   X,
   Play,
   Sliders,
-  Compass,
   Layers,
+  Cpu,
 } from 'lucide-react';
 import ScrambleText from './ScrambleText';
 import { playHover, playClick, playTransition } from '../utils/soundEngine';
@@ -26,12 +24,13 @@ export const CASE_STUDIES = [
   {
     id: 'chronos-9',
     index: '01',
-    code: 'DEPLOYMENT // 01-CHRONOS',
+    code: 'BLADE // 01-CHRONOS',
     title: 'CHRONOS-9 AUTONOMOUS SWARM',
     client: 'Vanguard Orbital Defense',
     category: 'MULTI-AGENT ROUTING FABRIC',
     accent: '#22D3EE',
     secondary: '#8B5CF6',
+    stickyTopClass: 'top-24',
     metrics: {
       latency: '4.8ms',
       throughput: '142,000 tok/s',
@@ -50,12 +49,13 @@ export const CASE_STUDIES = [
   {
     id: 'helios-fabric',
     index: '02',
-    code: 'DEPLOYMENT // 02-HELIOS',
+    code: 'BLADE // 02-HELIOS',
     title: 'HELIOS SUB-MS INFERENCE FABRIC',
     client: 'Synthetix Quant Markets',
     category: 'HIGH-FREQUENCY TELEMETRY ENGINE',
     accent: '#8B5CF6',
     secondary: '#22D3EE',
+    stickyTopClass: 'top-28',
     metrics: {
       latency: '3.2ms',
       throughput: '218,500 tok/s',
@@ -74,12 +74,13 @@ export const CASE_STUDIES = [
   {
     id: 'vortex-multimodal',
     index: '03',
-    code: 'DEPLOYMENT // 03-VORTEX',
+    code: 'BLADE // 03-VORTEX',
     title: 'VORTEX MULTIMODAL ENGINE',
     client: 'Orbital Robotics Lab',
     category: 'VISION-LANGUAGE TELEMETRY',
     accent: '#34D399',
     secondary: '#22D3EE',
+    stickyTopClass: 'top-32',
     metrics: {
       latency: '7.1ms',
       throughput: '94,800 tok/s',
@@ -98,12 +99,13 @@ export const CASE_STUDIES = [
   {
     id: 'aegis-enclave',
     index: '04',
-    code: 'DEPLOYMENT // 04-AEGIS',
+    code: 'BLADE // 04-AEGIS',
     title: 'AEGIS ZERO-KNOWLEDGE ENCLAVE',
     client: 'Hyperion BioHealth',
     category: 'CONFIDENTIAL AI GUARDRAILS',
     accent: '#F59E0B',
     secondary: '#8B5CF6',
+    stickyTopClass: 'top-36',
     metrics: {
       latency: '6.4ms',
       throughput: '112,400 tok/s',
@@ -121,7 +123,7 @@ export const CASE_STUDIES = [
   },
 ];
 
-// Procedural animated canvas preview inside each card & takeover
+// Lightweight visibility-gated procedural node canvas
 function ProceduralNodeCanvas({ accent, secondary, index, intensity = 1 }) {
   const canvasRef = useRef(null);
 
@@ -130,86 +132,94 @@ function ProceduralNodeCanvas({ accent, secondary, index, intensity = 1 }) {
     if (!canvas) return undefined;
     const ctx = canvas.getContext('2d');
     let raf = null;
+    let isVisible = true;
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      canvas.width = Math.max(240, Math.floor(rect.width));
-      canvas.height = Math.max(140, Math.floor(rect.height));
+      canvas.width = Math.max(220, Math.floor(rect.width * 0.85));
+      canvas.height = Math.max(120, Math.floor(rect.height * 0.85));
     };
     resize();
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+      },
+      { threshold: 0.05 }
+    );
+    observer.observe(canvas);
 
     const start = performance.now();
     const seed = parseInt(index, 10) || 1;
 
     const draw = (now) => {
-      const t = (now - start) * 0.0012 * intensity;
-      const w = canvas.width;
-      const h = canvas.height;
+      if (isVisible) {
+        const t = (now - start) * 0.0012 * intensity;
+        const w = canvas.width;
+        const h = canvas.height;
 
-      ctx.clearRect(0, 0, w, h);
+        ctx.clearRect(0, 0, w, h);
 
-      // Perspective cyber grid
-      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
-      ctx.lineWidth = 1;
-      const step = 28;
-      for (let x = 0; x < w; x += step) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, h);
-        ctx.stroke();
-      }
-      for (let y = 0; y < h; y += step) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
-      }
-
-      // Draw harmonic neural waves & nodes
-      const cx = w * 0.5;
-      const cy = h * 0.5;
-
-      for (let layer = 0; layer < 3; layer++) {
-        ctx.beginPath();
-        ctx.strokeStyle = layer % 2 === 0 ? accent : secondary;
-        ctx.globalAlpha = 0.35 + layer * 0.2;
-        ctx.lineWidth = 1.6;
-
-        for (let x = 0; x <= w; x += 6) {
-          const normX = x / w;
-          const waveY =
-            cy +
-            Math.sin(normX * (4 + seed) + t * (1.4 + layer * 0.4)) *
-              (h * 0.22) *
-              Math.sin(t * 0.5 + layer) +
-            Math.cos(normX * 9 - t) * 10;
-          if (x === 0) ctx.moveTo(x, waveY);
-          else ctx.lineTo(x, waveY);
+        // Perspective cyber grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.045)';
+        ctx.lineWidth = 1;
+        const step = 32;
+        for (let x = 0; x < w; x += step) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, h);
+          ctx.stroke();
         }
-        ctx.stroke();
-      }
+        for (let y = 0; y < h; y += step) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(w, y);
+          ctx.stroke();
+        }
 
-      // Orbiting telemetry nodes
-      ctx.globalAlpha = 0.9;
-      const nodeCount = 5 + seed;
-      for (let i = 0; i < nodeCount; i++) {
-        const angle = t * (0.8 + i * 0.15) + i * 1.2;
-        const rx = cx + Math.cos(angle) * (w * 0.32);
-        const ry = cy + Math.sin(angle * 1.3) * (h * 0.26);
+        const cx = w * 0.5;
+        const cy = h * 0.5;
 
-        ctx.beginPath();
-        ctx.fillStyle = i % 2 === 0 ? accent : secondary;
-        ctx.arc(rx, ry, 2.8, 0, Math.PI * 2);
-        ctx.fill();
+        for (let layer = 0; layer < 2; layer++) {
+          ctx.beginPath();
+          ctx.strokeStyle = layer % 2 === 0 ? accent : secondary;
+          ctx.globalAlpha = 0.4 + layer * 0.25;
+          ctx.lineWidth = 1.5;
 
-        // Connect to center hub
-        ctx.beginPath();
-        ctx.strokeStyle = accent;
-        ctx.globalAlpha = 0.16;
-        ctx.moveTo(cx, cy);
-        ctx.lineTo(rx, ry);
-        ctx.stroke();
+          for (let x = 0; x <= w; x += 8) {
+            const normX = x / w;
+            const waveY =
+              cy +
+              Math.sin(normX * (4 + seed) + t * (1.4 + layer * 0.4)) *
+                (h * 0.22) *
+                Math.sin(t * 0.5 + layer) +
+              Math.cos(normX * 8 - t) * 8;
+            if (x === 0) ctx.moveTo(x, waveY);
+            else ctx.lineTo(x, waveY);
+          }
+          ctx.stroke();
+        }
+
         ctx.globalAlpha = 0.9;
+        const nodeCount = 4 + seed;
+        for (let i = 0; i < nodeCount; i++) {
+          const angle = t * (0.8 + i * 0.15) + i * 1.2;
+          const rx = cx + Math.cos(angle) * (w * 0.32);
+          const ry = cy + Math.sin(angle * 1.3) * (h * 0.26);
+
+          ctx.beginPath();
+          ctx.fillStyle = i % 2 === 0 ? accent : secondary;
+          ctx.arc(rx, ry, 2.6, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.strokeStyle = accent;
+          ctx.globalAlpha = 0.15;
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(rx, ry);
+          ctx.stroke();
+          ctx.globalAlpha = 0.9;
+        }
       }
 
       raf = requestAnimationFrame(draw);
@@ -218,6 +228,7 @@ function ProceduralNodeCanvas({ accent, secondary, index, intensity = 1 }) {
     raf = requestAnimationFrame(draw);
     return () => {
       if (raf) cancelAnimationFrame(raf);
+      observer.disconnect();
     };
   }, [accent, secondary, index, intensity]);
 
@@ -225,172 +236,103 @@ function ProceduralNodeCanvas({ accent, secondary, index, intensity = 1 }) {
 }
 
 /**
- * TunnelFlightCard
- * Individual 3D card positioned in Z-space inside the sticky scroll-scrubbed runway.
- * As scrollYProgress advances from 0 -> 1, each card flies from deep Z-space (-900px)
- * to center focus (0px) and then flies past the camera (+520px) with 3D rotation.
+ * StickyBladeCard
+ * Each AI Architecture deployment card is sticky at a staggered top offset
+ * (top-24, top-28, top-32, top-36). As the next blade card scrolls up on top of it,
+ * the underlying card smoothly scales down (1 -> 0.94) and dims (1 -> 0.45) using
+ * 100% GPU-composited transform (scale) & opacity.
  */
-function TunnelFlightCard({ study, idx, total, smoothProgress, onSelect }) {
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0, gx: 50, gy: 50 });
+function StickyBladeCard({ study, idx, total, scrollYProgress, onSelect }) {
+  const isLast = idx === total - 1;
+  const collapseStart = (idx + 0.15) / total;
+  const collapseEnd = Math.min(1, (idx + 1.05) / total);
 
-  // Center scroll progress point for this card (0.12, 0.37, 0.62, 0.88)
-  const step = 1 / total;
-  const center = step * idx + step * 0.5;
-  const enterStart = Math.max(0, center - step * 1.35);
-  const focusStart = Math.max(0, center - step * 0.38);
-  const focusEnd = Math.min(1, center + step * 0.38);
-  const exitEnd = Math.min(1, center + step * 1.25);
-
-  const sideSign = idx % 2 === 0 ? -1 : 1;
-
-  const z = useTransform(
-    smoothProgress,
-    [enterStart, focusStart, focusEnd, exitEnd],
-    [-850, 0, 40, 520]
-  );
-  const x = useTransform(
-    smoothProgress,
-    [enterStart, focusStart, focusEnd, exitEnd],
-    [sideSign * 260, 0, 0, sideSign * -220]
-  );
-  const y = useTransform(
-    smoothProgress,
-    [enterStart, focusStart, focusEnd, exitEnd],
-    [130, 0, 0, -110]
-  );
-  const rotateY = useTransform(
-    smoothProgress,
-    [enterStart, focusStart, focusEnd, exitEnd],
-    [sideSign * -28, 0, 0, sideSign * 22]
-  );
-  const rotateX = useTransform(
-    smoothProgress,
-    [enterStart, focusStart, focusEnd, exitEnd],
-    [18, 0, 0, -16]
-  );
+  const targetScale = 0.94 - idx * 0.005;
   const scale = useTransform(
-    smoothProgress,
-    [enterStart, focusStart, focusEnd, exitEnd],
-    [0.68, 1, 1.03, 1.22]
+    scrollYProgress,
+    [collapseStart, collapseEnd],
+    [1, isLast ? 1 : targetScale]
   );
+
   const opacity = useTransform(
-    smoothProgress,
-    [
-      Math.max(0, enterStart - 0.04),
-      focusStart,
-      focusEnd,
-      Math.min(1, exitEnd + 0.02),
-    ],
-    [idx === 0 ? 1 : 0, 1, 1, idx === total - 1 ? 1 : 0]
+    scrollYProgress,
+    [collapseStart, collapseEnd],
+    [1, isLast ? 1 : 0.45]
   );
-
-  // Floating foreground telemetry satellite badge parallax
-  const badgeParallaxY = useTransform(
-    smoothProgress,
-    [enterStart, exitEnd],
-    [65, -75]
-  );
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width;
-    const py = (e.clientY - rect.top) / rect.height;
-    setTilt({
-      rx: (0.5 - py) * 9,
-      ry: (px - 0.5) * 9,
-      gx: px * 100,
-      gy: py * 100,
-    });
-  };
 
   return (
-    <motion.div
-      style={{
-        z,
-        x,
-        y,
-        rotateY,
-        rotateX,
-        scale,
-        opacity,
-        transformStyle: 'preserve-3d',
-        zIndex: total - idx + 10,
-      }}
-      className=" absolute inset-x-0 mx-auto w-full max-w-4xl px-2 sm:px-6 pointer-events-auto"
+    <div
+      id={`blade-card-${idx}`}
+      style={{ zIndex: idx + 10 }}
+      className={`sticky ${study.stickyTopClass} mb-12 sm:mb-16`}
     >
-      {/* Floating Foreground Parallax Telemetry Pill */}
-      <motion.div
-        style={{ y: badgeParallaxY, translateZ: '70px' }}
-        className={`pointer-events-none absolute -top-5 ${
-          idx % 2 === 0 ? 'right-6 sm:right-10' : 'left-6 sm:left-10'
-        } z-30 hidden sm:flex items-center gap-2 rounded-full border border-cyan-400/50 bg-[#09090B]/95 px-3.5 py-1 font-mono text-[11px] text-cyan-300 shadow-[0_0_30px_rgba(34,211,238,0.28)] backdrop-blur-md`}
-      >
-        <span
-          className="h-2 w-2 rounded-full animate-pulse"
-          style={{ backgroundColor: study.accent }}
-        />
-        <span>Z-NODE {study.index} // LIVE STREAM</span>
-        <span className="text-emerald-400">{study.metrics.latency}</span>
-      </motion.div>
-
-      <article
+      <motion.article
+        style={{
+          scale,
+          opacity,
+          transformOrigin: 'top center',
+        }}
         onMouseEnter={playHover}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={() => setTilt({ rx: 0, ry: 0, gx: 50, gy: 50 })}
         onClick={() => {
           playTransition();
           onSelect(study);
         }}
-        data-cursor="[ LAUNCH 3D PORTAL ]"
-        style={{
-          transform: `perspective(1200px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
-          transformStyle: 'preserve-3d',
-        }}
-        className="group relative cursor-pointer overflow-hidden rounded-3xl border border-[#27272A] bg-[#111115]/95 p-5 sm:p-7 shadow-[0_30px_90px_rgba(0,0,0,0.85)] backdrop-blur-xl transition-colors duration-200 hover:border-cyan-400/70"
+        data-cursor="[ EXEC BLADE PORTAL ]"
+        className="group relative mx-auto w-full max-w-5xl cursor-pointer overflow-hidden rounded-3xl border border-[#27272A] bg-[#090D16]/95 p-5 sm:p-8 shadow-[0_28px_80px_rgba(0,0,0,0.88)] transition-colors duration-200 hover:border-cyan-400/70 will-change-transform"
       >
-        {/* Dynamic cursor spotlight sheen */}
+        {/* Top Hardware Blade Rack Strip */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          className="absolute inset-x-0 top-0 h-[3px]"
           style={{
-            background: `radial-gradient(560px circle at ${tilt.gx}% ${tilt.gy}%, rgba(34,211,238,0.16), transparent 70%)`,
+            background: `linear-gradient(90deg, ${study.accent}, ${study.secondary}, transparent)`,
           }}
         />
 
         {/* Top Meta Bar */}
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 font-mono text-[11px]">
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-2 border-b border-[#27272A]/80 pb-4 font-mono text-[11px]">
           <div className="flex items-center gap-2.5">
             <span
-              className="rounded-md border px-2 py-0.5 font-bold"
+              className="rounded-md border px-2.5 py-0.5 font-bold"
               style={{
                 borderColor: `${study.accent}66`,
                 backgroundColor: `${study.accent}18`,
                 color: study.accent,
               }}
             >
-              NODE {study.index} / 04
+              BLADE {study.index} / 04
             </span>
             <span className="text-cyan-300">{study.code}</span>
           </div>
-          <span className="rounded-full border border-[#27272A] bg-[#09090B] px-3 py-0.5 text-zinc-300">
-            CLIENT // {study.client}
-          </span>
+
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline-flex items-center gap-1.5 text-emerald-400">
+              <span
+                className="h-2 w-2 rounded-full"
+                style={{ backgroundColor: study.accent }}
+              />
+              LOCKED IN RACK
+            </span>
+            <span className="rounded-full border border-[#27272A] bg-[#09090B] px-3 py-0.5 text-zinc-300">
+              CLIENT // {study.client}
+            </span>
+          </div>
         </div>
 
-        {/* Main Card Split Layout inside 3D Tunnel */}
-        <div className="relative z-10 mt-5 grid gap-6 lg:grid-cols-12 lg:items-center">
-          {/* Left: Live Procedural Shader/Node Preview */}
-          <div className="relative h-48 sm:h-56 w-full overflow-hidden rounded-2xl border border-[#27272A] bg-[#09090B] lg:col-span-6">
+        {/* Main Card Split Layout */}
+        <div className="relative z-10 mt-6 grid gap-6 lg:grid-cols-12 lg:items-center">
+          {/* Left: Live Procedural Topology Preview */}
+          <div className="relative h-52 sm:h-60 w-full overflow-hidden rounded-2xl border border-[#27272A] bg-[#09090B] lg:col-span-6">
             <ProceduralNodeCanvas
               accent={study.accent}
               secondary={study.secondary}
               index={study.index}
-              intensity={1.35}
+              intensity={1.2}
             />
-            <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-md border border-zinc-800 bg-[#09090B]/85 px-2.5 py-1 font-mono text-[10px] text-zinc-300 backdrop-blur-md">
+            <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-md border border-zinc-800 bg-[#09090B]/95 px-2.5 py-1 font-mono text-[10px] text-zinc-300">
               <Layers className="h-3 w-3 text-cyan-400" />
-              <span>3D TOPOLOGY TELEMETRY</span>
+              <span>ISOMETRIC BLADE TELEMETRY</span>
             </div>
-            <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between rounded-lg border border-zinc-800/80 bg-[#09090B]/90 px-3 py-1.5 font-mono text-[10px] backdrop-blur-md">
+            <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between rounded-lg border border-zinc-800/80 bg-[#09090B]/95 px-3 py-1.5 font-mono text-[10px]">
               <span className="text-zinc-300">{study.category}</span>
               <span className="text-emerald-400 font-semibold">
                 P50: {study.metrics.latency}
@@ -415,8 +357,8 @@ function TunnelFlightCard({ study, idx, total, smoothProgress, onSelect }) {
               </p>
 
               {/* Architecture bullet preview */}
-              <div className="mt-3.5 space-y-1.5">
-                {study.architecture.slice(0, 2).map((point) => (
+              <div className="mt-4 space-y-2">
+                {study.architecture.map((point) => (
                   <div
                     key={point}
                     className="flex items-center gap-2 font-mono text-[11px] text-zinc-400"
@@ -429,122 +371,24 @@ function TunnelFlightCard({ study, idx, total, smoothProgress, onSelect }) {
             </div>
 
             {/* Bottom KPI Strip */}
-            <div className="mt-5 grid grid-cols-3 gap-2 border-t border-[#27272A]/90 pt-4 font-mono text-xs">
-              <div className="rounded-lg border border-[#27272A]/70 bg-[#09090B]/80 px-2.5 py-1.5">
+            <div className="mt-6 grid grid-cols-3 gap-2.5 border-t border-[#27272A]/90 pt-4 font-mono text-xs">
+              <div className="rounded-lg border border-[#27272A]/70 bg-[#09090B] px-3 py-2">
                 <span className="block text-[9px] text-zinc-500">THROUGHPUT</span>
                 <strong className="text-zinc-100">{study.metrics.throughput}</strong>
               </div>
-              <div className="rounded-lg border border-[#27272A]/70 bg-[#09090B]/80 px-2.5 py-1.5">
+              <div className="rounded-lg border border-[#27272A]/70 bg-[#09090B] px-3 py-2">
                 <span className="block text-[9px] text-zinc-500">COST DELTA</span>
                 <strong className="text-emerald-400">-{study.metrics.savings}</strong>
               </div>
-              <div className="rounded-lg border border-[#27272A]/70 bg-[#09090B]/80 px-2.5 py-1.5">
+              <div className="rounded-lg border border-[#27272A]/70 bg-[#09090B] px-3 py-2">
                 <span className="block text-[9px] text-zinc-500">SLA UPTIME</span>
                 <strong className="text-cyan-300">{study.metrics.uptime}</strong>
               </div>
             </div>
           </div>
         </div>
-      </article>
-    </motion.div>
-  );
-}
-
-function ReelCard({ study, idx, onSelect }) {
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0, gx: 50, gy: 50 });
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width;
-    const py = (e.clientY - rect.top) / rect.height;
-    const ry = (px - 0.5) * 12;
-    const rx = (0.5 - py) * 12;
-    setTilt({ rx, ry, gx: px * 100, gy: py * 100 });
-  };
-
-  const handleMouseLeave = () => {
-    setTilt({ rx: 0, ry: 0, gx: 50, gy: 50 });
-  };
-
-  return (
-    <motion.article
-      initial={{ opacity: 0, y: 36, rotateX: 14 }}
-      whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
-      viewport={{ once: false, amount: 0.2 }}
-      transition={{ duration: 0.55, delay: idx * 0.06 }}
-      onMouseEnter={playHover}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      onClick={() => {
-        playTransition();
-        onSelect(study);
-      }}
-      data-cursor="[ LAUNCH PORTAL ]"
-      style={{
-        transform: `perspective(1100px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
-        transformStyle: 'preserve-3d',
-      }}
-      className="group relative cursor-pointer overflow-hidden rounded-2xl border border-[#27272A] bg-[#111115]/90 p-6 transition-all duration-200 hover:border-cyan-400/60 hover:shadow-[0_0_45px_rgba(34,211,238,0.12)]"
-    >
-      {/* Dynamic spotlight sheen */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{
-          background: `radial-gradient(480px circle at ${tilt.gx}% ${tilt.gy}%, rgba(34,211,238,0.14), transparent 70%)`,
-        }}
-      />
-
-      {/* Top Meta Bar */}
-      <div className="relative z-10 flex items-center justify-between font-mono text-[11px]">
-        <span className="text-cyan-400">{study.code}</span>
-        <span className="rounded-full border border-[#27272A] bg-[#09090B] px-2.5 py-0.5 text-zinc-400">
-          {study.client}
-        </span>
-      </div>
-
-      {/* Live Procedural Shader/Node Preview */}
-      <div className="relative z-10 my-5 h-44 w-full overflow-hidden rounded-xl border border-[#27272A]/90 bg-[#09090B]">
-        <ProceduralNodeCanvas
-          accent={study.accent}
-          secondary={study.secondary}
-          index={study.index}
-        />
-        <div className="absolute bottom-2.5 left-3 right-3 flex items-center justify-between rounded-lg border border-zinc-800/80 bg-[#09090B]/85 px-3 py-1.5 font-mono text-[10px] backdrop-blur-md">
-          <span className="text-zinc-400">{study.category}</span>
-          <span className="text-emerald-400">P50: {study.metrics.latency}</span>
-        </div>
-      </div>
-
-      {/* Title & Summary */}
-      <div className="relative z-10">
-        <div className="flex items-start justify-between gap-3">
-          <h3 className="text-xl font-extrabold tracking-tight text-[#FAFAFA] group-hover:text-cyan-300 transition-colors">
-            <ScrambleText text={study.title} scrambleOnMount={false} />
-          </h3>
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#27272A] bg-[#09090B] text-zinc-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:border-cyan-400/50 group-hover:text-cyan-300">
-            <ArrowUpRight className="h-4 w-4" />
-          </span>
-        </div>
-
-        <p className="mt-2 text-sm leading-relaxed text-zinc-400">{study.summary}</p>
-
-        {/* Bottom KPI Strip */}
-        <div className="mt-5 grid grid-cols-3 gap-2 border-t border-[#27272A]/80 pt-4 font-mono text-xs">
-          <div>
-            <span className="block text-[10px] text-zinc-500">THROUGHPUT</span>
-            <strong className="text-zinc-200">{study.metrics.throughput}</strong>
-          </div>
-          <div>
-            <span className="block text-[10px] text-zinc-500">COST DELTA</span>
-            <strong className="text-emerald-400">-{study.metrics.savings}</strong>
-          </div>
-          <div>
-            <span className="block text-[10px] text-zinc-500">SLA UPTIME</span>
-            <strong className="text-cyan-300">{study.metrics.uptime}</strong>
-          </div>
-        </div>
-      </div>
-    </motion.article>
+      </motion.article>
+    </div>
   );
 }
 
@@ -553,47 +397,19 @@ export default function ArchitectureReel({ onTriggerPortal, onOpenModal }) {
   const [simConcurrency, setSimConcurrency] = useState(640);
   const [simCacheRate, setSimCacheRate] = useState(68);
   const [benchmarkRunning, setBenchmarkRunning] = useState(false);
-  const [activeTunnelIdx, setActiveTunnelIdx] = useState(0);
 
-  const tunnelRef = useRef(null);
+  const deckRef = useRef(null);
   const { scrollYProgress } = useScroll({
-    target: tunnelRef,
+    target: deckRef,
     offset: ['start start', 'end end'],
   });
 
-  const smoothTunnelProgress = useSpring(scrollYProgress, {
-    stiffness: 140,
-    damping: 26,
-    mass: 0.28,
-  });
-
-  // Track which of the 4 deployments is currently in focus during the scroll flight
-  useMotionValueEvent(smoothTunnelProgress, 'change', (latest) => {
-    const idx = Math.min(
-      CASE_STUDIES.length - 1,
-      Math.max(0, Math.floor(latest * CASE_STUDIES.length))
-    );
-    if (idx !== activeTunnelIdx) {
-      setActiveTunnelIdx(idx);
-    }
-  });
-
-  // Tunnel perspective grid rings depth animation
-  const ringScale1 = useTransform(smoothTunnelProgress, [0, 1], [0.75, 1.45]);
-  const ringRotate = useTransform(smoothTunnelProgress, [0, 1], [0, 45]);
-  const progressBarFill = useTransform(smoothTunnelProgress, [0, 1], ['8%', '100%']);
-
-  const scrollToTunnelNode = (idx) => {
-    if (!tunnelRef.current) return;
+  const scrollToBladeNode = (idx) => {
     playClick();
-    const rect = tunnelRef.current.getBoundingClientRect();
-    const absoluteTop = window.scrollY + rect.top;
-    const scrollableDistance = rect.height - window.innerHeight;
-    const targetProgress = (idx + 0.45) / CASE_STUDIES.length;
-    window.scrollTo({
-      top: absoluteTop + scrollableDistance * targetProgress,
-      behavior: 'smooth',
-    });
+    const el = document.getElementById(`blade-card-${idx}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const handleOpenStudy = (study) => {
@@ -623,7 +439,6 @@ export default function ArchitectureReel({ onTriggerPortal, onOpenModal }) {
     setTimeout(() => setBenchmarkRunning(false), 750);
   };
 
-  // Computed live telemetry for the takeover simulator
   const computedLatency = activeStudy
     ? Math.max(
         2.1,
@@ -640,139 +455,66 @@ export default function ArchitectureReel({ onTriggerPortal, onOpenModal }) {
     Math.round((simConcurrency * simCacheRate * 1.85) / 10) * 10;
 
   return (
-    <section id="reel" className="relative border-t border-[#27272A]/80">
-      {/* STICKY SCROLL-SCRUBBED 3D Z-SPACE TUNNEL RUNWAY */}
-      <div ref={tunnelRef} className="relative min-h-[280vh]">
-        <div className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col justify-between overflow-hidden py-6 sm:py-10">
-          {/* Perspective 3D Cybernetic Wireframe Tunnel Rings in Foreground Stage */}
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
-            <motion.div
-              style={{ scale: ringScale1, rotateZ: ringRotate }}
-              className="h-[540px] w-[540px] rounded-full border border-cyan-400/10 sm:h-[760px] sm:w-[760px]"
-            />
-            <motion.div
-              style={{ scale: ringScale1 }}
-              className="absolute h-[360px] w-[680px] rounded-3xl border border-violet-500/10"
-            />
-          </div>
-
-          {/* Sticky Stage Top Header & Live Scroll-Progress Indicator (01 -> 02 -> 03 -> 04) */}
-          <div className="relative z-30 mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-300">
-                  <Compass className="h-3.5 w-3.5 text-cyan-400 animate-spin" />
-                  <span>02 // 3D Z-SPACE ARCHITECTURE FLIGHT</span>
-                </div>
-                <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#FAFAFA] sm:text-4xl">
-                  <ScrambleText
-                    text="Scroll to Fly Through Production Nodes."
-                    scrambleOnMount={false}
-                  />
-                </h2>
-              </div>
-
-              {/* Interactive 01 -> 02 -> 03 -> 04 Scroll Progress & Quick-Jump Bar */}
-              <div className="flex flex-col items-start gap-2 md:items-end">
-                <div className="flex items-center gap-1.5 rounded-xl border border-[#27272A] bg-[#111115]/90 p-1.5 backdrop-blur-md">
-                  {CASE_STUDIES.map((study, idx) => {
-                    const isCurrent = activeTunnelIdx === idx;
-                    return (
-                      <button
-                        key={study.id}
-                        type="button"
-                        onClick={() => scrollToTunnelNode(idx)}
-                        onMouseEnter={playHover}
-                        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 font-mono text-xs transition-all ${
-                          isCurrent
-                            ? 'bg-cyan-400 text-[#09090B] font-bold shadow-[0_0_20px_rgba(34,211,238,0.4)]'
-                            : 'text-zinc-400 hover:bg-[#1A1A22] hover:text-white'
-                        }`}
-                      >
-                        <span>{study.index}</span>
-                        <span className="hidden sm:inline text-[10px]">
-                          {study.id.split('-')[0].toUpperCase()}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="h-1 w-full min-w-[220px] overflow-hidden rounded-full bg-[#18181D]">
-                  <motion.div
-                    style={{ width: progressBarFill }}
-                    className="h-full rounded-full bg-gradient-to-r from-[#22D3EE] via-[#8B5CF6] to-[#34D399]"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Center 3D Perspective Stage where 4 Architecture Cards Fly Through Z-Space */}
-          <div
-            style={{ perspective: '1300px', transformStyle: 'preserve-3d' }}
-            className="relative z-20 my-auto flex w-full items-center justify-center min-h-[390px] sm:min-h-[430px]"
-          >
-            {CASE_STUDIES.map((study, idx) => (
-              <TunnelFlightCard
-                key={study.id}
-                study={study}
-                idx={idx}
-                total={CASE_STUDIES.length}
-                smoothProgress={smoothTunnelProgress}
-                onSelect={handleOpenStudy}
-              />
-            ))}
-          </div>
-
-          {/* Sticky Stage Bottom Telemetry Bar */}
-          <div className="relative z-30 mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-4 font-mono text-[11px] text-zinc-400 sm:px-6 lg:px-8">
-            <div className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full bg-cyan-400 animate-ping" />
-              <span>
-                ACTIVE FOCUS:{' '}
-                <strong className="text-white">
-                  {CASE_STUDIES[activeTunnelIdx]?.title}
-                </strong>
-              </span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="hidden sm:inline text-zinc-500">
-                SCROLL DOWN TO SCRUB Z-AXIS • CLICK CARD FOR FULL PORTAL
-              </span>
-              <button
-                type="button"
-                onClick={() => handleOpenStudy(CASE_STUDIES[activeTunnelIdx])}
-                className="rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-3 py-1 text-cyan-300 hover:bg-cyan-400/20"
-              >
-                Inspect Active Node →
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Complete 2x2 Matrix Index Below the 3D Runway for Instant Comparison */}
-      <div className="mx-auto max-w-7xl px-4 pb-20 pt-8 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-t border-[#27272A]/80 pt-10">
+    <section id="reel" className="relative border-t border-[#27272A]/80 py-16 sm:py-24">
+      <div ref={deckRef} className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Section Header + Direct MotionValue scaleX Progress Bar */}
+        <div className="mb-12 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-cyan-400">
-              02.B // COMPLETE TOPOLOGY MATRIX
-            </span>
-            <h3 className="mt-1 text-xl font-bold text-[#FAFAFA] sm:text-2xl">
-              All Verified Production Clusters
-            </h3>
+            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-[#090D16]/95 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] text-cyan-300">
+              <Cpu className="h-3.5 w-3.5 text-cyan-400" />
+              <span>02 // STICKY HARDWARE BLADE DECK STACK</span>
+            </div>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#FAFAFA] sm:text-4xl">
+              <ScrambleText
+                text="Scroll to Stack Production AI Blades."
+                scrambleOnMount={false}
+              />
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm text-zinc-400 sm:text-base">
+              As you scroll down, each verified AI cluster blade slides up and locks onto the hardware rack while preceding blades compress into depth. Click any blade to launch its stress simulator.
+            </p>
           </div>
-          <span className="font-mono text-xs text-zinc-400">
-            <span className="text-cyan-400">[4 ACTIVE CLUSTERS]</span> • CLICK ANY NODE FOR STRESS SIMULATOR
-          </span>
+
+          {/* Quick-Jump Blade Index & Pure GPU scaleX Progress Bar */}
+          <div className="flex flex-col items-start gap-2 md:items-end">
+            <div className="flex items-center gap-1.5 rounded-xl border border-[#27272A] bg-[#090D16]/95 p-1.5">
+              {CASE_STUDIES.map((study, idx) => (
+                <button
+                  key={study.id}
+                  type="button"
+                  onClick={() => scrollToBladeNode(idx)}
+                  onMouseEnter={playHover}
+                  className="flex items-center gap-1.5 rounded-lg border border-transparent px-2.5 py-1 font-mono text-xs text-zinc-300 transition-colors hover:border-cyan-400/40 hover:bg-[#111115] hover:text-cyan-300"
+                >
+                  <span style={{ color: study.accent }}>{study.index}</span>
+                  <span className="hidden sm:inline text-[10px]">
+                    {study.id.split('-')[0].toUpperCase()}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="h-1 w-full min-w-[220px] overflow-hidden rounded-full bg-[#18181D]">
+              <motion.div
+                style={{
+                  scaleX: scrollYProgress,
+                  transformOrigin: 'left center',
+                }}
+                className="h-full w-full bg-gradient-to-r from-[#22D3EE] via-[#8B5CF6] to-[#34D399] will-change-transform"
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* STICKY ISOMETRIC HARDWARE BLADE DECK STACK */}
+        <div className="relative pb-12">
           {CASE_STUDIES.map((study, idx) => (
-            <ReelCard
+            <StickyBladeCard
               key={study.id}
               study={study}
               idx={idx}
+              total={CASE_STUDIES.length}
+              scrollYProgress={scrollYProgress}
               onSelect={handleOpenStudy}
             />
           ))}
@@ -787,7 +529,7 @@ export default function ArchitectureReel({ onTriggerPortal, onOpenModal }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[75] overflow-y-auto bg-[#09090B]/95 backdrop-blur-2xl"
+            className="fixed inset-0 z-[75] overflow-y-auto bg-[#090D16]/98"
           >
             <div className="mx-auto min-h-screen max-w-6xl px-4 py-8 sm:px-6 lg:px-8 flex flex-col justify-between">
               {/* Top Portal Bar */}
@@ -892,7 +634,7 @@ export default function ArchitectureReel({ onTriggerPortal, onOpenModal }) {
                       index={activeStudy.index}
                       intensity={benchmarkRunning ? 3.2 : 1.1}
                     />
-                    <div className="absolute top-3 left-3 flex items-center gap-2 rounded-lg border border-zinc-800 bg-[#09090B]/90 px-3 py-1 font-mono text-[11px] text-cyan-300">
+                    <div className="absolute top-3 left-3 flex items-center gap-2 rounded-lg border border-zinc-800 bg-[#09090B]/95 px-3 py-1 font-mono text-[11px] text-cyan-300">
                       <Activity className="h-3.5 w-3.5" />
                       <span>
                         {benchmarkRunning

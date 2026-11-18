@@ -61,7 +61,7 @@ export default function Hero({
             className="lg:col-span-6 space-y-7"
           >
             {/* Seasonal Harvest + WebGL Telemetry Badge */}
-            <div className="inline-flex flex-wrap items-center gap-2.5 px-4 py-1.5 rounded-full bg-sage-light/90 backdrop-blur-sm border border-sage/25 text-sage text-xs sm:text-sm font-medium tracking-wide">
+            <div className="inline-flex flex-wrap items-center gap-2.5 px-4 py-1.5 rounded-full bg-sage-light border border-sage/25 text-sage text-xs sm:text-sm font-medium tracking-wide">
               <span className="w-2 h-2 rounded-full bg-terracotta animate-pulse" />
               <span>Autumn Harvest • Ethiopia &amp; Colombia</span>
               <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-full bg-espresso text-cream">
@@ -125,7 +125,7 @@ export default function Hero({
                     });
                   }
                 }}
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-espresso/20 bg-cream/70 backdrop-blur-sm text-espresso font-medium text-sm sm:text-base hover:bg-cream-dark transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-espresso/20 bg-cream text-espresso font-medium text-sm sm:text-base hover:bg-cream-dark transition-colors"
               >
                 <span>Brewing Ratios</span>
               </a>
@@ -173,7 +173,7 @@ export default function Hero({
             transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
             className="lg:col-span-6 relative"
           >
-            <div className="relative rounded-3xl bg-cream-dark/80 backdrop-blur-md border border-espresso/12 p-6 sm:p-8 shadow-editorial overflow-hidden">
+            <div className="relative rounded-3xl bg-cream-dark border border-espresso/12 p-6 sm:p-8 shadow-editorial overflow-hidden">
               {/* Top metadata bar + Live Shader Roast Profile Selector */}
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-umber/75 uppercase tracking-widest pb-4 border-b border-espresso/10">
                 <span className="font-mono text-[11px]">

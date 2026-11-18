@@ -40,7 +40,7 @@ export default function CustomCursor({ onVelocityChange }) {
       prev.y = pos.y;
       prev.t = now;
 
-      if (onVelocityChange && now - lastVelUpdate > 90) {
+      if (onVelocityChange && now - lastVelUpdate > 1000) {
         lastVelUpdate = now;
         onVelocityChange(speed);
       }
@@ -49,12 +49,12 @@ export default function CustomCursor({ onVelocityChange }) {
         '[data-cursor], a, button, input, select, textarea, [role="button"]'
       );
       if (target) {
-        setIsHovered(true);
         const customLabel = target.getAttribute('data-cursor') || '';
-        setLabel(customLabel);
+        setIsHovered((prev) => (prev ? prev : true));
+        setLabel((prev) => (prev === customLabel ? prev : customLabel));
       } else {
-        setIsHovered(false);
-        setLabel('');
+        setIsHovered((prev) => (prev ? false : prev));
+        setLabel((prev) => (prev === '' ? prev : ''));
       }
     };
 

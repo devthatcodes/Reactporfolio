@@ -10,7 +10,7 @@ const VERTEX_SHADER = `
 `;
 
 const FRAGMENT_SHADER = `
-  precision highp float;
+  precision mediump float;
   varying vec2 v_uv;
   uniform vec2 u_resolution;
   uniform float u_time;
@@ -62,35 +62,30 @@ const FRAGMENT_SHADER = `
     gridScale.x += u_time * 0.35;
     gridScale.y += sin(warpedP.x * 3.5 + u_time * 0.8) * 0.35;
 
-    vec2 gridFract = abs(fract(gridScale - 0.5) - 0.5) / fwidth(gridScale * 0.0 + 0.045);
+    vec2 gridFract = abs(fract(gridScale - 0.5) - 0.5) / 0.045;
     float gridLine = min(gridFract.x, gridFract.y);
     float gridMask = smoothstep(1.2, 0.0, gridLine) * 0.16;
 
     // Orbital Liquidity Corridor Arcs (SDF rings)
     float arcAccum = 0.0;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 3; i++) {
       float fi = float(i);
       vec2 center = vec2(
         sin(u_time * (0.22 + fi * 0.07) + fi * 1.7) * 0.35,
         cos(u_time * (0.18 + fi * 0.05) + fi * 2.1) * 0.22
       );
-      float radius = 0.26 + fi * 0.14 + u_pulse * 0.08;
+      float radius = 0.26 + fi * 0.16 + u_pulse * 0.08;
       float ringDist = abs(length(warpedP - center) - radius);
       float angle = atan(warpedP.y - center.y, warpedP.x - center.x);
       float packet = smoothstep(0.2, 1.0, sin(angle * (3.0 + fi) - u_time * (2.2 + fi * 0.6)));
-      float glow = (0.0022 / (ringDist + 0.0025)) * (0.35 + 0.65 * packet);
+      float glow = (0.0022 / (ringDist + 0.0028)) * (0.35 + 0.65 * packet);
       arcAccum += glow;
     }
 
     // Flowing Quantum Wave Field
     float n1 = noise(warpedP * 3.8 + vec2(u_time * 0.3, -u_time * 0.2));
-    float n2 = noise(warpedP * 7.5 - vec2(u_time * 0.45, u_time * 0.25));
-    float waveField = smoothstep(0.25, 0.85, n1 * 0.65 + n2 * 0.35);
+    float waveField = smoothstep(0.25, 0.85, n1);
 
-    // Palette shifts based on network mode:
-    // Mode 0: FX CORRIDOR (Emerald #10B981 + Cyan #06B6D4)
-    // Mode 1: TREASURY YIELD (Gold/Emerald #34D399 + Cobalt #3B82F6)
-    // Mode 2: ZERO-KNOWLEDGE VAULT (Violet/Cyan #38BDF8 + Indigo #6366F1)
     vec3 baseBg = vec3(0.012, 0.027, 0.071); // #030712 Obsidian
     vec3 colPrimary = mix(
       vec3(0.063, 0.725, 0.506), // Emerald
@@ -98,11 +93,10 @@ const FRAGMENT_SHADER = `
       clamp(u_mode * 0.5, 0.0, 1.0)
     );
     if (u_mode > 1.5) {
-      colPrimary = vec3(0.22, 0.74, 0.97); // Cyber Sky/Cyan
+      colPrimary = vec3(0.22, 0.74, 0.97);
     }
-    vec3 colSecondary = vec3(0.145, 0.388, 0.922); // Cobalt #2563EB
+    vec3 colSecondary = vec3(0.145, 0.388, 0.922);
 
-    // Cursor spotlight aura
     float cursorGlow = exp(-dMouse * (3.2 - min(u_velocity * 0.8, 1.5))) * (0.28 + u_velocity * 0.25 + u_pulse * 0.35);
 
     vec3 color = baseBg;
@@ -111,7 +105,6 @@ const FRAGMENT_SHADER = `
     color += mix(colPrimary, colSecondary, 0.4) * arcAccum * 0.42;
     color += colPrimary * cursorGlow * 0.48;
 
-    // Subtle vignette for crisp legibility
     float vig = smoothstep(1.35, 0.25, length(p));
     color *= mix(0.55, 1.0, vig);
 
@@ -139,10 +132,18 @@ export default function LiquidityShaderCanvas({
     if (!canvas) return;
 
     let animId;
-    let gl = canvas.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'high-performance' });
+    const gl = canvas.getContext('webgl', {
+      antialias: false,
+      alpha: false,
+      depth: false,
+      stencil: false,
+      preserveDrawingBuffer: false,
+      powerPreference: 'high-performance',
+    });
 
-    const mouse = { x: 0.5, y: 0.5, targetX: 0.5, targetY: 0.5, vx: 0, vy: 0, speed: 0 };
+    const mouse = { x: 0.5, y: 0.5, targetX: 0.5, targetY: 0.5, speed: 0, clientX: 540, clientY: 380 };
     let scrollNorm = 0;
+    let lastCursorEmit = 0;
 
     const handleMouseMove = (e) => {
       const nx = e.clientX / Math.max(window.innerWidth, 1);
@@ -152,7 +153,13 @@ export default function LiquidityShaderCanvas({
       mouse.speed = Math.min(2.5, Math.hypot(dx, dy) * 32);
       mouse.targetX = nx;
       mouse.targetY = ny;
-      if (onCursorTelemetry) {
+      mouse.clientX = e.clientX;
+      mouse.clientY = e.clientY;
+
+      // Throttle telemetry React state callback to once per 1000ms to prevent scroll/render lag
+      const now = performance.now();
+      if (onCursorTelemetry && now - lastCursorEmit >= 1000) {
+        lastCursorEmit = now;
         onCursorTelemetry({
           x: Math.round(e.clientX),
           y: Math.round(e.clientY),
@@ -184,14 +191,8 @@ export default function LiquidityShaderCanvas({
     let uniforms = {};
 
     if (gl) {
-      // Enable standard derivatives if WebGL1 for fwidth fallback safety
-      gl.getExtension('OES_standard_derivatives');
-      const safeFrag = FRAGMENT_SHADER.replace(
-        'fwidth(gridScale * 0.0 + 0.045)',
-        '0.045'
-      );
       const vs = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
-      const fs = compileShader(gl, gl.FRAGMENT_SHADER, safeFrag);
+      const fs = compileShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
 
       if (vs && fs) {
         program = gl.createProgram();
@@ -227,11 +228,11 @@ export default function LiquidityShaderCanvas({
       }
     }
 
-    // 2D fallback context if WebGL is unavailable
     const ctx2d = !program ? canvas.getContext('2d') : null;
 
     const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+      // Cap DPR at 0.75 so WebGL renders 75% fewer pixels at locked 60/120fps
+      const dpr = 0.75;
       canvas.width = Math.floor(window.innerWidth * dpr);
       canvas.height = Math.floor(window.innerHeight * dpr);
       if (gl && program) {
@@ -239,9 +240,9 @@ export default function LiquidityShaderCanvas({
       }
     };
     resize();
-    window.addEventListener('resize', resize);
+    window.addEventListener('resize', resize, { passive: true });
 
-    let startTime = performance.now();
+    const startTime = performance.now();
     let frameCount = 0;
     let lastFpsTime = performance.now();
     let smoothMode = modeRef.current;
@@ -249,7 +250,8 @@ export default function LiquidityShaderCanvas({
     const render = (now) => {
       const elapsed = (now - startTime) * 0.001;
       frameCount++;
-      if (now - lastFpsTime >= 600) {
+      // Throttle telemetry update to once per second (1000ms)
+      if (now - lastFpsTime >= 1000) {
         const currentFps = Math.min(120, Math.round((frameCount * 1000) / (now - lastFpsTime)));
         if (onFpsUpdate) onFpsUpdate(currentFps);
         frameCount = 0;
@@ -290,16 +292,6 @@ export default function LiquidityShaderCanvas({
         grad.addColorStop(1, 'rgba(3, 7, 18, 0)');
         ctx2d.fillStyle = grad;
         ctx2d.fillRect(0, 0, w, h);
-
-        // Draw animated orbital corridor arcs
-        ctx2d.strokeStyle = 'rgba(16, 185, 129, 0.16)';
-        ctx2d.lineWidth = 1.2;
-        for (let i = 0; i < 4; i++) {
-          ctx2d.beginPath();
-          const r = (0.18 + i * 0.09) * Math.min(w, h);
-          ctx2d.arc(w * 0.5, h * 0.5, r, elapsed * (0.4 + i * 0.15), elapsed * (0.4 + i * 0.15) + Math.PI * 1.35);
-          ctx2d.stroke();
-        }
       }
 
       animId = requestAnimationFrame(render);
@@ -313,12 +305,13 @@ export default function LiquidityShaderCanvas({
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', resize);
     };
-  }, []);
+  }, [onCursorTelemetry, onFpsUpdate]);
 
   return (
     <canvas
       ref={canvasRef}
       className="fixed inset-0 w-full h-full pointer-events-none z-0"
+      style={{ willChange: 'transform', transform: 'translateZ(0)' }}
       aria-hidden="true"
     />
   );

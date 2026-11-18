@@ -2,59 +2,22 @@ import React, { useRef } from 'react';
 import {
   motion,
   useScroll,
-  useVelocity,
   useSpring,
   useTransform,
 } from 'framer-motion';
 
 /**
  * VelocitySkewWrapper
- * Applies real-time scroll-velocity 3D perspective tilt (rotateX) and inertia skew (skewY)
- * to foreground content as the user scrolls.
+ * Kept as a lightweight pass-through for export compatibility (no 3D skew/perspective).
  */
 export function VelocitySkewWrapper({ children }) {
-  const { scrollY } = useScroll();
-  const scrollVelocity = useVelocity(scrollY);
-
-  const smoothVelocity = useSpring(scrollVelocity, {
-    damping: 42,
-    stiffness: 340,
-    mass: 0.45,
-  });
-
-  const skewY = useTransform(smoothVelocity, [-2400, 0, 2400], [-4.5, 0, 4.5], {
-    clamp: true,
-  });
-  const rotateX = useTransform(smoothVelocity, [-2400, 0, 2400], [5, 0, -5], {
-    clamp: true,
-  });
-  const scale = useTransform(smoothVelocity, [-2400, 0, 2400], [0.985, 1, 0.985], {
-    clamp: true,
-  });
-
-  return (
-    <div style={{ perspective: '1600px' }}>
-      <motion.div
-        style={{
-          skewY,
-          rotateX,
-          scale,
-          transformStyle: 'preserve-3d',
-          willChange: 'transform',
-        }}
-      >
-        {children}
-      </motion.div>
-    </div>
-  );
+  return <>{children}</>;
 }
 
 /**
- * ScrollPortalSection
- * Wraps each major section so scrolling continuously drives:
- * - Entry (0.0 -> 0.28): clipPath unmask, 3D scale/rotateX/y rise, opacity reveal
- * - Exit (0.75 -> 1.0): 3D recession into depth (scale, rotateX, y, opacity) as the next section enters
- * - Live thermal gauge bar across the top of the section header
+ * ScrollPortalSection — "Botanical Arc Reveal & Rotating Seal Header"
+ * Zero clip-path and zero filter:blur! Uses purely GPU-composited y, scale, rotate, and opacity
+ * with a rotating circular roastery seal emblem in the telemetry header.
  */
 export function ScrollPortalSection({
   children,
@@ -71,95 +34,66 @@ export function ScrollPortalSection({
   });
 
   const smoothProgress = useSpring(scrollYProgress, {
-    damping: 34,
-    stiffness: 240,
-    mass: 0.4,
+    damping: 38,
+    stiffness: 260,
+    mass: 0.35,
   });
 
-  const clipPath = useTransform(
+  const y = useTransform(
     smoothProgress,
-    [0, 0.24, 0.78, 1],
-    disableEntryClip
-      ? [
-          'inset(0% 0% 0% 0% round 0px)',
-          'inset(0% 0% 0% 0% round 0px)',
-          'inset(0% 0% 0% 0% round 0px)',
-          'inset(8% 4% 8% 4% round 24px)',
-        ]
-      : [
-          'inset(14% 6% 14% 6% round 28px)',
-          'inset(0% 0% 0% 0% round 0px)',
-          'inset(0% 0% 0% 0% round 0px)',
-          'inset(10% 4% 10% 4% round 24px)',
-        ]
+    [0, 0.22, 0.82, 1],
+    disableEntryClip ? [0, 0, 0, -28] : [48, 0, 0, -28]
   );
 
   const scale = useTransform(
     smoothProgress,
-    [0, 0.26, 0.75, 1],
-    disableEntryClip ? [1, 1, 1, 0.88] : [0.86, 1, 1, 0.88]
-  );
-
-  const rotateX = useTransform(
-    smoothProgress,
-    [0, 0.26, 0.75, 1],
-    disableEntryClip ? [0, 0, 0, -14] : [16, 0, 0, -14]
-  );
-
-  const y = useTransform(
-    smoothProgress,
-    [0, 0.26, 0.75, 1],
-    disableEntryClip ? [0, 0, 0, -90] : [100, 0, 0, -90]
+    [0, 0.22, 0.82, 1],
+    disableEntryClip ? [1, 1, 1, 0.985] : [0.97, 1, 1, 0.985]
   );
 
   const opacity = useTransform(
     smoothProgress,
-    [0, 0.2, 0.78, 1],
-    disableEntryClip ? [1, 1, 1, 0.15] : [0.05, 1, 1, 0.15]
+    [0, 0.16, 0.85, 1],
+    disableEntryClip ? [1, 1, 1, 0.65] : [0.15, 1, 1, 0.65]
   );
 
-  const gaugeScaleX = useTransform(smoothProgress, [0.08, 0.82], [0, 1]);
-  const badgeY = useTransform(smoothProgress, [0, 0.5, 1], [36, 0, -36]);
+  const gaugeScaleX = useTransform(smoothProgress, [0.06, 0.82], [0, 1]);
+  const sealRotate = useTransform(smoothProgress, [0, 1], [0, 240]);
 
   return (
-    <div
-      ref={sectionRef}
-      className="relative"
-      style={{ perspective: '1600px' }}
-    >
-      {/* Floating Foreground Scroll-Progress Telemetry Header Bar */}
+    <div ref={sectionRef} className="relative">
+      {/* Botanical Arc Telemetry Header & Rotating Seal */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-        <motion.div
-          style={{ y: badgeY }}
-          className="flex items-center justify-between gap-4 text-[10px] font-mono uppercase tracking-[0.22em] text-umber/70 mb-1.5"
-        >
-          <span className="inline-flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-terracotta animate-pulse" />
+        <div className="flex items-center justify-between gap-4 text-[10px] font-mono uppercase tracking-[0.22em] text-umber/75 mb-2">
+          <span className="inline-flex items-center gap-2.5">
+            <motion.span
+              style={{ rotate: sealRotate, willChange: 'transform' }}
+              className="w-5 h-5 rounded-full border border-dashed border-terracotta flex items-center justify-center shrink-0"
+            >
+              <span className="w-2 h-2 rounded-full bg-terracotta" />
+            </motion.span>
             <span className="text-terracotta font-semibold">{code}</span>
             <span className="hidden sm:inline text-espresso/60">// {label}</span>
           </span>
-          <span className="text-espresso/70 bg-cream-dark/90 px-2.5 py-0.5 rounded-full border border-espresso/10">
+          <span className="text-espresso/75 bg-cream-dark px-2.5 py-0.5 rounded-full border border-espresso/10">
             ROAST CURVE {tempRange}
           </span>
-        </motion.div>
+        </div>
         <div className="h-[2px] w-full bg-espresso/10 rounded-full overflow-hidden">
           <motion.div
-            style={{ scaleX: gaugeScaleX, transformOrigin: '0% 50%' }}
+            style={{ scaleX: gaugeScaleX, transformOrigin: '0% 50%', willChange: 'transform' }}
             className="h-full w-full bg-gradient-to-r from-sage via-terracotta to-espresso"
           />
         </div>
       </div>
 
-      {/* 3D Scroll-Driven Foreground Portal Container */}
+      {/* Pure GPU Section Container (Zero clip-path, Zero 3D perspective skew) */}
       <motion.div
         style={{
-          clipPath,
-          scale,
-          rotateX,
           y,
+          scale,
           opacity,
-          transformStyle: 'preserve-3d',
-          willChange: 'transform, clip-path, opacity',
+          willChange: 'transform, opacity',
         }}
       >
         {children}
@@ -169,8 +103,8 @@ export function ScrollPortalSection({
 }
 
 /**
- * ScrollSensoryMarquee
- * Giant scroll-scrubbed dual-direction kinetic typography divider between sections.
+ * ScrollSensoryMarquee — "Botanical Arc Reveal & Rotating Seal Divider"
+ * Smooth scroll-linked horizontal marquee paired with a central Rotating Botanical Roastery Seal Emblem.
  */
 export function ScrollSensoryMarquee({
   topLine = 'FIRST CRACK 196.4°C • EXOTHERMIC ESTER RELEASE • HIGH-ALTITUDE MICRO-LOTS •',
@@ -183,29 +117,35 @@ export function ScrollSensoryMarquee({
     offset: ['start end', 'end start'],
   });
 
-  const xLeft = useTransform(scrollYProgress, [0, 1], ['8%', '-28%']);
-  const xRight = useTransform(scrollYProgress, [0, 1], ['-26%', '10%']);
-  const rotateZ = useTransform(scrollYProgress, [0, 0.5, 1], [-1.5, 0, 1.5]);
-  const badgeScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.85, 1.08, 0.85]);
+  const xLeft = useTransform(scrollYProgress, [0, 1], ['4%', '-22%']);
+  const xRight = useTransform(scrollYProgress, [0, 1], ['-20%', '6%']);
+  const sealRotate = useTransform(scrollYProgress, [0, 1], [-90, 180]);
+  const badgeScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.92, 1.04, 0.92]);
 
   return (
-    <motion.div
+    <div
       ref={marqueeRef}
-      style={{ rotateZ }}
-      className="relative py-7 sm:py-10 overflow-hidden border-y border-espresso/15 bg-espresso text-cream select-none z-20 shadow-editorial"
+      className="relative py-8 sm:py-11 overflow-hidden border-y border-espresso/15 bg-espresso text-cream select-none z-20"
     >
-      {/* Subtle diagonal terracotta sheen */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-25"
-        style={{
-          background:
-            'radial-gradient(circle at 50% 50%, rgba(200, 90, 50, 0.38), transparent 70%)',
-        }}
-      />
+      {/* Subtle Botanical Arc SVG Curve across Divider */}
+      <svg
+        viewBox="0 0 1440 90"
+        fill="none"
+        preserveAspectRatio="none"
+        className="pointer-events-none absolute inset-x-0 top-0 w-full h-7 text-terracotta/25"
+        aria-hidden="true"
+      >
+        <path
+          d="M0 75 Q720 5 1440 75"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeDasharray="6 6"
+        />
+      </svg>
 
       <div className="relative space-y-2">
         <motion.div
-          style={{ x: xLeft }}
+          style={{ x: xLeft, willChange: 'transform' }}
           className="whitespace-nowrap flex items-center gap-8 font-serif text-2xl sm:text-4xl lg:text-5xl tracking-tight text-cream/90"
         >
           <span>{topLine}</span>
@@ -214,7 +154,7 @@ export function ScrollSensoryMarquee({
         </motion.div>
 
         <motion.div
-          style={{ x: xRight }}
+          style={{ x: xRight, willChange: 'transform' }}
           className="whitespace-nowrap flex items-center gap-8 font-mono text-xs sm:text-sm uppercase tracking-[0.28em] text-cream/60"
         >
           <span>{bottomLine}</span>
@@ -223,15 +163,21 @@ export function ScrollSensoryMarquee({
         </motion.div>
       </div>
 
-      {/* Center Floating Telemetry Pill */}
+      {/* Center Rotating Botanical Roastery Seal Emblem */}
       <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <motion.div
-          style={{ scale: badgeScale }}
-          className="px-4 py-1.5 rounded-full bg-terracotta text-cream text-[10px] sm:text-xs font-mono uppercase tracking-[0.22em] border border-cream/30 shadow-lg"
+          style={{ scale: badgeScale, willChange: 'transform' }}
+          className="relative flex items-center gap-2.5 px-4 py-2 rounded-full bg-espresso text-cream text-[10px] sm:text-xs font-mono uppercase tracking-[0.22em] border-2 border-terracotta shadow-lg"
         >
-          {badge}
+          <motion.span
+            style={{ rotate: sealRotate, willChange: 'transform' }}
+            className="w-6 h-6 rounded-full bg-terracotta/20 border border-dashed border-terracotta flex items-center justify-center"
+          >
+            <span className="w-2 h-2 rounded-full bg-terracotta" />
+          </motion.span>
+          <span>{badge}</span>
         </motion.div>
       </div>
-    </motion.div>
+    </div>
   );
 }

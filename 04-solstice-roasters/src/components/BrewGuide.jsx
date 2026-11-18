@@ -148,11 +148,9 @@ export default function BrewGuide() {
     mass: 0.4,
   });
 
-  // Differential foreground parallax for Left Equipment Stage vs Right Timeline
-  const leftColumnY = useTransform(smoothScroll, [0, 0.5, 1], [65, 0, -55]);
-  const leftColumnRotateY = useTransform(smoothScroll, [0, 0.5, 1], [10, 0, -8]);
-  const rightColumnY = useTransform(smoothScroll, [0, 0.5, 1], [115, 0, -90]);
-  const rightColumnRotateY = useTransform(smoothScroll, [0, 0.5, 1], [-10, 0, 8]);
+  // Differential foreground parallax for Left Equipment Stage vs Right Timeline (pure 2D GPU y)
+  const leftColumnY = useTransform(smoothScroll, [0, 0.5, 1], [32, 0, -28]);
+  const rightColumnY = useTransform(smoothScroll, [0, 0.5, 1], [54, 0, -42]);
 
   const recipe = BREW_RECIPES.find((r) => r.id === activeTab) || BREW_RECIPES[0];
 
@@ -189,7 +187,6 @@ export default function BrewGuide() {
       ref={sectionRef}
       id="brew-guide"
       className="py-16 sm:py-24 bg-cream-dark/50 border-b border-espresso/10 overflow-hidden"
-      style={{ perspective: '1500px' }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header + Method Tabs */}
@@ -238,7 +235,7 @@ export default function BrewGuide() {
           </div>
         </div>
 
-        {/* Main Interactive Brew Card with Differential 3D Scroll Parallax */}
+        {/* Main Interactive Brew Card with Differential GPU Scroll Parallax */}
         <AnimatePresence mode="wait">
           <motion.div
             key={recipe.id}
@@ -246,15 +243,13 @@ export default function BrewGuide() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -14 }}
             transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-cream/90 backdrop-blur-sm rounded-3xl border border-espresso/12 p-6 sm:p-10 shadow-editorial"
-            style={{ transformStyle: 'preserve-3d' }}
+            className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-cream rounded-3xl border border-espresso/12 p-6 sm:p-10 shadow-editorial"
           >
             {/* Left Specs & Live Timer */}
             <motion.div
               style={{
                 y: leftColumnY,
-                rotateY: leftColumnRotateY,
-                transformStyle: 'preserve-3d',
+                willChange: 'transform',
               }}
               className="lg:col-span-5 flex flex-col justify-between space-y-6 lg:border-r lg:border-espresso/10 lg:pr-8"
             >
@@ -393,8 +388,7 @@ export default function BrewGuide() {
             <motion.div
               style={{
                 y: rightColumnY,
-                rotateY: rightColumnRotateY,
-                transformStyle: 'preserve-3d',
+                willChange: 'transform',
               }}
               className="lg:col-span-7 flex flex-col justify-center space-y-4"
             >

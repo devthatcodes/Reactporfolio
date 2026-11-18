@@ -69,7 +69,7 @@ export default function CustomCursor() {
           rotate: isHovered ? 45 : 0,
         }}
         transition={{ type: 'spring', stiffness: 260, damping: 22 }}
-        className="fixed top-0 left-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-400/50 bg-cyan-400/5 shadow-[0_0_20px_rgba(34,211,238,0.2)] backdrop-blur-[1px]"
+        className="fixed top-0 left-0 -translate-x-1/2 -translate-y-1/2 rounded-full border border-cyan-400/50 bg-cyan-400/5 shadow-[0_0_20px_rgba(34,211,238,0.2)]"
       >
         {/* Reticle Crosshair Notches */}
         <span className="absolute -top-1 left-1/2 h-1.5 w-[1px] -translate-x-1/2 bg-cyan-400/80" />

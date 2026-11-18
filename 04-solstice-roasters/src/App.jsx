@@ -13,7 +13,6 @@ import CustomCursor from './components/CustomCursor';
 import SensoryHud from './components/SensoryHud';
 import OriginPortalModal from './components/OriginPortalModal';
 import {
-  VelocitySkewWrapper,
   ScrollPortalSection,
   ScrollSensoryMarquee,
 } from './components/ScrollRoastTransition';
@@ -25,13 +24,13 @@ export default function App() {
 
   // Active Theory WebGL Shader Roast Profile (0: Light Floral, 1: Medium Caramel, 2: Dark Obsidian)
   const [roastMode, setRoastMode] = useState(0);
-  // 01 // 3D Reel vs 02 // Sensory Flavor Matrix
+  // 01 // Rotary Arc vs 02 // Sensory Flavor Matrix
   const [shopViewMode, setShopViewMode] = useState('reel');
   // Active Full-Screen Origin Portal Coffee Lot
   const [portalCoffee, setPortalCoffee] = useState(null);
-  // Active Multi-Layer Curtain Portal Transition
+  // Active Circular Crema Iris Bloom Portal Transition
   const [activePortal, setActivePortal] = useState(null);
-  // Live Cursor Velocity Telemetry
+  // Live Cursor Velocity Telemetry (throttled to 1s)
   const [cursorVelocity, setCursorVelocity] = useState(0);
 
   const handleCycleRoastMode = useCallback(() => {
@@ -55,11 +54,11 @@ export default function App() {
       if (el) {
         el.scrollIntoView({ behavior: 'smooth' });
       }
-    }, 320);
+    }, 220);
 
     setTimeout(() => {
       setActivePortal(null);
-    }, 820);
+    }, 520);
   }, []);
 
   const handleAddToCart = (coffee, grind) => {
@@ -135,67 +134,65 @@ export default function App() {
       />
 
       <main className="relative z-10 flex-1 overflow-x-clip">
-        <VelocitySkewWrapper>
-          <ScrollPortalSection
-            code="STAGE 00 // CHARGE & RAMP"
-            label="BOTANICAL & ROAST CURVE TELEMETRY"
-            tempRange="94°C → 198.2°C"
-            disableEntryClip
-          >
-            <Hero
-              roastMode={roastMode}
-              onSelectRoastMode={setRoastMode}
-              onPortalNavigate={handlePortalNavigate}
-            />
-          </ScrollPortalSection>
-
-          <ScrollSensoryMarquee
-            topLine="FIRST CRACK 196.4°C • EXOTHERMIC ESTER RELEASE • HIGH-ALTITUDE MICRO-LOTS •"
-            bottomLine="GEDEB ETHIOPIA 2,150M • HUILA PINK BOURBON 1,850M • TARRAZÚ HONEY 1,720M •"
-            badge="PORTAL 01 // 3D LOT FLIGHT"
+        <ScrollPortalSection
+          code="STAGE 00 // CHARGE & RAMP"
+          label="BOTANICAL & ROAST CURVE TELEMETRY"
+          tempRange="94°C → 198.2°C"
+          disableEntryClip
+        >
+          <Hero
+            roastMode={roastMode}
+            onSelectRoastMode={setRoastMode}
+            onPortalNavigate={handlePortalNavigate}
           />
+        </ScrollPortalSection>
 
-          <ScrollPortalSection
-            code="STAGE 01 // MAILLARD & FLIGHT"
-            label="SINGLE-ORIGIN 3D MICRO-LOT SHOWCASE"
-            tempRange="178°C → 204.5°C"
-          >
-            <CoffeeShop
-              onAddToCart={handleAddToCart}
-              onOpenPortal={(coffee) => setPortalCoffee(coffee)}
-              viewMode={shopViewMode}
-              onViewModeChange={setShopViewMode}
-            />
-          </ScrollPortalSection>
+        <ScrollSensoryMarquee
+          topLine="FIRST CRACK 196.4°C • EXOTHERMIC ESTER RELEASE • HIGH-ALTITUDE MICRO-LOTS •"
+          bottomLine="GEDEB ETHIOPIA 2,150M • HUILA PINK BOURBON 1,850M • TARRAZÚ HONEY 1,720M •"
+          badge="PORTAL 01 // ROTARY TASTING ARC"
+        />
 
-          <ScrollSensoryMarquee
-            topLine="DIALED-IN EXTRACTION • 1.42% TARGET TDS • 21.0% EXTRACTION YIELD •"
-            bottomLine="V60 CONE SPIRAL POUR • AEROPRESS VACUUM STEEP • 9-BAR BOTTOMLESS ESPRESSO •"
-            badge="PORTAL 03 // EXTRACTION LAB"
+        <ScrollPortalSection
+          code="STAGE 01 // MAILLARD & TASTING WHEEL"
+          label="CURVED BOTANICAL ARC & ROTARY CAROUSEL"
+          tempRange="178°C → 208.6°C"
+        >
+          <CoffeeShop
+            onAddToCart={handleAddToCart}
+            onOpenPortal={(coffee) => setPortalCoffee(coffee)}
+            viewMode={shopViewMode}
+            onViewModeChange={setShopViewMode}
           />
+        </ScrollPortalSection>
 
-          <ScrollPortalSection
-            code="STAGE 03 // EXTRACTION LAB"
-            label="REAL-TIME POUR & BREW TELEMETRY"
-            tempRange="92°C → 94°C WATER"
-          >
-            <BrewGuide />
-          </ScrollPortalSection>
+        <ScrollSensoryMarquee
+          topLine="DIALED-IN EXTRACTION • 1.42% TARGET TDS • 21.0% EXTRACTION YIELD •"
+          bottomLine="V60 CONE SPIRAL POUR • AEROPRESS VACUUM STEEP • 9-BAR BOTTOMLESS ESPRESSO •"
+          badge="PORTAL 03 // EXTRACTION LAB"
+        />
 
-          <ScrollSensoryMarquee
-            topLine="PORTLAND SLOW BAR • SE DIVISION ROASTERY • WEEKLY GUIDED CUPPINGS •"
-            bottomLine="LORING 12KG CAST-IRON DRUM • ROASTED MONDAY & THURSDAY • 48H DISPATCH •"
-            badge="PORTAL 04 // TASTING ROOM"
-          />
+        <ScrollPortalSection
+          code="STAGE 03 // EXTRACTION LAB"
+          label="REAL-TIME POUR & BREW TELEMETRY"
+          tempRange="92°C → 94°C WATER"
+        >
+          <BrewGuide />
+        </ScrollPortalSection>
 
-          <ScrollPortalSection
-            code="STAGE 04 // TASTING ROOM & DISPATCH"
-            label="SLOW BAR CUPPING & SUBSCRIPTION"
-            tempRange="AGTRON 55.8 → 68.4"
-          >
-            <TastingRoomAndSub />
-          </ScrollPortalSection>
-        </VelocitySkewWrapper>
+        <ScrollSensoryMarquee
+          topLine="PORTLAND SLOW BAR • SE DIVISION ROASTERY • WEEKLY GUIDED CUPPINGS •"
+          bottomLine="LORING 12KG CAST-IRON DRUM • ROASTED MONDAY & THURSDAY • 48H DISPATCH •"
+          badge="PORTAL 04 // TASTING ROOM"
+        />
+
+        <ScrollPortalSection
+          code="STAGE 04 // TASTING ROOM & DISPATCH"
+          label="SLOW BAR CUPPING & SUBSCRIPTION"
+          tempRange="AGTRON 55.8 → 70.2"
+        >
+          <TastingRoomAndSub />
+        </ScrollPortalSection>
       </main>
 
       <div className="relative z-10">
