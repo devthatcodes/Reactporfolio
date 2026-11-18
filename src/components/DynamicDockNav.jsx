@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { MonitorPlay, Volume2, VolumeX, ArrowUpRight } from 'lucide-react';
+import { MonitorPlay, Sparkles, ArrowUpRight } from 'lucide-react';
 import { PORTFOLIO_PROJECTS } from '../data/projects';
 import soundEngine from '../utils/soundEngine';
 
@@ -8,28 +8,22 @@ export default function DynamicDockNav({
   activeProject,
   onSelectProject,
   onOpenTheater,
-  onNavigate,
-  soundEnabled,
-  onToggleSound,
+  onOpenInquiry,
+  onScrollTo,
 }) {
   const accent = activeProject?.accent || '#E2D9C8';
 
   return (
-    <header className="fixed top-5 inset-x-0 z-50 px-5 sm:px-8 pointer-events-none">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Left: Deontae Work Signature Monogram & Identity */}
-        <motion.button
+    <header className="fixed top-4 inset-x-0 z-50 px-4 sm:px-8 pointer-events-none">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+        {/* Left: Deontae Work Identity */}
+        <button
           type="button"
-          data-cursor="TOP"
-          initial={{ y: -24, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
           onClick={() => {
             soundEngine.playClick();
-            onNavigate('#top', 'Deontae Work', 'PORTFOLIO INDEX');
+            onScrollTo('#top');
           }}
-          onMouseEnter={() => soundEngine.playHover()}
-          className="pointer-events-auto flex items-center gap-3 bg-[#0D0E12]/90 border border-white/10 rounded-full pl-2 pr-4 py-1.5 shadow-2xl group hover:border-white/25 transition-colors"
+          className="pointer-events-auto flex items-center gap-3 bg-[#0D0E12]/95 border border-white/10 rounded-full pl-2 pr-4 py-1.5 shadow-xl hover:border-white/25 transition-colors"
         >
           <span
             className="w-8 h-8 rounded-full flex items-center justify-center font-display font-extrabold text-xs text-[#060608] transition-colors duration-500"
@@ -41,34 +35,35 @@ export default function DynamicDockNav({
             <div className="font-display font-bold text-xs sm:text-sm text-[#F5F4F0] tracking-tight">
               Deontae Work
             </div>
-            <div className="text-[10px] font-mono uppercase tracking-[0.18em] text-white/45">
+            <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-white/50">
               Front End Engineer
             </div>
           </div>
-        </motion.button>
+        </button>
 
-        {/* Center: Floating Project & Section Dock */}
-        <motion.nav
-          initial={{ y: -24, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.55, delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
-          className="pointer-events-auto hidden lg:flex items-center gap-1 bg-[#0D0E12]/90 border border-white/10 rounded-full p-1.5 shadow-2xl"
-        >
+        {/* Center Navigation Dock */}
+        <nav className="pointer-events-auto hidden lg:flex items-center gap-1 bg-[#0D0E12]/95 border border-white/10 rounded-full p-1.5 shadow-xl">
+          <button
+            type="button"
+            onClick={() => onScrollTo('#work')}
+            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/75 hover:text-white transition-colors"
+          >
+            Selected Work
+          </button>
+
           {PORTFOLIO_PROJECTS.map((proj) => {
             const isActive = activeProject?.id === proj.id;
             return (
               <button
                 key={proj.id}
                 type="button"
-                data-cursor={`WORK ${proj.number}`}
                 onClick={() => {
                   soundEngine.playClick();
                   onSelectProject(proj);
-                  onNavigate(`#project-${proj.id}`, proj.title, `SELECTED WORK ${proj.number}`);
+                  onScrollTo(`#project-${proj.id}`);
                 }}
-                onMouseEnter={() => soundEngine.playHover()}
-                className={`relative px-3.5 py-1.5 rounded-full text-xs transition-colors ${
-                  isActive ? 'text-[#060608] font-semibold' : 'text-white/60 hover:text-white'
+                className={`relative px-3 py-1.5 rounded-full text-xs transition-colors ${
+                  isActive ? 'text-[#060608] font-semibold' : 'text-white/55 hover:text-white'
                 }`}
               >
                 {isActive && (
@@ -79,7 +74,7 @@ export default function DynamicDockNav({
                     style={{ backgroundColor: proj.accent }}
                   />
                 )}
-                <span className="relative z-10 flex items-center gap-1.5">
+                <span className="relative z-10 flex items-center gap-1">
                   <span className="font-mono text-[10px] opacity-75">{proj.number}</span>
                   <span>{proj.title}</span>
                 </span>
@@ -91,63 +86,46 @@ export default function DynamicDockNav({
 
           <button
             type="button"
-            data-cursor="ENGINEERING"
-            onClick={() => {
-              soundEngine.playClick();
-              onNavigate('#engineering-lab', 'Engineering Craft', 'ARCHITECTURE & MOTION');
-            }}
-            onMouseEnter={() => soundEngine.playHover()}
-            className="px-3.5 py-1.5 rounded-full text-xs text-white/60 hover:text-white transition-colors"
+            onClick={() => onScrollTo('#engineering-lab')}
+            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/75 hover:text-white transition-colors"
           >
-            Craft
+            Services &amp; Pricing
           </button>
           <button
             type="button"
-            data-cursor="CONTACT"
-            onClick={() => {
-              soundEngine.playClick();
-              onNavigate('#contact', 'Initiate Dialogue', 'CONTACT DEONTAE');
-            }}
-            onMouseEnter={() => soundEngine.playHover()}
-            className="px-3.5 py-1.5 rounded-full text-xs text-white/60 hover:text-white transition-colors"
+            onClick={() => onScrollTo('#contact')}
+            className="px-3.5 py-1.5 rounded-full text-xs font-medium text-white/75 hover:text-white transition-colors"
           >
             Contact
           </button>
-        </motion.nav>
+        </nav>
 
-        {/* Right: Sound Toggle & Live Theater CTA */}
-        <motion.div
-          initial={{ y: -24, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.55, delay: 0.12, ease: [0.16, 1, 0.3, 1] }}
-          className="pointer-events-auto flex items-center gap-2"
-        >
+        {/* Right: Clear Client Inquiry CTA + Live Preview */}
+        <div className="pointer-events-auto flex items-center gap-2">
           <button
             type="button"
-            data-cursor={soundEnabled ? 'MUTE UI' : 'SOUND ON'}
-            onClick={onToggleSound}
-            onMouseEnter={() => soundEngine.playHover()}
-            aria-label="Toggle Sound"
-            className="w-9 h-9 rounded-full bg-[#0D0E12]/90 border border-white/10 flex items-center justify-center text-white/65 hover:text-white hover:border-white/25 transition-colors"
-          >
-            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-          </button>
-
-          <button
-            type="button"
-            data-cursor="LIVE THEATER"
             onClick={() => {
               soundEngine.playClick();
               onOpenTheater(activeProject || PORTFOLIO_PROJECTS[0]);
             }}
-            onMouseEnter={() => soundEngine.playHover()}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold text-[#060608] transition-transform active:scale-95 shadow-lg"
-            style={{ backgroundColor: accent }}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-[#0D0E12]/95 border border-white/15 text-xs font-medium text-white/80 hover:text-white hover:border-white/35 transition-colors"
           >
-            <MonitorPlay className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Interactive Theater</span>
+            <MonitorPlay className="w-3.5 h-3.5" style={{ color: accent }} />
+            <span>Live Demo</span>
           </button>
-        </motion.div>
+
+          <button
+            type="button"
+            onClick={() => {
+              soundEngine.playClick();
+              onOpenInquiry();
+            }}
+            className="inline-flex items-center gap-1.5 px-4 sm:px-5 py-2 rounded-full bg-[#E2D9C8] hover:bg-white text-[#060608] font-display font-bold text-xs uppercase tracking-wider transition-colors shadow-lg"
+          >
+            <span>Get Your Website Built</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </header>
   );

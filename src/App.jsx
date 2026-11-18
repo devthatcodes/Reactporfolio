@@ -1,102 +1,92 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import DynamicDockNav from './components/DynamicDockNav';
 import HeroPortfolio from './components/HeroPortfolio';
 import WorkStageShowcase from './components/WorkStageShowcase';
 import EngineeringLabSection from './components/EngineeringLabSection';
 import ContactFooter from './components/ContactFooter';
 import LiveSiteTheaterModal from './components/LiveSiteTheaterModal';
+import ClientInquiryModal from './components/ClientInquiryModal';
 import PortfolioShaderCanvas from './components/PortfolioShaderCanvas';
-import PortfolioCursor from './components/PortfolioCursor';
-import PortfolioCurtainTransition from './components/PortfolioCurtainTransition';
 import { PORTFOLIO_PROJECTS } from './data/projects';
+import { MessageSquarePlus } from 'lucide-react';
 import soundEngine from './utils/soundEngine';
 
 export default function App() {
   const [activeProject, setActiveProject] = useState(PORTFOLIO_PROJECTS[0]);
   const [theaterProject, setTheaterProject] = useState(null);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [transitionState, setTransitionState] = useState({
-    active: false,
-    title: '',
-    subtitle: '',
-    accent: '#E2D9C8',
-  });
+  const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [inquiryPrefill, setInquiryPrefill] = useState(null);
 
-  useEffect(() => {
-    return soundEngine.subscribe((enabled) => {
-      setSoundEnabled(enabled);
-    });
+  const handleScrollTo = useCallback((selector) => {
+    const el = document.querySelector(selector);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }, []);
 
-  const handleNavigate = useCallback(
-    (selector, title = 'Selected Works', subtitle = 'DEONTAE WORK · FRONT END ENGINEER') => {
-      soundEngine.playTransition();
-      setTransitionState({
-        active: true,
-        title,
-        subtitle,
-        accent: activeProject?.accent || '#E2D9C8',
-      });
-
-      setTimeout(() => {
-        const el = document.querySelector(selector);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 220);
-
-      setTimeout(() => {
-        setTransitionState((prev) => ({ ...prev, active: false }));
-      }, 640);
-    },
-    [activeProject]
-  );
-
   const handleOpenTheater = useCallback((proj) => {
-    soundEngine.playTransition();
+    soundEngine.playClick();
     setTheaterProject(proj);
+  }, []);
+
+  const handleOpenInquiry = useCallback((prefill = null) => {
+    soundEngine.playClick();
+    setInquiryPrefill(prefill);
+    setInquiryOpen(true);
   }, []);
 
   return (
     <div className="relative min-h-screen bg-[#060608] text-[#F5F4F0] overflow-x-hidden">
-      {/* Custom Spring-Physics Lens Cursor */}
-      <PortfolioCursor accentColor={activeProject?.accent} />
-
-      {/* Diagonal Silk & DW Monogram Curtain Transition */}
-      <PortfolioCurtainTransition transitionState={transitionState} />
-
-      {/* Real-Time 60/120fps WebGL Iridescent Silk Canvas (Morphs Accent Color on Scroll) */}
+      {/* Subtle 60/120fps WebGL Iridescent Silk Background */}
       <PortfolioShaderCanvas accentColor={activeProject?.accent || '#38BDF8'} />
 
-      {/* Top Architectural Identity & Floating Dock */}
+      {/* Clean Top Navigation Dock with Prominent "Get Your Website Built" CTA */}
       <DynamicDockNav
         activeProject={activeProject}
         onSelectProject={setActiveProject}
         onOpenTheater={handleOpenTheater}
-        onNavigate={handleNavigate}
-        soundEnabled={soundEnabled}
-        onToggleSound={() => soundEngine.toggle()}
+        onOpenInquiry={() => handleOpenInquiry()}
+        onScrollTo={handleScrollTo}
       />
 
       <main className="relative z-10">
         <HeroPortfolio
           onOpenTheater={handleOpenTheater}
-          onNavigate={handleNavigate}
+          onOpenInquiry={handleOpenInquiry}
+          onScrollTo={handleScrollTo}
           onHoverProject={setActiveProject}
         />
 
         <WorkStageShowcase
           activeProject={activeProject}
           onOpenTheater={handleOpenTheater}
+          onOpenInquiry={handleOpenInquiry}
           onActiveChange={setActiveProject}
         />
 
-        <EngineeringLabSection />
+        <EngineeringLabSection onOpenInquiry={handleOpenInquiry} />
       </main>
 
       <div className="relative z-10">
         <ContactFooter onOpenTheater={handleOpenTheater} />
       </div>
+
+      {/* Persistent Floating "Get a Website Quote" Button in Bottom-Right */}
+      <button
+        type="button"
+        onClick={() => handleOpenInquiry()}
+        className="fixed bottom-5 right-5 z-40 inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#E2D9C8] hover:bg-white text-[#060608] font-display font-bold text-xs uppercase tracking-wider shadow-[0_15px_40px_rgba(0,0,0,0.65)] transition-transform active:scale-95"
+      >
+        <MessageSquarePlus className="w-4 h-4" />
+        <span>Get a Website Quote</span>
+      </button>
+
+      {/* Instant Client Inquiry & Project Scope Modal */}
+      <ClientInquiryModal
+        isOpen={inquiryOpen}
+        onClose={() => setInquiryOpen(false)}
+        prefill={inquiryPrefill}
+      />
 
       {/* Fullscreen Interactive Live Site Theater Modal */}
       {theaterProject && (
