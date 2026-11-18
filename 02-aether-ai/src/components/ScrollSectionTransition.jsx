@@ -2,15 +2,164 @@ import React, { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 
 /**
+ * NeuralCircuitConduit
+ * Interactive SVG Neural Circuit Connector between sections.
+ * Glowing cyan/violet data packets flow downward along branched circuit traces
+ * while `useScroll` drives the SVG circuit fill path from top to bottom.
+ */
+export function NeuralCircuitConduit({
+  code = 'BUS // 01 → 02',
+  label = 'SYNAPTIC ROUTING CONDUIT',
+  accent = '#22D3EE',
+  secondary = '#8B5CF6',
+}) {
+  const conduitRef = useRef(null);
+
+  const { scrollYProgress } = useScroll({
+    target: conduitRef,
+    offset: ['start 90%', 'end 30%'],
+  });
+
+  const pathLength = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  const nodeScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.7, 1.15, 1]);
+  const glowOpacity = useTransform(scrollYProgress, [0, 0.4, 1], [0.15, 0.9, 1]);
+
+  return (
+    <div
+      ref={conduitRef}
+      className="relative mx-auto flex max-w-4xl flex-col items-center justify-center py-4 select-none"
+    >
+      {/* Top Micro Telemetry Pill */}
+      <motion.div
+        style={{ opacity: glowOpacity, scale: nodeScale }}
+        className="z-10 flex items-center gap-2 rounded-full border border-[#27272A] bg-[#090D16]/95 px-3 py-1 font-mono text-[10px] tracking-[0.22em] text-zinc-400 shadow-[0_0_24px_rgba(34,211,238,0.12)]"
+      >
+        <span
+          className="h-1.5 w-1.5 rounded-full"
+          style={{
+            backgroundColor: accent,
+            boxShadow: `0 0 8px ${accent}`,
+          }}
+        />
+        <span className="text-zinc-200">{code}</span>
+        <span className="hidden text-zinc-600 sm:inline">//</span>
+        <span className="hidden text-cyan-300/80 sm:inline">{label}</span>
+      </motion.div>
+
+      {/* Branched SVG Neural Circuit Trace */}
+      <div className="relative -my-1 h-28 w-full max-w-[360px]">
+        <svg
+          viewBox="0 0 360 112"
+          fill="none"
+          className="h-full w-full overflow-visible"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient
+              id={`circuit-grad-${code.replace(/\s+/g, '')}`}
+              x1="180"
+              y1="0"
+              x2="180"
+              y2="112"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0%" stopColor={accent} />
+              <stop offset="55%" stopColor={secondary} />
+              <stop offset="100%" stopColor={accent} />
+            </linearGradient>
+          </defs>
+
+          {/* Base Unlit Circuit Tracks */}
+          <path
+            d="M 180 0 L 180 112"
+            stroke="#1F1F26"
+            strokeWidth="1.5"
+          />
+          <path
+            d="M 180 22 L 104 46 L 104 78 L 180 98"
+            stroke="#1F1F26"
+            strokeWidth="1.25"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M 180 22 L 256 46 L 256 78 L 180 98"
+            stroke="#1F1F26"
+            strokeWidth="1.25"
+            strokeLinejoin="round"
+          />
+
+          {/* Scroll-Driven Primary Center Trunk */}
+          <motion.path
+            d="M 180 0 L 180 112"
+            stroke={`url(#circuit-grad-${code.replace(/\s+/g, '')})`}
+            strokeWidth="2"
+            strokeLinecap="round"
+            style={{ pathLength }}
+          />
+
+          {/* Scroll-Driven Left Synaptic Branch */}
+          <motion.path
+            d="M 180 22 L 104 46 L 104 78 L 180 98"
+            stroke={accent}
+            strokeWidth="1.4"
+            strokeOpacity="0.7"
+            strokeLinejoin="round"
+            style={{ pathLength }}
+          />
+
+          {/* Scroll-Driven Right Synaptic Branch */}
+          <motion.path
+            d="M 180 22 L 256 46 L 256 78 L 180 98"
+            stroke={secondary}
+            strokeWidth="1.4"
+            strokeOpacity="0.7"
+            strokeLinejoin="round"
+            style={{ pathLength }}
+          />
+
+          {/* Continuous High-Speed Data Packet Pulses (stroke-dashoffset / animateMotion) */}
+          <circle r="2.5" fill={accent}>
+            <animateMotion
+              dur="1.8s"
+              repeatCount="indefinite"
+              path="M 180 0 L 180 112"
+            />
+          </circle>
+          <circle r="2" fill={secondary}>
+            <animateMotion
+              dur="2.3s"
+              repeatCount="indefinite"
+              path="M 180 22 L 104 46 L 104 78 L 180 98"
+            />
+          </circle>
+          <circle r="2" fill={accent}>
+            <animateMotion
+              dur="2.3s"
+              begin="0.9s"
+              repeatCount="indefinite"
+              path="M 180 22 L 256 46 L 256 78 L 180 98"
+            />
+          </circle>
+
+          {/* Circuit Junction Nodes */}
+          <circle cx="180" cy="22" r="3" fill="#09090B" stroke={accent} strokeWidth="1.5" />
+          <circle cx="104" cy="62" r="2.5" fill="#09090B" stroke={accent} strokeWidth="1.5" />
+          <circle cx="256" cy="62" r="2.5" fill="#09090B" stroke={secondary} strokeWidth="1.5" />
+          <circle cx="180" cy="98" r="3" fill="#09090B" stroke={secondary} strokeWidth="1.5" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/**
  * ScrollPortalSection
- * Lightweight 120fps GPU-composited Slide-Up & Scale-In Deck Reveal:
- * - Uses ONLY y ([50, 0]), scale ([0.96, 1]), and opacity ([0.2, 1]) on scroll entry.
- * - Zero clip-path, zero blur filters, zero 3D perspective repaints.
- * - Includes a horizontal Neural Data Stream top bar driven by pure scaleX / translateX.
+ * Wraps sections in a clean 3D Perspective Horizon Unfold (`opacity`, `y: [44, 0]`, `scale: [0.96, 1]`)
+ * with a glowing top border edge that illuminates as the circuit beam reaches it.
  */
 export function ScrollPortalSection({
   children,
-  sectionCode = 'BLADE // 01',
+  sectionCode = 'NODE // 01',
   sectionLabel = 'TELEMETRY',
   accentColor = '#22D3EE',
   stickySafe = false,
@@ -23,48 +172,53 @@ export function ScrollPortalSection({
     offset: ['start end', 'end start'],
   });
 
-  // Pure GPU-composited Slide-Up & Scale-In Deck Reveal
+  // 3D Perspective Horizon Unfold on scroll entry
   const y = useTransform(
     scrollYProgress,
-    [0, 0.24, 0.85, 1],
-    [isFirst ? 0 : 50, 0, 0, -24]
+    [0, 0.22, 0.88, 1],
+    [isFirst ? 0 : 44, 0, 0, -18]
   );
   const scale = useTransform(
     scrollYProgress,
-    [0, 0.24, 0.85, 1],
-    [isFirst ? 1 : 0.96, 1, 1, 0.98]
+    [0, 0.22, 0.88, 1],
+    [isFirst ? 1 : 0.96, 1, 1, 0.985]
   );
   const opacity = useTransform(
     scrollYProgress,
-    [0, 0.2, 0.88, 1],
-    [isFirst ? 1 : 0.2, 1, 1, 0.5]
+    [0, 0.18, 0.9, 1],
+    [isFirst ? 1 : 0.22, 1, 1, 0.65]
   );
 
-  // Horizontal scanline progress bar driven directly by MotionValue scaleX
-  const barScaleX = useTransform(scrollYProgress, [0.02, 0.45], [0, 1]);
+  // Glowing top horizon edge that illuminates as the circuit beam reaches the section
+  const beamScaleX = useTransform(scrollYProgress, [0.02, 0.35], [0.08, 1]);
+  const beamOpacity = useTransform(scrollYProgress, [0.02, 0.25, 0.9], [0.2, 1, 0.35]);
 
   if (stickySafe) {
     return (
       <div ref={sectionRef} className="relative">
         <div className="pointer-events-none mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-zinc-400">
+          <div className="flex items-center justify-between py-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-400">
             <span className="flex items-center gap-2">
               <span
                 className="inline-block h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: accentColor }}
+                style={{
+                  backgroundColor: accentColor,
+                  boxShadow: `0 0 8px ${accentColor}`,
+                }}
               />
-              <span>{sectionCode}</span>
+              <span className="text-zinc-200">{sectionCode}</span>
             </span>
-            <span className="hidden sm:inline text-zinc-500">
-              STICKY HARDWARE BLADE STACK // {sectionLabel}
+            <span className="hidden text-zinc-500 sm:inline">
+              NEURAL TOPOLOGY DECK // {sectionLabel}
             </span>
           </div>
-          <div className="relative h-[2px] w-full overflow-hidden bg-[#18181D]">
+          <div className="relative h-[1px] w-full overflow-hidden bg-[#18181D]">
             <motion.div
               style={{
-                scaleX: barScaleX,
-                transformOrigin: 'left center',
-                backgroundColor: accentColor,
+                scaleX: beamScaleX,
+                opacity: beamOpacity,
+                transformOrigin: 'center',
+                background: `linear-gradient(90deg, transparent, ${accentColor}, #8B5CF6, transparent)`,
               }}
               className="h-full w-full will-change-transform"
             />
@@ -81,120 +235,40 @@ export function ScrollPortalSection({
         style={{ y, scale, opacity }}
         className="relative will-change-transform"
       >
-        {/* Top Neural Data Stream Header */}
-        <div className="pointer-events-none relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-zinc-500">
-            <span className="flex items-center gap-2">
-              <span
-                className="inline-block h-1.5 w-1.5 rounded-full"
-                style={{ backgroundColor: accentColor }}
+        {!isFirst && (
+          <div className="pointer-events-none relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between py-2 font-mono text-[10px] uppercase tracking-[0.24em] text-zinc-500">
+              <span className="flex items-center gap-2">
+                <span
+                  className="inline-block h-1.5 w-1.5 rounded-full"
+                  style={{
+                    backgroundColor: accentColor,
+                    boxShadow: `0 0 8px ${accentColor}`,
+                  }}
+                />
+                <span className="text-zinc-300">{sectionCode}</span>
+              </span>
+              <span className="hidden text-zinc-500 sm:inline">
+                HORIZON NODE // {sectionLabel}
+              </span>
+            </div>
+            {/* Glowing Top Horizon Border Edge */}
+            <div className="relative h-[1px] w-full overflow-hidden rounded-full bg-[#18181D]">
+              <motion.div
+                style={{
+                  scaleX: beamScaleX,
+                  opacity: beamOpacity,
+                  transformOrigin: 'center',
+                  background: `linear-gradient(90deg, transparent, ${accentColor}, #8B5CF6, transparent)`,
+                }}
+                className="h-full w-full will-change-transform"
               />
-              <span className="text-zinc-300">{sectionCode}</span>
-            </span>
-            <span className="hidden sm:inline text-zinc-500">
-              NEURAL BLADE DECK // {sectionLabel}
-            </span>
+            </div>
           </div>
-          <div className="relative h-[2px] w-full overflow-hidden rounded-full bg-[#18181D]">
-            <motion.div
-              style={{
-                scaleX: barScaleX,
-                transformOrigin: 'left center',
-                backgroundColor: accentColor,
-              }}
-              className="h-full w-full will-change-transform"
-            />
-          </div>
-        </div>
+        )}
 
         {children}
       </motion.div>
-    </div>
-  );
-}
-
-/**
- * ScrollKineticBanner
- * Lightweight Horizontal Neural Data Stream Divider between sections.
- * Uses pure GPU translateX and scaleX progress bar (zero blur, zero 3D tilt, zero setState).
- */
-export function ScrollKineticBanner({
-  primaryText = 'AUTONOMOUS NEURAL FABRIC // ZERO-COPY TENSOR STREAMING // SUB-4MS FAILOVER',
-  secondaryText = 'SEMANTIC VECTOR CACHE // OPENTELEMETRY NATIVE // CRYPTOGRAPHIC ENCLAVE',
-  code = 'STREAM // DATA BUS',
-  accent = '#22D3EE',
-}) {
-  const bannerRef = useRef(null);
-
-  const { scrollYProgress } = useScroll({
-    target: bannerRef,
-    offset: ['start end', 'end start'],
-  });
-
-  // Pure GPU translateX and scaleX MotionValues
-  const xLeft = useTransform(scrollYProgress, [0, 1], ['4%', '-18%']);
-  const xRight = useTransform(scrollYProgress, [0, 1], ['-18%', '4%']);
-  const progressScaleX = useTransform(scrollYProgress, [0.1, 0.9], [0, 1]);
-
-  return (
-    <div
-      ref={bannerRef}
-      className="relative overflow-hidden border-y border-[#27272A]/80 bg-[#090D16]/95 py-5 select-none"
-    >
-      {/* Top HUD Metadata & GPU scaleX Progress Bar */}
-      <div className="mx-auto mb-2.5 flex max-w-7xl items-center justify-between px-4 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-400 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2">
-          <span
-            className="inline-block h-2 w-2 rounded-sm"
-            style={{ backgroundColor: accent }}
-          />
-          <span className="text-cyan-300">{code}</span>
-        </div>
-
-        <div className="hidden h-1 w-56 overflow-hidden rounded-full bg-[#18181D] sm:block">
-          <motion.div
-            style={{
-              scaleX: progressScaleX,
-              transformOrigin: 'left center',
-            }}
-            className="h-full w-full bg-gradient-to-r from-[#22D3EE] via-[#8B5CF6] to-[#34D399] will-change-transform"
-          />
-        </div>
-
-        <div className="flex items-center gap-2 text-zinc-500">
-          <span>NEURAL DATA STREAM // 120FPS SYNC</span>
-        </div>
-      </div>
-
-      {/* Dual-Direction Horizontal Mono Telemetry Tracks */}
-      <div className="space-y-1">
-        <motion.div
-          style={{ x: xLeft }}
-          className="flex whitespace-nowrap font-extrabold tracking-tight text-xl sm:text-3xl lg:text-4xl will-change-transform"
-        >
-          {[0, 1].map((idx) => (
-            <span
-              key={idx}
-              className="mx-4 bg-gradient-to-r from-[#FAFAFA] via-cyan-200 to-zinc-500 bg-clip-text text-transparent"
-            >
-              {primaryText} <span className="mx-3 text-cyan-400">•</span>
-            </span>
-          ))}
-        </motion.div>
-
-        <motion.div
-          style={{ x: xRight }}
-          className="flex whitespace-nowrap font-mono text-xs sm:text-sm tracking-[0.22em] uppercase text-zinc-500 will-change-transform"
-        >
-          {[0, 1, 2].map((idx) => (
-            <span key={idx} className="mx-4 flex items-center gap-3">
-              <span className="text-violet-400">[BLADE_BUS]</span>
-              <span>{secondaryText}</span>
-              <span className="text-cyan-400">///</span>
-            </span>
-          ))}
-        </motion.div>
-      </div>
     </div>
   );
 }

@@ -188,8 +188,8 @@ export default function OriginPortalModal({
               <span className="px-3 py-1 rounded-full bg-terracotta/20 border border-terracotta/50 text-terracotta text-xs font-mono uppercase tracking-widest">
                 {coffee.lotCode || 'ORIGIN PORTAL'}
               </span>
-              <span className="text-xs font-mono uppercase tracking-widest text-cream/60">
-                GPS // {coffee.coordinates || '6.1667° N, 38.2000° E'}
+              <span className="text-xs font-serif italic tracking-wider text-cream/70">
+                Coordinates · {coffee.coordinates || '6.1667° N, 38.2000° E'}
               </span>
             </div>
 
@@ -391,8 +391,8 @@ export default function OriginPortalModal({
                 {/* Live Telemetry Readout Box */}
                 <div className="p-4 rounded-2xl bg-espresso border border-terracotta/30 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-mono uppercase tracking-widest text-terracotta">
-                      PHASE // {activeRoastStep.phase}
+                    <span className="text-xs font-serif italic tracking-wider text-terracotta">
+                      Roast Stage · {activeRoastStep.phase}
                     </span>
                     <span className="text-xs font-mono text-cream/60 tabular-nums">
                       T+{activeRoastStep.sec}s
@@ -493,7 +493,7 @@ export default function OriginPortalModal({
                 PROCESS: {coffee.process}
               </span>
             </div>
-            <span>PRESS [ESC] OR CLICK X TO EXIT ORIGIN PORTAL</span>
+            <span>Press Escape or click × to return to the roastery</span>
           </div>
         </div>
       </motion.div>

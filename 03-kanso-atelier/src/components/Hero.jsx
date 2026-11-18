@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowDown, Sun, Compass } from 'lucide-react';
+import { ArrowDown, Sun } from 'lucide-react';
 import ScrambleText from './ScrambleText';
 import { soundEngine } from '../utils/soundEngine';
 
@@ -10,15 +10,16 @@ const fadeUp = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.85,
+      duration: 0.9,
       delay,
-      ease: [0.22, 1, 0.36, 1],
+      ease: [0.16, 1, 0.3, 1],
     },
   }),
 };
 
 export default function Hero({ onNavigatePortal }) {
   const sectionRef = useRef(null);
+  const plateRef = useRef(null);
   const [mouseNorm, setMouseNorm] = useState({ x: 0.65, y: 0.28 });
 
   // Multi-layer foreground parallax driven by scroll
@@ -27,10 +28,10 @@ export default function Hero({ onNavigatePortal }) {
     offset: ['start start', 'end start'],
   });
 
-  const titleParallaxY = useTransform(scrollYProgress, [0, 1], [0, -55]);
-  const copyParallaxY = useTransform(scrollYProgress, [0, 1], [0, -30]);
-  const monolithParallaxY = useTransform(scrollYProgress, [0, 1], [0, 45]);
-  const plaqueParallaxY = useTransform(scrollYProgress, [0, 1], [0, -70]);
+  const titleParallaxY = useTransform(scrollYProgress, [0, 1], [0, -45]);
+  const copyParallaxY = useTransform(scrollYProgress, [0, 1], [0, -24]);
+  const innerPlateParallaxY = useTransform(scrollYProgress, [0, 1], ['-6%', '6%']);
+  const plaqueParallaxY = useTransform(scrollYProgress, [0, 1], [0, -50]);
 
   const handleMonolithMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -49,8 +50,8 @@ export default function Hero({ onNavigatePortal }) {
       id="top"
       className="relative z-10 min-h-screen pt-28 pb-16 md:pt-36 md:pb-24 flex flex-col justify-between overflow-hidden bg-architectural-grid"
     >
-      <div className="max-w-[1360px] w-full mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center my-auto">
-        {/* Left Column: Editorial & Kinetic Typography with Differential Scroll Parallax */}
+      <div className="max-w-[1360px] w-full mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center my-auto">
+        {/* Left Column: Poetic Masked Serif Curtain Typography */}
         <div className="lg:col-span-7 space-y-8 relative z-10">
           <motion.div
             variants={fadeUp}
@@ -62,22 +63,44 @@ export default function Hero({ onNavigatePortal }) {
           >
             <span className="inline-block w-8 h-[1px] bg-bronze" />
             <ScrambleText
-              text="Architecture & Spatial Experience · Est. 2018"
-              duration={720}
+              text="Architecture & Spatial Monograph · Est. 2018"
+              duration={0.85}
             />
           </motion.div>
 
-          <motion.div style={{ y: titleParallaxY }} className="will-change-transform">
-            <motion.h1
-              variants={fadeUp}
-              initial="hidden"
-              animate="visible"
-              custom={0.18}
-              className="font-serif text-5xl sm:text-6xl md:text-7xl xl:text-[5.25rem] font-normal leading-[1.03] tracking-[-0.015em] text-charcoal"
-            >
-              Quiet spaces shaped by{' '}
-              <span className="italic text-bronze font-normal">light</span>, timber, and stone.
-            </motion.h1>
+          <motion.div style={{ y: titleParallaxY }} className="will-change-transform space-y-1">
+            <h1 className="font-serif text-5xl sm:text-6xl md:text-7xl xl:text-[5.25rem] font-normal leading-[1.04] tracking-[-0.015em] text-charcoal">
+              <span className="block overflow-hidden pb-1">
+                <motion.span
+                  initial={{ y: '105%' }}
+                  animate={{ y: '0%' }}
+                  transition={{ duration: 0.85, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+                  className="inline-block will-change-transform"
+                >
+                  Quiet spaces shaped
+                </motion.span>
+              </span>
+              <span className="block overflow-hidden pb-1">
+                <motion.span
+                  initial={{ y: '105%' }}
+                  animate={{ y: '0%' }}
+                  transition={{ duration: 0.85, delay: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                  className="inline-block will-change-transform"
+                >
+                  by <em className="italic text-bronze font-normal">light</em>, timber,
+                </motion.span>
+              </span>
+              <span className="block overflow-hidden pb-1">
+                <motion.span
+                  initial={{ y: '105%' }}
+                  animate={{ y: '0%' }}
+                  transition={{ duration: 0.85, delay: 0.34, ease: [0.16, 1, 0.3, 1] }}
+                  className="inline-block will-change-transform"
+                >
+                  and stone.
+                </motion.span>
+              </span>
+            </h1>
           </motion.div>
 
           <motion.div style={{ y: copyParallaxY }} className="space-y-8 will-change-transform">
@@ -85,7 +108,7 @@ export default function Hero({ onNavigatePortal }) {
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              custom={0.32}
+              custom={0.42}
               className="max-w-xl text-sm sm:text-base leading-relaxed text-taupe font-light"
             >
               Operating between Kyoto and Copenhagen, Kanso Atelier crafts residences, cultural
@@ -97,22 +120,22 @@ export default function Hero({ onNavigatePortal }) {
               variants={fadeUp}
               initial="hidden"
               animate="visible"
-              custom={0.44}
+              custom={0.52}
               className="pt-2 flex flex-wrap items-center gap-8"
             >
               <a
                 href="#works"
-                data-cursor="ENTER ARCHIVE"
+                data-cursor="Archive"
                 onMouseEnter={() => soundEngine.playHoverTick(1.0)}
                 onClick={(e) => {
                   e.preventDefault();
                   soundEngine.playPortalSweep();
                   if (onNavigatePortal) {
                     onNavigatePortal({
-                      index: '02',
+                      index: 'II',
                       label: 'Works',
                       href: '#works',
-                      sectionTitle: 'MONOGRAPH ARCHIVE',
+                      sectionTitle: 'Selected Monographs',
                     });
                   }
                 }}
@@ -126,17 +149,17 @@ export default function Hero({ onNavigatePortal }) {
 
               <a
                 href="#philosophy"
-                data-cursor="STUDIO ETHOS"
+                data-cursor="Ethos"
                 onMouseEnter={() => soundEngine.playHoverTick(1.1)}
                 onClick={(e) => {
                   e.preventDefault();
                   soundEngine.playPortalSweep();
                   if (onNavigatePortal) {
                     onNavigatePortal({
-                      index: '03',
+                      index: 'I',
                       label: 'Philosophy',
                       href: '#philosophy',
-                      sectionTitle: 'SPATIAL ETHOS',
+                      sectionTitle: 'Spatial Philosophy',
                     });
                   }
                 }}
@@ -148,257 +171,277 @@ export default function Hero({ onNavigatePortal }) {
           </motion.div>
         </div>
 
-        {/* Right Column: Interactive Solar Monolith & Caustic Raytracer Study */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          style={{
-            y: monolithParallaxY,
-          }}
-          className="lg:col-span-5 relative will-change-transform"
-        >
-          {/* Floating Foreground Parallax Telemetry Plaque */}
+        {/* Right Column: Architectural Artwork Frame with Slow Curtain Unveil & 1.16 -> 1.0 Scale-Down */}
+        <div ref={plateRef} className="lg:col-span-5 relative">
+          {/* Floating Editorial Monograph Footnote Plaque */}
           <motion.div
             style={{ y: plaqueParallaxY }}
-            className="hidden sm:flex items-center gap-3 absolute -left-8 bottom-12 z-30 px-4 py-2.5 bg-charcoal text-alabaster border border-bronze/50 shadow-xl"
+            className="hidden sm:flex flex-col absolute -left-8 bottom-12 z-30 px-5 py-3.5 bg-[#F6F4F0] text-charcoal border border-charcoal/15 shadow-[0_16px_40px_rgba(28,27,25,0.08)]"
           >
-            <Compass className="w-4 h-4 text-bronze animate-spin [animation-duration:18s]" />
-            <div className="text-[9px] font-mono uppercase tracking-[0.2em]">
-              <div className="text-bronze">SOLAR DATUM // 1:100</div>
-              <div>SHADOW VECTOR {shadowShift > 0 ? `+${shadowShift}` : shadowShift}MM</div>
-            </div>
+            <span className="font-serif italic text-sm text-bronze">
+              Plate 00 — Solar Study
+            </span>
+            <span className="text-[9px] font-mono uppercase tracking-[0.22em] text-taupe mt-0.5">
+              SHADOW OFFSET {shadowShift > 0 ? `+${shadowShift}` : shadowShift}MM · 1:100
+            </span>
           </motion.div>
 
+          {/* Outer Frame with Paper Curtain Unveil (#EAE6DF) & Inner Scale-Down (1.16 -> 1.0) */}
           <div
             onMouseMove={handleMonolithMove}
-            data-cursor="STEER SOLAR AXIS"
-            className="relative bg-stone/95 border border-charcoal/15 p-6 sm:p-10 aspect-[4/5] flex items-center justify-center overflow-hidden cursor-crosshair shadow-lg"
+            data-cursor="Light"
+            className="relative bg-stone/95 border border-charcoal/15 aspect-[4/5] overflow-hidden shadow-[0_20px_50px_rgba(28,27,25,0.06)]"
           >
-            {/* Dynamic cursor-steered warm sunbeam gradient */}
-            <div
-              className="absolute inset-0 pointer-events-none transition-opacity duration-300"
-              style={{
-                background: `radial-gradient(circle at ${mouseNorm.x * 100}% ${
-                  mouseNorm.y * 100
-                }%, rgba(154, 123, 79, 0.22) 0%, rgba(239, 236, 230, 0) 65%)`,
-              }}
+            {/* Warm Limestone Paper Curtain Overlay (#EAE6DF) sliding off over 1.1s [0.16, 1, 0.3, 1] */}
+            <motion.div
+              initial={{ scaleY: 1 }}
+              whileInView={{ scaleY: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+              style={{ transformOrigin: 'bottom center' }}
+              className="pointer-events-none absolute inset-0 z-30 bg-[#EAE6DF] border-t border-bronze/40 will-change-transform"
             />
 
-            {/* Top Interactive Telemetry Tag */}
-            <div className="absolute top-4 left-6 right-6 flex items-center justify-between text-[9px] font-mono uppercase tracking-[0.2em] text-taupe z-20">
-              <span className="flex items-center gap-1.5">
-                <Sun className="w-3 h-3 text-bronze" />
-                <span>INTERACTIVE HELIODON</span>
-              </span>
-              <span className="text-charcoal">
-                AZ {Math.round(mouseNorm.x * 180 + 90)}° / ALT {Math.round((1 - mouseNorm.y) * 75)}°
-              </span>
-            </div>
-
-            <svg
-              viewBox="0 0 400 500"
-              className="w-full h-full relative z-10"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-label="Interactive architectural monolith and solar ray study"
+            {/* Inner Artwork Container: Scales down 1.16 -> 1.0 on reveal + vertical scroll parallax y: ['-6%', '6%'] */}
+            <motion.div
+              style={{ y: innerPlateParallaxY }}
+              className="w-full h-full will-change-transform"
             >
-              {/* Outer architectural datum frame */}
-              <rect
-                x="24"
-                y="24"
-                width="352"
-                height="452"
-                stroke="#1C1B19"
-                strokeOpacity="0.14"
-                strokeWidth="0.75"
-              />
-
-              {/* Interactive Sun / Solstice Orb */}
-              <circle
-                cx={sunCx}
-                cy={sunCy}
-                r="40"
-                stroke="#9A7B4F"
-                strokeWidth="1"
-                strokeDasharray="3 3"
-              />
-              <circle cx={sunCx} cy={sunCy} r="16" fill="#9A7B4F" fillOpacity="0.18" />
-              <circle cx={sunCx} cy={sunCy} r="4" fill="#9A7B4F" />
-
-              {/* Dynamic Diagonal Light Rays */}
-              <line
-                x1={sunCx}
-                y1={sunCy}
-                x2={140 + shadowShift}
-                y2="414"
-                stroke="#9A7B4F"
-                strokeOpacity="0.5"
-                strokeWidth="0.9"
-              />
-              <line
-                x1={sunCx + 24}
-                y1={sunCy - 16}
-                x2={195 + shadowShift}
-                y2="414"
-                stroke="#9A7B4F"
-                strokeOpacity="0.28"
-                strokeWidth="0.75"
-                strokeDasharray="4 4"
-              />
-
-              {/* Dynamic Cast Shadow Polygon on Ground Plinth */}
-              <polygon
-                points={`152,414 322,414 ${322 + shadowShift},438 ${152 + shadowShift},438`}
-                fill="#1C1B19"
-                fillOpacity="0.12"
-              />
-
-              {/* Background Stone Volume */}
-              <rect
-                x="78"
-                y="128"
-                width="148"
-                height="286"
-                fill="#E5E0D7"
-                stroke="#1C1B19"
-                strokeWidth="1"
-              />
-
-              {/* Timber Louver Rhythm inside Volume */}
-              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-                <line
-                  key={i}
-                  x1={94 + i * 16}
-                  y1="148"
-                  x2={94 + i * 16}
-                  y2="290"
-                  stroke="#9A7B4F"
-                  strokeWidth="1"
-                  strokeOpacity="0.75"
+              <motion.div
+                initial={{ scale: 1.16 }}
+                whileInView={{ scale: 1.0 }}
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ duration: 1.35, ease: [0.16, 1, 0.3, 1] }}
+                className="relative w-full h-full p-6 sm:p-10 flex items-center justify-center will-change-transform"
+              >
+                {/* Dynamic cursor-steered warm sunbeam gradient */}
+                <div
+                  className="absolute inset-0 pointer-events-none transition-opacity duration-300"
+                  style={{
+                    background: `radial-gradient(circle at ${mouseNorm.x * 100}% ${
+                      mouseNorm.y * 100
+                    }%, rgba(154, 123, 79, 0.20) 0%, rgba(239, 236, 230, 0) 65%)`,
+                  }}
                 />
-              ))}
 
-              {/* Foreground Cantilevered Monolith */}
-              <path
-                d="M152 210 H322 V414 H152 Z"
-                fill="#F7F5F0"
-                stroke="#1C1B19"
-                strokeWidth="1.2"
-              />
+                {/* Top Editorial Plate Caption */}
+                <div className="absolute top-4 left-6 right-6 flex items-center justify-between text-[9px] font-mono uppercase tracking-[0.2em] text-taupe z-20">
+                  <span className="flex items-center gap-1.5">
+                    <Sun className="w-3 h-3 text-bronze" />
+                    <span>HELIODON DAYLIGHT STUDY</span>
+                  </span>
+                  <span className="text-charcoal">
+                    AZ {Math.round(mouseNorm.x * 180 + 90)}° / ALT {Math.round((1 - mouseNorm.y) * 75)}°
+                  </span>
+                </div>
 
-              {/* Deep Eave Shadow Band (height shifts subtly with solar altitude) */}
-              <rect
-                x="152"
-                y="210"
-                width="170"
-                height={Math.max(12, Math.round(mouseNorm.y * 34))}
-                fill="#1C1B19"
-                fillOpacity="0.1"
-              />
+                <svg
+                  viewBox="0 0 400 500"
+                  className="w-full h-full relative z-10"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-label="Interactive architectural monolith and solar ray study"
+                >
+                  {/* Outer architectural datum frame */}
+                  <rect
+                    x="24"
+                    y="24"
+                    width="352"
+                    height="452"
+                    stroke="#1C1B19"
+                    strokeOpacity="0.14"
+                    strokeWidth="0.75"
+                  />
 
-              {/* Framed Courtyard Void */}
-              <rect
-                x="184"
-                y="268"
-                width="106"
-                height="146"
-                fill="#EFECE6"
-                stroke="#1C1B19"
-                strokeWidth="1"
-              />
-              <line
-                x1="237"
-                y1="268"
-                x2="237"
-                y2="414"
-                stroke="#1C1B19"
-                strokeOpacity="0.35"
-                strokeWidth="0.75"
-              />
+                  {/* Interactive Sun / Solstice Orb */}
+                  <circle
+                    cx={sunCx}
+                    cy={sunCy}
+                    r="40"
+                    stroke="#9A7B4F"
+                    strokeWidth="1"
+                    strokeDasharray="3 3"
+                  />
+                  <circle cx={sunCx} cy={sunCy} r="16" fill="#9A7B4F" fillOpacity="0.18" />
+                  <circle cx={sunCx} cy={sunCy} r="4" fill="#9A7B4F" />
 
-              {/* Ground Plinth / Datum Line */}
-              <line x1="48" y1="414" x2="352" y2="414" stroke="#1C1B19" strokeWidth="1.4" />
-              <line
-                x1="48"
-                y1="422"
-                x2="352"
-                y2="422"
-                stroke="#1C1B19"
-                strokeOpacity="0.3"
-                strokeWidth="0.75"
-              />
+                  {/* Dynamic Diagonal Light Rays */}
+                  <line
+                    x1={sunCx}
+                    y1={sunCy}
+                    x2={140 + shadowShift}
+                    y2="414"
+                    stroke="#9A7B4F"
+                    strokeOpacity="0.5"
+                    strokeWidth="0.9"
+                  />
+                  <line
+                    x1={sunCx + 24}
+                    y1={sunCy - 16}
+                    x2={195 + shadowShift}
+                    y2="414"
+                    stroke="#9A7B4F"
+                    strokeOpacity="0.28"
+                    strokeWidth="0.75"
+                    strokeDasharray="4 4"
+                  />
 
-              {/* Architectural Dimension Marks */}
-              <line x1="60" y1="128" x2="60" y2="414" stroke="#78736A" strokeWidth="0.6" />
-              <line x1="55" y1="128" x2="65" y2="128" stroke="#78736A" strokeWidth="0.6" />
-              <line x1="55" y1="414" x2="65" y2="414" stroke="#78736A" strokeWidth="0.6" />
+                  {/* Dynamic Cast Shadow Polygon on Ground Plinth */}
+                  <polygon
+                    points={`152,414 322,414 ${322 + shadowShift},438 ${152 + shadowShift},438`}
+                    fill="#1C1B19"
+                    fillOpacity="0.12"
+                  />
 
-              <text
-                x="52"
-                y="275"
-                transform="rotate(-90 52 275)"
-                fill="#78736A"
-                fontSize="8"
-                letterSpacing="2.5"
-                fontFamily="monospace"
-              >
-                EL +4.20M
-              </text>
+                  {/* Background Stone Volume */}
+                  <rect
+                    x="78"
+                    y="128"
+                    width="148"
+                    height="286"
+                    fill="#E5E0D7"
+                    stroke="#1C1B19"
+                    strokeWidth="1"
+                  />
 
-              <text
-                x="265"
-                y="450"
-                fill="#78736A"
-                fontSize="8"
-                letterSpacing="2"
-                fontFamily="monospace"
-              >
-                FIG. 01 / HELIODON
-              </text>
-            </svg>
+                  {/* Timber Louver Rhythm inside Volume */}
+                  {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                    <line
+                      key={i}
+                      x1={94 + i * 16}
+                      y1="148"
+                      x2={94 + i * 16}
+                      y2="290"
+                      stroke="#9A7B4F"
+                      strokeWidth="1"
+                      strokeOpacity="0.75"
+                    />
+                  ))}
 
-            {/* Corner Studio Coordinate Tag */}
-            <div className="absolute bottom-4 left-6 text-[10px] font-mono uppercase tracking-[0.2em] text-taupe">
-              35.0116° N · 55.6761° N
-            </div>
+                  {/* Foreground Cantilevered Monolith */}
+                  <path
+                    d="M152 210 H322 V414 H152 Z"
+                    fill="#F7F5F0"
+                    stroke="#1C1B19"
+                    strokeWidth="1.2"
+                  />
+
+                  {/* Deep Eave Shadow Band */}
+                  <rect
+                    x="152"
+                    y="210"
+                    width="170"
+                    height={Math.max(12, Math.round(mouseNorm.y * 34))}
+                    fill="#1C1B19"
+                    fillOpacity="0.1"
+                  />
+
+                  {/* Framed Courtyard Void */}
+                  <rect
+                    x="184"
+                    y="268"
+                    width="106"
+                    height="146"
+                    fill="#EFECE6"
+                    stroke="#1C1B19"
+                    strokeWidth="1"
+                  />
+                  <line
+                    x1="237"
+                    y1="268"
+                    x2="237"
+                    y2="414"
+                    stroke="#1C1B19"
+                    strokeOpacity="0.35"
+                    strokeWidth="0.75"
+                  />
+
+                  {/* Ground Plinth / Datum Line */}
+                  <line x1="48" y1="414" x2="352" y2="414" stroke="#1C1B19" strokeWidth="1.4" />
+                  <line
+                    x1="48"
+                    y1="422"
+                    x2="352"
+                    y2="422"
+                    stroke="#1C1B19"
+                    strokeOpacity="0.3"
+                    strokeWidth="0.75"
+                  />
+
+                  {/* Architectural Dimension Marks */}
+                  <line x1="60" y1="128" x2="60" y2="414" stroke="#78736A" strokeWidth="0.6" />
+                  <line x1="55" y1="128" x2="65" y2="128" stroke="#78736A" strokeWidth="0.6" />
+                  <line x1="55" y1="414" x2="65" y2="414" stroke="#78736A" strokeWidth="0.6" />
+
+                  <text
+                    x="52"
+                    y="275"
+                    transform="rotate(-90 52 275)"
+                    fill="#78736A"
+                    fontSize="8"
+                    letterSpacing="2.5"
+                    fontFamily="monospace"
+                  >
+                    EL +4.20M
+                  </text>
+
+                  <text
+                    x="265"
+                    y="450"
+                    fill="#78736A"
+                    fontSize="8"
+                    letterSpacing="2"
+                    fontFamily="monospace"
+                  >
+                    PLATE I / HELIODON
+                  </text>
+                </svg>
+
+                {/* Corner Studio Coordinate Tag */}
+                <div className="absolute bottom-4 left-6 text-[10px] font-mono uppercase tracking-[0.2em] text-taupe">
+                  35.0116° N · 55.6761° N
+                </div>
+              </motion.div>
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Bottom Scroll Cue */}
+      {/* Bottom Monograph Caption Bar */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.9, duration: 0.8 }}
+        transition={{ delay: 0.7, duration: 0.8 }}
         className="max-w-[1360px] w-full mx-auto px-6 md:px-12 pt-10 flex items-center justify-between border-t border-charcoal/10 mt-12"
       >
         <div className="flex items-center gap-6 text-[11px] font-mono uppercase tracking-[0.2em] text-taupe">
           <span>Kyoto</span>
           <span className="text-bronze">·</span>
           <span>Copenhagen</span>
-          <span className="hidden sm:inline text-charcoal/30">|</span>
-          <span className="hidden sm:inline text-bronze">SCROLL TO SCRUB 3D ARCHITECTURE</span>
+          <span className="hidden sm:inline text-charcoal/25">|</span>
+          <span className="hidden sm:inline font-serif italic text-sm tracking-normal normal-case text-bronze">
+            Ma (間) — Architecture of quiet proportion
+          </span>
         </div>
 
         <a
           href="#works"
-          data-cursor="SCROLL TO WORKS"
+          data-cursor="Archive"
           onClick={(e) => {
             e.preventDefault();
             soundEngine.playPortalSweep();
             if (onNavigatePortal) {
               onNavigatePortal({
-                index: '02',
+                index: 'II',
                 label: 'Works',
                 href: '#works',
-                sectionTitle: 'MONOGRAPH ARCHIVE',
+                sectionTitle: 'Selected Monographs',
               });
             }
           }}
           className="group inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.2em] text-charcoal hover:text-bronze transition-colors"
         >
-          <span>Explore Archive</span>
+          <span>Monograph Exhibition</span>
           <ArrowDown className="w-3.5 h-3.5 stroke-[1.5] group-hover:translate-y-0.5 transition-transform" />
         </a>
       </motion.div>

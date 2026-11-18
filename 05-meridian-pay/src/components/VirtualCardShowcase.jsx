@@ -63,30 +63,40 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  // Scroll-scrubbed 3D orbital rotation for the titanium card
+  // Apple Hardware Product Page Scroll-Docked 3D Titanium Card Choreography:
+  // Starts oversized and tilted (scale: 1.25, y: -40, rotateX: 28deg, rotateY: -18deg)
+  // and smoothly docks into its precision showcase slot (scale: 1.0, y: 0, rotateX: 0deg, rotateY: 0deg)
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    offset: ['start end', 'end start'],
+    offset: ['start 0.92', 'end 0.15'],
   });
 
-  const scrollOrbitY = useSpring(
-    useTransform(scrollYProgress, [0, 0.5, 1], [-28, 0, 18]),
-    { stiffness: 180, damping: 28 }
+  const scrollScale = useSpring(
+    useTransform(scrollYProgress, [0, 0.45, 0.85, 1], [1.25, 1.0, 1.0, 0.97]),
+    { stiffness: 200, damping: 28 }
+  );
+  const scrollDockY = useSpring(
+    useTransform(scrollYProgress, [0, 0.45, 1], [-40, 0, 12]),
+    { stiffness: 200, damping: 28 }
   );
   const scrollOrbitX = useSpring(
-    useTransform(scrollYProgress, [0, 0.5, 1], [20, 0, -10]),
-    { stiffness: 180, damping: 28 }
+    useTransform(scrollYProgress, [0, 0.45, 1], [28, 0, -6]),
+    { stiffness: 200, damping: 28 }
   );
-  const scrollOrbitZ = useTransform(scrollYProgress, [0, 0.5, 1], [-4, 0, 3]);
-  const floatRingY = useTransform(scrollYProgress, [0, 1], [70, -70]);
-  const panelParallaxY = useTransform(scrollYProgress, [0, 0.5, 1], [45, 0, -35]);
+  const scrollOrbitY = useSpring(
+    useTransform(scrollYProgress, [0, 0.45, 1], [-18, 0, 8]),
+    { stiffness: 200, damping: 28 }
+  );
+  const sheenSweepX = useTransform(scrollYProgress, [0, 0.7, 1], ['-130%', '130%', '170%']);
+  const floatRingY = useTransform(scrollYProgress, [0, 1], [50, -50]);
+  const panelParallaxY = useTransform(scrollYProgress, [0, 0.45, 1], [36, 0, -20]);
 
   // Automatically sweep holographic foil across the card as you scroll when not hovering
   useMotionValueEvent(scrollYProgress, 'change', (latest) => {
     if (!isHoveringCard) {
       setFoilCoords({
-        x: Math.round(15 + latest * 70),
-        y: Math.round(80 - latest * 60),
+        x: Math.round(12 + latest * 76),
+        y: Math.round(84 - latest * 64),
         angle: Math.round(105 + latest * 95),
       });
     }
@@ -138,7 +148,7 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
         <div className="max-w-2xl mb-12 lg:mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-[11px] font-mono font-semibold uppercase tracking-widest text-cyan-400 mb-3">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>03 // HOLOGRAPHIC METAL &amp; VIRTUAL CARDS</span>
+            <span>03 // PRECISION TITANIUM HARDWARE &amp; VIRTUAL CARDS</span>
           </div>
           <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">
             <ScrambleText text="Programmable Titanium Cards." />
@@ -150,37 +160,57 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          {/* Left: Scroll-Driven 3D Orbital + Cursor Gyroscopic Tilt Interactive Card */}
+          {/* Left: Apple-Style Scroll-Docked 3D Titanium Card Showcase */}
           <div className="lg:col-span-6 flex flex-col items-center relative">
-            {/* Floating Parallax Orbital Telemetry Badge */}
+            {/* Floating Hardware Precision Spec Pill */}
             <motion.div
               style={{ y: floatRingY }}
-              className="pointer-events-none hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#070D19]/90 border border-cyan-400/35 text-[10px] font-mono text-cyan-300 mb-4 shadow-[0_0_25px_rgba(6,182,212,0.2)]"
+              className="pointer-events-none hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#070D19]/90 border border-white/15 text-[10px] font-mono text-slate-300 mb-5 shadow-[0_10px_30px_rgba(0,0,0,0.45)]"
             >
-              <Orbit className="w-3.5 h-3.5 text-[#10B981] animate-spin" />
-              <span>3D SCROLL ORBIT + GYRO FOIL SHIMMER ACTIVE</span>
+              <Orbit className="w-3.5 h-3.5 text-[#10B981]" />
+              <span>GRADE-5 BRUSHED TITANIUM · SCROLL-DOCKED HARDWARE VIEW</span>
             </motion.div>
 
-            <div style={{ perspective: 1200 }} className="w-full max-w-[440px]">
-              {/* Outer Scroll-Driven 3D Orbital Wrapper */}
+            {/* Showcase Slot Dock Frame */}
+            <div
+              style={{ perspective: 1300 }}
+              className="w-full max-w-[440px] relative p-3 rounded-[28px] border border-white/10 bg-[#050A14]/60 shadow-inner"
+            >
+              {/* Corner Hardware Alignment Ticks */}
+              <span className="pointer-events-none absolute top-2 left-2 w-2.5 h-2.5 border-t border-l border-[#10B981]/50 rounded-tl" />
+              <span className="pointer-events-none absolute top-2 right-2 w-2.5 h-2.5 border-t border-r border-[#10B981]/50 rounded-tr" />
+              <span className="pointer-events-none absolute bottom-2 left-2 w-2.5 h-2.5 border-b border-l border-[#10B981]/50 rounded-bl" />
+              <span className="pointer-events-none absolute bottom-2 right-2 w-2.5 h-2.5 border-b border-r border-[#10B981]/50 rounded-br" />
+
+              {/* Outer Scroll-Docked 3D Hardware Wrapper */}
               <motion.div
                 style={{
-                  rotateY: scrollOrbitY,
+                  scale: scrollScale,
+                  y: scrollDockY,
                   rotateX: scrollOrbitX,
-                  rotateZ: scrollOrbitZ,
+                  rotateY: scrollOrbitY,
                   transformStyle: 'preserve-3d',
+                  willChange: 'transform',
                 }}
               >
                 {/* Inner Cursor-Driven 3D Tilt Card */}
                 <motion.div
                   ref={cardRef}
-                  data-cursor="ROTATE 3D CARD"
                   onMouseMove={handleMouseMove}
                   onMouseLeave={handleMouseLeave}
                   style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-                  className={`relative w-full aspect-[1.586/1] rounded-3xl bg-gradient-to-br ${theme.bgClass} p-6 sm:p-7 shadow-[0_30px_80px_rgba(0,0,0,0.85)] overflow-hidden select-none cursor-pointer border border-white/20`}
+                  className={`relative w-full aspect-[1.586/1] rounded-3xl bg-gradient-to-br ${theme.bgClass} p-6 sm:p-7 shadow-[0_30px_80px_rgba(0,0,0,0.85)] overflow-hidden select-none cursor-pointer border border-white/25`}
                 >
-                  {/* Live Iridescent Holographic Foil Shimmer Layer */}
+                  {/* Brushed Anodized Titanium Micro-Grain Texture */}
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-20 mix-blend-overlay"
+                    style={{
+                      backgroundImage:
+                        'repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0px, rgba(255,255,255,0.08) 1px, transparent 1px, transparent 3px)',
+                    }}
+                  />
+
+                  {/* Live Iridescent Metallic Foil Shimmer Layer */}
                   <div
                     className="pointer-events-none absolute inset-0 opacity-45 mix-blend-screen transition-opacity duration-200"
                     style={{
@@ -188,7 +218,13 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
                     }}
                   />
 
-                  {/* Bespoke Geometric Quantum SVG Pattern Overlay */}
+                  {/* Scroll-Driven Specular Anodized Light-Sheen Bar */}
+                  <motion.div
+                    style={{ x: sheenSweepX, willChange: 'transform' }}
+                    className="pointer-events-none absolute inset-y-0 w-32 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent mix-blend-overlay"
+                  />
+
+                  {/* Precision Geometric Etching Overlay */}
                   <svg
                     className="absolute inset-0 w-full h-full opacity-20 pointer-events-none"
                     viewBox="0 0 400 250"
@@ -246,7 +282,7 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
                       </span>
                     </div>
 
-                    {/* Middle Row: Holographic EMV Chip & Contactless + Gyro Telemetry */}
+                    {/* Middle Row: Precision EMV Chip & Contactless */}
                     <div className="flex items-center justify-between my-auto">
                       <div className="w-12 h-9 rounded-md bg-gradient-to-br from-amber-200/90 via-emerald-200/80 to-cyan-300/85 border border-white/40 flex items-center justify-center shadow-inner">
                         <div className="w-8 h-6 border border-slate-900/30 rounded-[3px] grid grid-cols-2 gap-px p-0.5">
@@ -256,7 +292,7 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="font-mono text-[10px] text-white/60">
-                          FOIL {foilCoords.x}% · {foilCoords.y}%
+                          SHEEN {foilCoords.x}% · {foilCoords.y}%
                         </span>
                         <Wifi className={`w-5 h-5 rotate-90 opacity-85 ${theme.textColor}`} />
                       </div>
@@ -304,7 +340,6 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
                   <button
                     key={item.id}
                     type="button"
-                    data-cursor={`FINISH: ${item.name.toUpperCase()}`}
                     onMouseEnter={() => soundEngine.playHover(1.05)}
                     onClick={() => {
                       soundEngine.playClick();
@@ -348,7 +383,6 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
                 </div>
                 <button
                   type="button"
-                  data-cursor={isFrozen ? 'UNFREEZE CARD' : 'FREEZE CARD'}
                   onClick={() => {
                     soundEngine.playClick();
                     if (onShaderPulse) onShaderPulse();
@@ -372,7 +406,7 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
                     MONTHLY VELOCITY LIMIT
                   </span>
                   <span className="font-mono text-2xl sm:text-3xl font-bold text-[#10B981] tabular-nums">
-                    ${spendLimit.toLocaleString('en-US')}
+                    <ScrambleText text={`$${spendLimit.toLocaleString('en-US')}`} />
                   </span>
                 </div>
 

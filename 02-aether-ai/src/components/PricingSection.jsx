@@ -4,7 +4,6 @@ import {
   AnimatePresence,
   useScroll,
   useTransform,
-  useSpring,
 } from 'framer-motion';
 import { Check, Sparkles, ChevronDown } from 'lucide-react';
 import ScrambleText from './ScrambleText';
@@ -65,41 +64,39 @@ const COMPARISON_ROWS = [
   { feature: 'PII Guardrails & Redaction', starter: '—', pro: 'Included', enterprise: 'Custom Policies' },
 ];
 
+/**
+ * PricingCard — Linear/Vercel Mouse-Tracked Spotlight Border Card
+ * Uses CSS variables `--mouse-x` and `--mouse-y` for zero-lag radial border illumination.
+ */
 function PricingCard({ tier, idx, annual, onSelectPlan }) {
   const cardRef = useRef(null);
-  const [tilt, setTilt] = useState({ rx: 0, ry: 0, gx: 50, gy: 50 });
 
   const { scrollYProgress } = useScroll({
     target: cardRef,
     offset: ['start end', 'end start'],
   });
 
-  // Center card (idx === 1) rises slightly faster in depth (pure GPU y & scale)
   const isCenter = idx === 1;
 
   const y = useTransform(
     scrollYProgress,
     [0, 0.42, 1],
-    [isCenter ? 55 : 35, isCenter ? -6 : 0, isCenter ? -35 : -20]
+    [isCenter ? 45 : 30, isCenter ? -6 : 0, isCenter ? -28 : -16]
   );
   const scale = useTransform(
     scrollYProgress,
     [0, 0.3, 0.85, 1],
-    [0.95, isCenter ? 1.02 : 1, isCenter ? 1.02 : 1, 0.97]
+    [0.96, isCenter ? 1.02 : 1, isCenter ? 1.02 : 1, 0.98]
   );
 
   const price = annual ? tier.annualPrice : tier.monthlyPrice;
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const px = (e.clientX - rect.left) / rect.width;
-    const py = (e.clientY - rect.top) / rect.height;
-    setTilt({
-      rx: (0.5 - py) * 6,
-      ry: (px - 0.5) * 6,
-      gx: px * 100,
-      gy: py * 100,
-    });
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+    e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
   };
 
   return (
@@ -109,31 +106,20 @@ function PricingCard({ tier, idx, annual, onSelectPlan }) {
         y,
         scale,
       }}
-      className="will-change-transform h-full"
+      className="h-full will-change-transform"
     >
       <div
         onMouseEnter={playHover}
         onMouseMove={handleMouseMove}
-        onMouseLeave={() => setTilt({ rx: 0, ry: 0, gx: 50, gy: 50 })}
-        style={{
-          transform: `perspective(1000px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
-        }}
-        className={`group relative flex h-full flex-col justify-between rounded-2xl border p-7 transition-colors duration-200 ${
+        style={{ '--mouse-x': '50%', '--mouse-y': '50%' }}
+        className={`spotlight-card group relative flex h-full flex-col justify-between rounded-2xl border p-7 transition-colors duration-200 ${
           tier.popular
             ? 'border-cyan-400/60 bg-[#090D16]/95 shadow-[0_25px_70px_rgba(34,211,238,0.14)]'
-            : 'border-[#27272A] bg-[#090D16]/90 hover:border-cyan-400/40'
+            : 'border-[#27272A] bg-[#090D16]/90'
         }`}
       >
-        {/* Cursor Spotlight */}
-        <div
-          className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-          style={{
-            background: `radial-gradient(380px circle at ${tilt.gx}% ${tilt.gy}%, rgba(34,211,238,0.13), transparent 70%)`,
-          }}
-        />
-
         {tier.popular && (
-          <div className="absolute -top-3 right-6 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#22D3EE] to-[#8B5CF6] px-3 py-0.5 text-[11px] font-bold text-[#09090B]">
+          <div className="absolute -top-3 right-6 z-20 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#22D3EE] to-[#8B5CF6] px-3 py-0.5 text-[11px] font-bold text-[#09090B]">
             <Sparkles className="h-3 w-3" />
             <span>Most Popular</span>
           </div>
@@ -179,7 +165,6 @@ function PricingCard({ tier, idx, annual, onSelectPlan }) {
 
         <button
           type="button"
-          data-cursor="[ SELECT PLAN ]"
           onMouseEnter={playHover}
           onClick={() => {
             playClick();
@@ -210,10 +195,7 @@ export default function PricingSection({ onSelectPlan }) {
             05 // COMPUTE PRICING
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#FAFAFA] sm:text-4xl">
-            <ScrambleText
-              text="Predictable pricing that scales with tokens."
-              scrambleOnMount={false}
-            />
+            <ScrambleText text="Predictable pricing that scales with tokens." />
           </h2>
           <p className="mt-3 text-base text-zinc-400">
             Start free in seconds. Upgrade when your production traffic demands edge caching and SLAs.
@@ -253,7 +235,7 @@ export default function PricingSection({ onSelectPlan }) {
           </div>
         </div>
 
-        {/* 3D Scroll-Parallax Pricing Cards */}
+        {/* Spotlight-Border Pricing Cards */}
         <div className="mt-14 grid gap-6 lg:grid-cols-3">
           {TIERS.map((tier, idx) => (
             <PricingCard

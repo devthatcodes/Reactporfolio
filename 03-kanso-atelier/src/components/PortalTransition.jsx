@@ -2,10 +2,11 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
- * Horizontal Shoji Screen Sliding Doors Transition (480ms total, pure GPU translateX).
- * Two warm architectural Washi/Limestone panels slide inward from Left and Right
- * to meet at a center vertical brass hairline seam with minimalist kanji/datum typography
- * (間 // MA — SPATIAL INTERVAL), then part open cleanly.
+ * Monograph Page-Turn Transition
+ * Sweeps a single warm alabaster archival book sheet from right to left
+ * (x: '100%' -> '0%' -> '-100%') with a subtle italic Cormorant Garamond
+ * watermark ("Kanso Atelier — Monograph"), feeling like turning a heavy
+ * cotton-rag monograph page.
  */
 export default function PortalTransition({ transitionState }) {
   const { active, title, subtitle, code } = transitionState || {};
@@ -14,91 +15,51 @@ export default function PortalTransition({ transitionState }) {
     <AnimatePresence>
       {active && (
         <div
-          key="shoji-portal"
-          className="fixed inset-0 z-[80] pointer-events-none overflow-hidden flex"
+          key="monograph-page-turn"
+          className="fixed inset-0 z-[80] pointer-events-none overflow-hidden"
           aria-hidden="true"
         >
-          {/* Left Shoji Sliding Panel (Warm Washi Paper / Stone with Cedar Kumiko Grid Lines) */}
-          <motion.div
-            initial={{ x: '-100%' }}
-            animate={{ x: ['-100%', '0%', '0%', '-100%'] }}
-            transition={{
-              duration: 0.48,
-              times: [0, 0.38, 0.62, 1],
-              ease: [0.65, 0, 0.35, 1],
-            }}
-            className="w-1/2 h-full bg-[#F3EFE8] border-r border-bronze/80 relative flex items-center justify-end pr-6 sm:pr-12 will-change-transform"
-          >
-            {/* Subtle Kumiko Horizontal Timber Lattice Rules */}
-            <div className="absolute inset-0 pointer-events-none flex flex-col justify-between py-16 opacity-25">
-              <div className="w-full h-[1px] bg-charcoal/30" />
-              <div className="w-full h-[1px] bg-charcoal/20" />
-              <div className="w-full h-[1px] bg-charcoal/30" />
-            </div>
-            {/* Vertical Cedar Mullion */}
-            <div className="absolute top-0 bottom-0 left-12 sm:left-24 w-[1px] bg-charcoal/10 pointer-events-none" />
-
-            <div className="relative z-10 text-right">
-              <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-bronze">
-                間 // MA
-              </div>
-              <div className="text-[9px] font-mono uppercase tracking-[0.22em] text-taupe mt-1">
-                {code || 'SPATIAL THRESHOLD'}
-              </div>
-            </div>
-          </motion.div>
-
-          {/* Right Shoji Sliding Panel */}
+          {/* Single Warm Alabaster Monograph Page Sheet (Right -> Left sweep) */}
           <motion.div
             initial={{ x: '100%' }}
-            animate={{ x: ['100%', '0%', '0%', '100%'] }}
+            animate={{ x: ['100%', '0%', '0%', '-100%'] }}
             transition={{
-              duration: 0.48,
-              times: [0, 0.38, 0.62, 1],
-              ease: [0.65, 0, 0.35, 1],
+              duration: 0.72,
+              times: [0, 0.42, 0.58, 1],
+              ease: [0.22, 1, 0.36, 1],
             }}
-            className="w-1/2 h-full bg-[#F3EFE8] border-l border-bronze/80 relative flex items-center justify-start pl-6 sm:pl-12 will-change-transform"
+            className="w-full h-full bg-[#F3EFE8] border-x border-[#9A7B4F]/40 shadow-[-28px_0_60px_rgba(28,27,25,0.12),28px_0_60px_rgba(28,27,25,0.08)] relative flex flex-col justify-between p-10 sm:p-16 will-change-transform"
           >
-            {/* Subtle Kumiko Horizontal Timber Lattice Rules */}
-            <div className="absolute inset-0 pointer-events-none flex flex-col justify-between py-16 opacity-25">
-              <div className="w-full h-[1px] bg-charcoal/30" />
-              <div className="w-full h-[1px] bg-charcoal/20" />
-              <div className="w-full h-[1px] bg-charcoal/30" />
-            </div>
-            {/* Vertical Cedar Mullion */}
-            <div className="absolute top-0 bottom-0 right-12 sm:right-24 w-[1px] bg-charcoal/10 pointer-events-none" />
+            {/* Archival Binding Margin Rule on Left Edge */}
+            <div className="absolute top-0 bottom-0 left-10 sm:left-20 w-[1px] bg-[#1C1B19]/10 pointer-events-none" />
+            <div className="absolute top-0 bottom-0 right-10 sm:right-20 w-[1px] bg-[#1C1B19]/10 pointer-events-none" />
 
-            <div className="relative z-10 text-left">
-              <div className="text-[10px] font-mono uppercase tracking-[0.3em] text-charcoal">
-                SPATIAL INTERVAL
-              </div>
-              <div className="text-[9px] font-mono uppercase tracking-[0.22em] text-taupe mt-1">
-                {subtitle || '35.0116° N · 55.6761° N'}
-              </div>
+            {/* Top Monograph Folio Header */}
+            <div className="relative z-10 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.28em] text-[#78736A] px-4 sm:px-12">
+              <span>{code || 'FOLIO // KANSO ATELIER'}</span>
+              <span>間 // MA — SPATIAL INTERVAL</span>
             </div>
-          </motion.div>
 
-          {/* Center Brass Seam Medallion & Monograph Title Stamp */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{
-              opacity: [0, 1, 1, 0],
-              scale: [0.96, 1, 1, 0.98],
-            }}
-            transition={{
-              duration: 0.48,
-              times: [0, 0.3, 0.7, 1],
-              ease: 'easeOut',
-            }}
-            className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none will-change-transform"
-          >
-            <div className="px-6 py-3 bg-charcoal text-alabaster border border-bronze shadow-lg flex flex-col items-center">
-              <span className="text-[9px] font-mono uppercase tracking-[0.32em] text-bronze mb-1">
-                間 // MA — SPATIAL INTERVAL
+            {/* Center Editorial Watermark & Chapter Title */}
+            <div className="relative z-10 my-auto flex flex-col items-center text-center px-6">
+              <span className="font-serif italic text-lg sm:text-2xl text-[#9A7B4F] tracking-wide mb-3">
+                Kanso Atelier — Monograph
               </span>
-              <span className="font-serif text-xl sm:text-3xl tracking-[0.1em] uppercase text-alabaster">
-                {title || 'KANSO ATELIER'}
-              </span>
+              <div className="w-12 h-[1px] bg-[#9A7B4F]/50 mb-5" />
+              <h2 className="font-serif text-3xl sm:text-5xl text-[#1C1B19] font-normal tracking-wide">
+                {title || 'Architectural Monograph'}
+              </h2>
+              {subtitle && (
+                <p className="text-[10px] font-mono uppercase tracking-[0.26em] text-[#78736A] mt-3">
+                  {subtitle}
+                </p>
+              )}
+            </div>
+
+            {/* Bottom Folio Page Footer */}
+            <div className="relative z-10 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.26em] text-[#78736A] px-4 sm:px-12">
+              <span>KYOTO 35.0116° N</span>
+              <span>COPENHAGEN 55.6761° N</span>
             </div>
           </motion.div>
         </div>

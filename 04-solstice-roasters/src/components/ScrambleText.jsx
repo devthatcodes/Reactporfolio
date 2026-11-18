@@ -1,68 +1,74 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 
-const GLYPHS = '0123456789ABCDEF°%//[]•ΔΩ∑§±#SOLSTICE';
-
+/**
+ * ScrambleText — Rewritten as "Warm Tactile Spring Wave / Ink-Press Reveal"
+ * Zero cyber glyphs or random characters! Words and characters rise gently
+ * with an organic analog spring bounce (stiffness: 200, damping: 16) like
+ * freshly stamped letterpress type on warm cotton paper.
+ */
 export default function ScrambleText({
   text = '',
   as: Tag = 'span',
   className = '',
-  duration = 520,
   scrambleOnHover = false,
   triggerKey = null,
 }) {
-  const [displayed, setDisplayed] = useState(text);
-  const frameRef = useRef(null);
-
-  const runScramble = useCallback(() => {
-    if (!text) return;
-    if (frameRef.current) cancelAnimationFrame(frameRef.current);
-
-    const startTime = performance.now();
-    const length = text.length;
-
-    const tick = (now) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(1, elapsed / duration);
-      const revealCount = Math.floor(progress * length);
-
-      let next = '';
-      for (let i = 0; i < length; i++) {
-        const char = text[i];
-        if (char === ' ' || i < revealCount) {
-          next += char;
-        } else {
-          const glyphIndex = Math.floor(
-            (Math.sin(i * 19.7 + now * 0.045) * 0.5 + 0.5) * GLYPHS.length
-          );
-          next += GLYPHS[glyphIndex % GLYPHS.length];
-        }
-      }
-
-      setDisplayed(next);
-
-      if (progress < 1) {
-        frameRef.current = requestAnimationFrame(tick);
-      } else {
-        setDisplayed(text);
-      }
-    };
-
-    frameRef.current = requestAnimationFrame(tick);
-  }, [text, duration]);
-
-  useEffect(() => {
-    runScramble();
-    return () => {
-      if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    };
-  }, [runScramble, triggerKey]);
+  const [hoverTick, setHoverTick] = useState(0);
+  const words = String(text).split(' ');
 
   return (
     <Tag
-      className={className}
-      onMouseEnter={scrambleOnHover ? runScramble : undefined}
+      className={`inline-block ${className}`}
+      onMouseEnter={
+        scrambleOnHover ? () => setHoverTick((prev) => prev + 1) : undefined
+      }
     >
-      {displayed}
+      <motion.span
+        key={`${triggerKey ?? text}-${hoverTick}`}
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: {},
+          visible: {
+            transition: {
+              staggerChildren: 0.032,
+            },
+          },
+        }}
+        className="inline"
+      >
+        {words.map((word, idx) => (
+          <React.Fragment key={`${word}-${idx}`}>
+            <motion.span
+              variants={{
+                hidden: {
+                  y: '0.32em',
+                  opacity: 0,
+                  rotate: 1.5,
+                  scale: 0.96,
+                },
+                visible: {
+                  y: '0em',
+                  opacity: 1,
+                  rotate: 0,
+                  scale: 1,
+                  transition: {
+                    type: 'spring',
+                    stiffness: 200,
+                    damping: 16,
+                    mass: 0.65,
+                  },
+                },
+              }}
+              className="inline-block will-change-transform"
+            >
+              {word}
+            </motion.span>
+            {idx < words.length - 1 ? ' ' : ''}
+          </React.Fragment>
+        ))}
+      </motion.span>
     </Tag>
   );
 }

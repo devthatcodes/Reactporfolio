@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Menu, X, Volume2, VolumeX, Flame } from 'lucide-react';
 import soundEngine from '../utils/soundEngine';
-import { ROAST_MODES } from './SensoryHud';
+
+const ROAST_PROFILES = [
+  { id: 0, label: 'Light Floral' },
+  { id: 1, label: 'Medium Honey' },
+  { id: 2, label: 'Deep Espresso' },
+];
 
 export function SolsticeCrest({ className = 'w-9 h-9', light = false }) {
   const strokeColor = light ? '#FBF8F3' : '#1E1612';
@@ -69,34 +74,34 @@ export default function Navbar({
 
   const navLinks = [
     {
-      code: '01',
+      code: 'I',
       label: 'Single Origins',
       href: '#origins',
-      portalTitle: '01 // MICRO-LOT REEL',
-      subtitle: '3D TERROIR SHOWCASE • SEASONAL HARVEST',
+      portalTitle: 'Single-Origin Tasting Deck',
+      subtitle: 'Fanned Apothecary Cards · Seasonal Micro-Lots',
       viewMode: 'reel',
     },
     {
-      code: '02',
-      label: 'Flavor Matrix',
+      code: 'II',
+      label: 'Flavor Compass',
       href: '#origins',
-      portalTitle: '02 // SENSORY FLAVOR MATRIX',
-      subtitle: 'ACIDITY × SWEETNESS SPECTROGRAPHY',
+      portalTitle: 'Cupping Table Flavor Compass',
+      subtitle: 'Acidity × Sweetness × Body Coordinate Map',
       viewMode: 'matrix',
     },
     {
-      code: '03',
+      code: 'III',
       label: 'Brew Guide',
       href: '#brew-guide',
-      portalTitle: '03 // EXTRACTION LAB',
-      subtitle: 'REAL-TIME POUR TELEMETRY & RATIOS',
+      portalTitle: 'Slow Bar Pour-Over Ritual',
+      subtitle: 'Scroll-Driven Extraction Stream & Brew Timer',
     },
     {
-      code: '04',
+      code: 'IV',
       label: 'Tasting Room',
       href: '#tasting-room',
-      portalTitle: '04 // TASTING ROOM',
-      subtitle: 'PORTLAND SLOW BAR & CUPPING RESERVATIONS',
+      portalTitle: 'Portland Roastery & Slow Bar',
+      subtitle: '1420 SE Alder St · Weekly Guided Cuppings',
     },
   ];
 
@@ -106,7 +111,7 @@ export default function Navbar({
       soundEngine.playPortalWipe();
       onPortalNavigate({
         id: link.href.replace('#', ''),
-        code: `PORTAL ${link.code}`,
+        code: `Chapter ${link.code} · Solstice Roastery`,
         title: link.portalTitle,
         subtitle: link.subtitle,
         viewMode: link.viewMode,
@@ -115,7 +120,7 @@ export default function Navbar({
     setMobileOpen(false);
   };
 
-  const modeInfo = ROAST_MODES[roastMode % ROAST_MODES.length];
+  const modeInfo = ROAST_PROFILES[roastMode % ROAST_PROFILES.length];
 
   return (
     <header className="sticky top-0 z-40 bg-cream/95 border-b border-espresso/10">
@@ -124,7 +129,7 @@ export default function Navbar({
           {/* Brand */}
           <a
             href="#"
-            data-cursor="HOME // TOP"
+            data-cursor="SOLSTICE · TOP"
             onMouseEnter={() => soundEngine.playHover(0)}
             className="flex items-center gap-3 group"
           >
@@ -138,8 +143,8 @@ export default function Navbar({
               <span className="font-serif text-xl sm:text-2xl font-semibold tracking-tight text-espresso block leading-none">
                 Solstice
               </span>
-              <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-umber/70 font-medium">
-                Sensory Lab // PDX
+              <span className="text-[11px] font-serif italic tracking-wider text-umber/75">
+                Micro-Lot Roastery · Portland
               </span>
             </div>
           </a>
@@ -150,83 +155,62 @@ export default function Navbar({
               <a
                 key={link.label}
                 href={link.href}
-                data-cursor={`PORTAL ${link.code}`}
+                data-cursor={`TASTE · ${link.label.toUpperCase()}`}
                 onMouseEnter={() => soundEngine.playHover(idx)}
                 onClick={(e) => handleNavClick(e, link)}
                 className="group text-sm font-medium text-umber hover:text-terracotta transition-colors relative py-1 flex items-center gap-1.5 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-terracotta hover:after:w-full after:transition-all after:duration-300"
               >
-                <span className="text-[10px] font-mono text-terracotta/75 group-hover:text-terracotta">
-                  {link.code}
+                <span className="text-xs font-serif italic text-terracotta/80 group-hover:text-terracotta">
+                  {link.code}.
                 </span>
                 <span>{link.label}</span>
               </a>
             ))}
           </nav>
 
-          {/* Actions: Thermal Shader Pill + Audio Synth Equalizer + Bag */}
+          {/* Actions: Roast Ambience Pill + Acoustic Chime Toggle + Bag */}
           <div className="flex items-center gap-2.5">
-            {/* Thermal Shader Mode Quick Switcher */}
+            {/* Roast Profile Ambience Switcher */}
             <button
               type="button"
-              data-cursor="THERMAL SHADER"
+              data-cursor="ROAST · PROFILE"
               onClick={() => {
                 soundEngine.playRoastShift((roastMode + 1) % 3);
                 if (onCycleRoastMode) onCycleRoastMode();
               }}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-cream-dark/90 border border-espresso/15 text-[11px] font-mono uppercase tracking-wider text-espresso hover:border-terracotta transition-colors"
-              title="Switch WebGL Thermal Shader Roast Profile"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-cream-dark/90 border border-espresso/15 text-xs font-serif italic text-espresso hover:border-terracotta transition-colors"
+              title="Switch Roast Profile Ambience"
             >
               <Flame className="w-3.5 h-3.5 text-terracotta" />
-              <span>{modeInfo.code.split(' ')[0]}</span>
+              <span>{modeInfo.label}</span>
             </button>
 
-            {/* Web Audio API Synth Equalizer Toggle */}
+            {/* Acoustic Tactile Sound Toggle */}
             <button
               type="button"
-              data-cursor="SYNTH AUDIO"
+              data-cursor="CHIME · AUDIO"
               onClick={() => soundEngine.toggle()}
-              className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border text-[11px] font-mono uppercase tracking-wider transition-colors ${
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border text-xs transition-colors ${
                 audioEnabled
                   ? 'bg-cream-dark/90 border-espresso/15 text-espresso hover:border-terracotta'
                   : 'bg-cream border-espresso/10 text-umber/50 hover:text-espresso'
               }`}
-              aria-label="Toggle Web Audio Sensory Synthesizer"
+              aria-label="Toggle Roastery Acoustic Chimes"
             >
               {audioEnabled ? (
                 <Volume2 className="w-3.5 h-3.5 text-terracotta" />
               ) : (
                 <VolumeX className="w-3.5 h-3.5 text-umber/50" />
               )}
-              <span className="hidden md:inline">
-                AUDIO [{audioEnabled ? 'ON' : 'OFF'}]
-              </span>
-              {/* Live Equalizer Bars */}
-              <span className="inline-flex items-end gap-0.5 h-3">
-                {[0, 1, 2].map((bar) => (
-                  <motion.span
-                    key={bar}
-                    animate={
-                      audioEnabled
-                        ? { height: ['35%', '100%', '45%'] }
-                        : { height: '25%' }
-                    }
-                    transition={{
-                      duration: 0.55 + bar * 0.15,
-                      repeat: audioEnabled ? Infinity : 0,
-                      ease: 'easeInOut',
-                    }}
-                    className={`w-0.5 rounded-full ${
-                      audioEnabled ? 'bg-terracotta' : 'bg-umber/30'
-                    }`}
-                  />
-                ))}
+              <span className="hidden md:inline font-serif italic">
+                Chimes {audioEnabled ? 'On' : 'Muted'}
               </span>
             </button>
 
             {/* Shopping Bag Button */}
             <motion.button
               type="button"
-              data-cursor="ROASTERY BAG"
+              data-cursor="ROASTERY · BAG"
               onClick={() => {
                 soundEngine.playClick();
                 onOpenCart();
@@ -282,7 +266,9 @@ export default function Navbar({
                   className="py-2 px-3 rounded-lg text-base font-medium text-umber hover:bg-cream-dark hover:text-terracotta transition-colors flex items-center justify-between"
                 >
                   <span>{link.label}</span>
-                  <span className="text-xs font-mono text-terracotta">{link.code}</span>
+                  <span className="text-xs font-serif italic text-terracotta">
+                    Chapter {link.code}
+                  </span>
                 </a>
               ))}
             </div>

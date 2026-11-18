@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ArrowUpRight, Volume2, VolumeX } from 'lucide-react';
-import ScrambleText from './ScrambleText';
 import { soundEngine } from '../utils/soundEngine';
 
 const NAV_ITEMS = [
-  { index: '01', label: 'Studio', href: '#studio', sectionTitle: 'THE STUDIO' },
-  { index: '02', label: 'Works', href: '#works', sectionTitle: 'MONOGRAPH ARCHIVE' },
-  { index: '03', label: 'Philosophy', href: '#philosophy', sectionTitle: 'SPATIAL ETHOS' },
-  { index: '04', label: 'Contact', href: '#contact', sectionTitle: 'COMMISSION INQUIRY' },
+  { index: 'I', label: 'Studio', href: '#studio', sectionTitle: 'The Studio' },
+  { index: 'II', label: 'Monographs', href: '#works', sectionTitle: 'Selected Monographs' },
+  { index: 'III', label: 'Philosophy', href: '#philosophy', sectionTitle: 'Spatial Ethos' },
+  { index: 'IV', label: 'Commission', href: '#contact', sectionTitle: 'Commission Inquiry' },
 ];
 
 export default function Header({ onNavigatePortal }) {
@@ -59,14 +58,13 @@ export default function Header({ onNavigatePortal }) {
           {/* Wordmark */}
           <a
             href="#top"
-            data-cursor="ORIGIN // TOP"
             onMouseEnter={() => soundEngine.playHoverTick(1.1)}
             onClick={(e) =>
               handleNavClick(e, {
                 index: '00',
                 label: 'Origin',
                 href: '#top',
-                sectionTitle: 'KANSO ATELIER',
+                sectionTitle: 'Kanso Atelier',
               })
             }
             className="group flex items-center gap-3 focus:outline-none"
@@ -77,7 +75,7 @@ export default function Header({ onNavigatePortal }) {
               height="26"
               viewBox="0 0 24 24"
               fill="none"
-              className="text-charcoal transition-transform duration-500 group-hover:rotate-90"
+              className="text-charcoal transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:rotate-90"
             >
               <rect x="2" y="2" width="20" height="20" stroke="currentColor" strokeWidth="1" />
               <line x1="2" y1="14" x2="22" y2="14" stroke="currentColor" strokeWidth="1" />
@@ -93,45 +91,43 @@ export default function Header({ onNavigatePortal }) {
             </div>
           </a>
 
-          {/* Desktop Navigation & Acoustic Synthesizer Toggle */}
+          {/* Desktop Navigation & Acoustic Toggle */}
           <div className="hidden md:flex items-center gap-9">
             <nav className="flex items-center gap-9" aria-label="Primary Navigation">
               {NAV_ITEMS.map((item) => (
                 <a
                   key={item.href}
                   href={item.href}
-                  data-cursor={`PORTAL // ${item.index}`}
                   onMouseEnter={() => soundEngine.playHoverTick(1.0)}
                   onClick={(e) => handleNavClick(e, item)}
                   className="group relative flex items-baseline gap-2 text-xs uppercase tracking-[0.2em] text-charcoal/80 hover:text-charcoal transition-colors py-1"
                 >
-                  <span className="text-[10px] font-mono text-bronze/80 group-hover:text-bronze transition-colors">
-                    {item.index}
+                  <span className="font-serif italic text-xs text-bronze/90 group-hover:text-bronze transition-colors">
+                    {item.index}.
                   </span>
-                  <ScrambleText text={item.label} scrambleOnHover duration={320} />
-                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-bronze transition-all duration-300 group-hover:w-full" />
+                  <span>{item.label}</span>
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-bronze transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-full" />
                 </a>
               ))}
             </nav>
 
-            {/* Web Audio API Acoustic Synth Toggle */}
+            {/* Acoustic Ambience Toggle */}
             <button
               type="button"
-              data-cursor={soundEnabled ? 'MUTE SYNTH' : 'ENABLE AUDIO'}
               onClick={handleToggleSound}
               className={`flex items-center gap-2 px-3 py-1.5 border text-[10px] font-mono uppercase tracking-[0.2em] transition-all ${
                 soundEnabled
                   ? 'border-bronze bg-charcoal text-alabaster'
                   : 'border-charcoal/15 bg-alabaster/70 text-taupe hover:text-charcoal hover:border-charcoal/40'
               }`}
-              aria-label="Toggle procedural spatial audio"
+              aria-label="Toggle studio acoustic ambience"
             >
               {soundEnabled ? (
-                <Volume2 className="w-3.5 h-3.5 text-bronze animate-pulse" />
+                <Volume2 className="w-3.5 h-3.5 text-bronze" />
               ) : (
                 <VolumeX className="w-3.5 h-3.5" />
               )}
-              <span>SOUND [{soundEnabled ? 'ON' : 'OFF'}]</span>
+              <span>{soundEnabled ? 'Ambience On' : 'Ambience'}</span>
             </button>
           </div>
 
@@ -183,7 +179,7 @@ export default function Header({ onNavigatePortal }) {
               <div>
                 <div className="flex items-center justify-between pb-6 border-b border-charcoal/10">
                   <span className="font-serif text-lg tracking-[0.16em] uppercase text-charcoal">
-                    Spatial Index
+                    Monograph Index
                   </span>
                   <button
                     type="button"
@@ -207,7 +203,7 @@ export default function Header({ onNavigatePortal }) {
                       className="group flex items-center justify-between py-2 border-b border-charcoal/10"
                     >
                       <div className="flex items-baseline gap-4">
-                        <span className="text-xs font-mono text-bronze">{item.index}</span>
+                        <span className="font-serif italic text-sm text-bronze">{item.index}.</span>
                         <span className="font-serif text-3xl text-charcoal group-hover:text-bronze transition-colors">
                           {item.label}
                         </span>

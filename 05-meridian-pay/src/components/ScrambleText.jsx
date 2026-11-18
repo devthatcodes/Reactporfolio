@@ -1,56 +1,77 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
-const GLYPHS = '01X#/_∆◊Ξ§$€¥£94728∑Ω≈';
-
+/**
+ * ScrambleText (Meridian Institutional Edition)
+ * Crisp Vertical Slot-Machine / Odometer Slide-Up Reveal.
+ * Zero random hacker glyphs — words and currency figures roll smoothly upward
+ * into lock position with spring precision inside an overflow-hidden mask.
+ */
 export default function ScrambleText({
   text = '',
   className = '',
   as: Component = 'span',
-  speed = 24,
   scrambleOnHover = false,
   triggerKey = null,
 }) {
-  const [displayed, setDisplayed] = useState(text);
-  const frameRef = useRef(null);
-
-  const runScramble = (targetText) => {
-    if (frameRef.current) clearInterval(frameRef.current);
-    let iteration = 0;
-    const length = targetText.length;
-
-    frameRef.current = setInterval(() => {
-      const next = targetText
-        .split('')
-        .map((char, idx) => {
-          if (char === ' ') return ' ';
-          if (idx < iteration) return targetText[idx];
-          return GLYPHS[Math.floor(Math.random() * GLYPHS.length)];
-        })
-        .join('');
-
-      setDisplayed(next);
-      iteration += Math.max(0.45, length / 18);
-
-      if (iteration >= length) {
-        clearInterval(frameRef.current);
-        setDisplayed(targetText);
-      }
-    }, speed);
-  };
+  const [rollCycle, setRollCycle] = useState(0);
 
   useEffect(() => {
-    runScramble(String(text));
-    return () => {
-      if (frameRef.current) clearInterval(frameRef.current);
-    };
+    setRollCycle((c) => c + 1);
   }, [text, triggerKey]);
+
+  const rawText = String(text);
+  const tokens = rawText.split(' ');
+  const isNumericMetric = /[$€£¥%0-9]/.test(rawText) && tokens.length <= 2;
 
   return (
     <Component
-      className={className}
-      onMouseEnter={scrambleOnHover ? () => runScramble(String(text)) : undefined}
+      className={`inline-flex flex-wrap items-baseline ${className}`}
+      onMouseEnter={scrambleOnHover ? () => setRollCycle((c) => c + 1) : undefined}
     >
-      {displayed}
+      {isNumericMetric
+        ? rawText.split('').map((char, idx) => (
+            <span
+              key={`${rollCycle}-char-${idx}`}
+              className="inline-block overflow-hidden align-bottom leading-[1.12]"
+            >
+              <motion.span
+                initial={{ y: '105%', opacity: 0 }}
+                animate={{ y: '0%', opacity: 1 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 380,
+                  damping: 30,
+                  mass: 0.6,
+                  delay: idx * 0.022,
+                }}
+                className="inline-block will-change-transform"
+              >
+                {char === ' ' ? '\u00A0' : char}
+              </motion.span>
+            </span>
+          ))
+        : tokens.map((word, idx) => (
+            <span
+              key={`${rollCycle}-word-${idx}`}
+              className="inline-block overflow-hidden align-bottom leading-[1.14] mr-[0.26em] last:mr-0"
+            >
+              <motion.span
+                initial={{ y: '100%', opacity: 0 }}
+                animate={{ y: '0%', opacity: 1 }}
+                transition={{
+                  type: 'spring',
+                  stiffness: 340,
+                  damping: 32,
+                  mass: 0.7,
+                  delay: idx * 0.038,
+                }}
+                className="inline-block will-change-transform"
+              >
+                {word}
+              </motion.span>
+            </span>
+          ))}
     </Component>
   );
 }

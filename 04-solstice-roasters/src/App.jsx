@@ -7,14 +7,12 @@ import TastingRoomAndSub from './components/TastingRoomAndSub';
 import CartDrawer from './components/CartDrawer';
 import Footer from './components/Footer';
 import RoastShaderCanvas from './components/RoastShaderCanvas';
-import Preloader from './components/Preloader';
 import PortalTransition from './components/PortalTransition';
 import CustomCursor from './components/CustomCursor';
-import SensoryHud from './components/SensoryHud';
 import OriginPortalModal from './components/OriginPortalModal';
 import {
   ScrollPortalSection,
-  ScrollSensoryMarquee,
+  BotanicalVineDivider,
 } from './components/ScrollRoastTransition';
 import { COFFEES } from './data/coffees';
 
@@ -22,16 +20,14 @@ export default function App() {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  // Active Theory WebGL Shader Roast Profile (0: Light Floral, 1: Medium Caramel, 2: Dark Obsidian)
+  // Ambient Roast Profile (0: Light Floral, 1: Medium Caramel, 2: Deep Espresso)
   const [roastMode, setRoastMode] = useState(0);
-  // 01 // Rotary Arc vs 02 // Sensory Flavor Matrix
+  // Fanned Tasting Deck & Harvest Grid vs Sensory Flavor Wheel
   const [shopViewMode, setShopViewMode] = useState('reel');
-  // Active Full-Screen Origin Portal Coffee Lot
+  // Active Full-Screen Origin Tasting Card Modal
   const [portalCoffee, setPortalCoffee] = useState(null);
-  // Active Circular Crema Iris Bloom Portal Transition
+  // Active Warm Circular Espresso Iris Bloom Transition
   const [activePortal, setActivePortal] = useState(null);
-  // Live Cursor Velocity Telemetry (throttled to 1s)
-  const [cursorVelocity, setCursorVelocity] = useState(0);
 
   const handleCycleRoastMode = useCallback(() => {
     setRoastMode((prev) => (prev + 1) % 3);
@@ -105,25 +101,14 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen flex flex-col bg-cream text-espresso selection:bg-terracotta/20 selection:text-espresso">
-      {/* Active Theory Roaster Telemetry Preloader */}
-      <Preloader />
-
-      {/* Real-Time WebGL Thermal Crema & Botanical Fluid Shader */}
+      {/* Warm Parchment & Floating Botanical Aura */}
       <RoastShaderCanvas roastMode={roastMode} />
 
-      {/* Multi-Layer Diagonal Portal Curtain Transition */}
+      {/* Warm Circular Espresso Iris Bloom Transition */}
       <PortalTransition activePortal={activePortal} />
 
-      {/* Dual-Ring Magnetic Reticle Cursor */}
-      <CustomCursor onVelocityChange={setCursorVelocity} />
-
-      {/* Peripheral Sensory Telemetry HUD */}
-      <SensoryHud
-        roastMode={roastMode}
-        onCycleRoastMode={handleCycleRoastMode}
-        cursorVelocity={cursorVelocity}
-        onPortalJump={handlePortalNavigate}
-      />
+      {/* Warm Circular Roastery Wax-Seal Stamp Cursor */}
+      <CustomCursor />
 
       <Navbar
         cartCount={totalCount}
@@ -135,8 +120,8 @@ export default function App() {
 
       <main className="relative z-10 flex-1 overflow-x-clip">
         <ScrollPortalSection
-          code="STAGE 00 // CHARGE & RAMP"
-          label="BOTANICAL & ROAST CURVE TELEMETRY"
+          code="Chapter I · Autumn Harvest"
+          label="Botanical Provenance & Drum Roast Curve"
           tempRange="94°C → 198.2°C"
           disableEntryClip
         >
@@ -147,15 +132,14 @@ export default function App() {
           />
         </ScrollPortalSection>
 
-        <ScrollSensoryMarquee
-          topLine="FIRST CRACK 196.4°C • EXOTHERMIC ESTER RELEASE • HIGH-ALTITUDE MICRO-LOTS •"
-          bottomLine="GEDEB ETHIOPIA 2,150M • HUILA PINK BOURBON 1,850M • TARRAZÚ HONEY 1,720M •"
-          badge="PORTAL 01 // ROTARY TASTING ARC"
+        <BotanicalVineDivider
+          chapter="Micro-Lot Selection · Single-Origin Harvest"
+          inscription="Grown above 1,650m in Ethiopia, Colombia, Costa Rica, Kenya & Guatemala · Roasted in 12kg cast-iron drums"
         />
 
         <ScrollPortalSection
-          code="STAGE 01 // MAILLARD & TASTING WHEEL"
-          label="CURVED BOTANICAL ARC & ROTARY CAROUSEL"
+          code="Chapter II · Tasting Deck & Harvest Lots"
+          label="Fanned Tasting Cards & Single-Origin Apothecary"
           tempRange="178°C → 208.6°C"
         >
           <CoffeeShop
@@ -166,30 +150,28 @@ export default function App() {
           />
         </ScrollPortalSection>
 
-        <ScrollSensoryMarquee
-          topLine="DIALED-IN EXTRACTION • 1.42% TARGET TDS • 21.0% EXTRACTION YIELD •"
-          bottomLine="V60 CONE SPIRAL POUR • AEROPRESS VACUUM STEEP • 9-BAR BOTTOMLESS ESPRESSO •"
-          badge="PORTAL 03 // EXTRACTION LAB"
+        <BotanicalVineDivider
+          chapter="Pour-Over Ritual · Extraction Craft"
+          inscription="Dialed-in water chemistry at 93°C · Gentle spiral bloom & steady glass carafe percolation"
         />
 
         <ScrollPortalSection
-          code="STAGE 03 // EXTRACTION LAB"
-          label="REAL-TIME POUR & BREW TELEMETRY"
-          tempRange="92°C → 94°C WATER"
+          code="Chapter III · Slow Bar Pour-Over Guide"
+          label="Scroll-Driven Extraction Stream & Brew Timer"
+          tempRange="92°C → 96°C Water"
         >
           <BrewGuide />
         </ScrollPortalSection>
 
-        <ScrollSensoryMarquee
-          topLine="PORTLAND SLOW BAR • SE DIVISION ROASTERY • WEEKLY GUIDED CUPPINGS •"
-          bottomLine="LORING 12KG CAST-IRON DRUM • ROASTED MONDAY & THURSDAY • 48H DISPATCH •"
-          badge="PORTAL 04 // TASTING ROOM"
+        <BotanicalVineDivider
+          chapter="Portland Roastery · Weekly Guided Cuppings"
+          inscription="1420 SE Alder St, Portland · Fresh-roasted Monday & Thursday, dispatched within 48 hours"
         />
 
         <ScrollPortalSection
-          code="STAGE 04 // TASTING ROOM & DISPATCH"
-          label="SLOW BAR CUPPING & SUBSCRIPTION"
-          tempRange="AGTRON 55.8 → 70.2"
+          code="Chapter IV · Tasting Room & Roaster's Dispatch"
+          label="Slow Bar Cupping Table & Seasonal Subscription"
+          tempRange="Agtron 55.8 → 70.2"
         >
           <TastingRoomAndSub />
         </ScrollPortalSection>
@@ -199,7 +181,7 @@ export default function App() {
         <Footer />
       </div>
 
-      {/* Full-Screen Origin & Sensory Portal Takeover Modal */}
+      {/* Full-Screen Origin & Sensory Tasting Notes Modal */}
       <OriginPortalModal
         coffee={portalCoffee}
         coffees={COFFEES}

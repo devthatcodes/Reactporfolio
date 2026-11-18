@@ -25,6 +25,10 @@ const CORRIDORS = [
     id: 'tyo-ldn',
     index: '01',
     code: 'CORRIDOR // TYO-LDN-01',
+    routeCapitals: 'TOKYO → LONDON',
+    originCity: 'TOKYO (BOJ)',
+    destCity: 'LONDON (BOE)',
+    trancheFigure: '¥3.82B → £19.84M',
     title: 'TOKYO–LONDON INSTANT FX BRIDGE',
     subtitle: 'ZENGIN ⇄ CHAPS ATOMIC LIQUIDITY ENGINE',
     pair: 'JPY ⇄ GBP',
@@ -33,6 +37,9 @@ const CORRIDORS = [
     spread: '0.01% FLAT',
     accent: '#10B981',
     secondary: '#06B6D4',
+    arcPath: 'M 260 65 Q 165 12 68 52',
+    startCoord: { x: 260, y: 65 },
+    endCoord: { x: 68, y: 52 },
     nodes: ['BOJ-ZENGIN-TYO', 'SGX-CLEARING-SIN', 'LCH-QUANTUM-LDN', 'BOE-RTGS-LDN'],
     summary:
       'Eliminates 48-hour correspondent Nostro/Vostro pre-funding between Tokyo and London through an atomic dual-pool liquidity bridge with real-time ISO-20022 cryptographic finality.',
@@ -53,15 +60,22 @@ const CORRIDORS = [
   {
     id: 'autonomous-sweep',
     index: '02',
-    code: 'CORRIDOR // NYC-ZRH-02',
+    code: 'CORRIDOR // ZRH-NYC-02',
+    routeCapitals: 'ZURICH → NEW YORK',
+    originCity: 'ZURICH (SNB)',
+    destCity: 'NEW YORK (FED)',
+    trancheFigure: 'CHF 42.0M → $47.65M',
     title: 'AUTONOMOUS MULTI-ENTITY SWEEP',
     subtitle: 'ZERO-IDLE CASH OVERNIGHT U.S. T-BILL REPO ENGINE',
-    pair: 'USD ⇄ EUR ⇄ CHF',
+    pair: 'CHF ⇄ EUR ⇄ USD',
     latency: '112ms',
     volume: '$22.4B / MO',
     spread: '4.85% APY',
     accent: '#06B6D4',
     secondary: '#3B82F6',
+    arcPath: 'M 155 56 Q 95 18 42 66',
+    startCoord: { x: 155, y: 56 },
+    endCoord: { x: 42, y: 66 },
     nodes: ['OPERATING-SUB-42', 'ZURICH-CONSOLIDATOR', 'FEDWIRE-NYC', 'BLACKROCK-T-BILL-VAULT'],
     summary:
       'Continuously monitors 42+ global subsidiary bank accounts and autonomously sweeps idle operating liquidity at 16:00 EST into SIPC-insured U.S. Treasury repositories with instant T+0 recall.',
@@ -83,14 +97,21 @@ const CORRIDORS = [
     id: 'programmable-mint',
     index: '03',
     code: 'CORRIDOR // SIN-FRA-03',
+    routeCapitals: 'SINGAPORE → FRANKFURT',
+    originCity: 'SINGAPORE (MAS)',
+    destCity: 'FRANKFURT (ECB)',
+    trancheFigure: 'S$28.5M → €19.56M',
     title: 'PROGRAMMABLE TREASURY MINT',
     subtitle: '24/7/365 ON-CHAIN & FIAT HYBRID LIQUIDITY POOL',
-    pair: 'USDC ⇄ EURC ⇄ SEPA',
+    pair: 'SGD ⇄ USDC ⇄ EUR',
     latency: '19ms',
     volume: '$8.9B / MO',
     spread: '0.005% SWAP',
     accent: '#3B82F6',
     secondary: '#10B981',
+    arcPath: 'M 232 94 Q 175 30 148 54',
+    startCoord: { x: 232, y: 94 },
+    endCoord: { x: 148, y: 54 },
     nodes: ['TREASURY-API-WEBHOOK', 'MERIDIAN-MINT-CORE', 'EUROSYSTEM-TARGET2', 'SEPA-INSTANT-FRA'],
     summary:
       'Bridges weekend and holiday bank closures by minting programmable institutional settlement tokens backed 1:1 by central bank reserves, settling directly into SEPA Instant.',
@@ -112,6 +133,10 @@ const CORRIDORS = [
     id: 'sovereign-rail',
     index: '04',
     code: 'CORRIDOR // GLOBAL-ZK-04',
+    routeCapitals: 'NEW YORK → SINGAPORE',
+    originCity: 'NEW YORK (FED)',
+    destCity: 'SINGAPORE (MAS)',
+    trancheFigure: '$64.0M → S$85.87M',
     title: 'SOVEREIGN ZERO-LATENCY RAIL',
     subtitle: 'FIPS 140-3 HSM & ZERO-KNOWLEDGE COMPLIANCE MESH',
     pair: '140+ CURRENCIES',
@@ -120,6 +145,9 @@ const CORRIDORS = [
     spread: 'ZERO WIRE FEE',
     accent: '#10B981',
     secondary: '#8B5CF6',
+    arcPath: 'M 42 66 Q 145 14 232 94',
+    startCoord: { x: 42, y: 66 },
+    endCoord: { x: 232, y: 94 },
     nodes: ['HSM-ENCLAVE-01', 'ZK-AML-VERIFIER', 'MPC-QUORUM-SIGNER', 'GLOBAL-RTGS-MESH'],
     summary:
       'Enforces cryptographic multi-party CFO approval quorums and automated OFAC/AML zero-knowledge proofs before dispatching sub-second payouts across 140+ local payment rails.',
@@ -164,7 +192,6 @@ function CorridorLedgerCard({ corridor, idx, isFocused, onFocus, onOpenPortal })
         onFocus(idx);
       }}
       onClick={() => onOpenPortal(corridor, idx)}
-      data-cursor="LAUNCH VAULT PORTAL"
       className={`relative rounded-3xl p-6 sm:p-8 border transition-colors cursor-pointer overflow-hidden group ${
         isFocused
           ? 'bg-[#081121] border-[#10B981]/70 shadow-[0_20px_50px_rgba(0,0,0,0.65)]'
@@ -195,7 +222,7 @@ function CorridorLedgerCard({ corridor, idx, isFocused, onFocus, onOpenPortal })
         <circle cx="280" cy="95" r="6" fill={corridor.accent} />
       </svg>
 
-      {/* Top Corridor Index & Pair Pill */}
+      {/* Top Corridor Index & Capital Flow Pill */}
       <div className="relative z-10 flex flex-wrap items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-2.5">
           <span
@@ -205,7 +232,7 @@ function CorridorLedgerCard({ corridor, idx, isFocused, onFocus, onOpenPortal })
               color: corridor.accent,
             }}
           >
-            {corridor.index} // LEDGER
+            {corridor.index} // {corridor.routeCapitals}
           </span>
           <span className="font-mono text-xs tracking-widest text-slate-400 uppercase">
             {corridor.code}
@@ -265,16 +292,16 @@ function CorridorLedgerCard({ corridor, idx, isFocused, onFocus, onOpenPortal })
           </div>
           <div className="hidden sm:block">
             <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
-              INSTITUTIONAL SPREAD
+              LIVE TRANCHE FLOW
             </div>
-            <div className="font-mono text-base sm:text-lg font-bold text-cyan-400">
-              {corridor.spread}
+            <div className="font-mono text-base sm:text-lg font-bold text-cyan-400 tabular-nums">
+              {corridor.trancheFigure}
             </div>
           </div>
         </div>
 
         <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#10B981] text-[#030712] font-mono text-xs font-bold uppercase tracking-wider group-hover:translate-x-1 transition-transform">
-          <span>Unlock Corridor Vault</span>
+          <span>Inspect Corridor</span>
           <ArrowUpRight className="w-4 h-4" />
         </span>
       </div>
@@ -291,16 +318,10 @@ export default function CorridorReel({ onTriggerPortal, onShaderPulse }) {
 
   const sectionRef = useRef(null);
 
-  // Pure MotionValue scroll tracking (zero React setState on scroll!)
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ['start start', 'end end'],
   });
-
-  // GPU-composited orbital ring rotations & scale driven by scrollYProgress
-  const outerRingRotate = useTransform(scrollYProgress, [0, 1], [0, 220]);
-  const innerRingRotate = useTransform(scrollYProgress, [0, 1], [0, -180]);
-  const orbitalScale = useTransform(scrollYProgress, [0, 0.5, 1], [0.95, 1.05, 0.98]);
 
   const current = CORRIDORS[activeIndex];
 
@@ -368,9 +389,9 @@ export default function CorridorReel({ onTriggerPortal, onShaderPulse }) {
               <ScrambleText text="Global Liquidity Corridors." />
             </h2>
             <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-2xl">
-              Pinned orbital treasury telemetry on the left synchronizes with our 4 flagship
-              atomic settlement corridors on the right. Click any corridor to unlock its vault
-              simulator.
+              Pinned live FX settlement flow map on the left synchronizes with our 4 flagship
+              atomic settlement corridors on the right. Select any corridor to animate live
+              tranche clearing between financial capitals.
             </p>
           </div>
 
@@ -397,57 +418,124 @@ export default function CorridorReel({ onTriggerPortal, onShaderPulse }) {
 
         {/* 60fps Split-Screen Sticky Settlement Command Deck */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* LEFT COLUMN (lg:col-span-5 sticky top-24 self-start): Interactive Global Liquidity Orbital Visual & Total Volume Counter */}
+          {/* LEFT COLUMN (lg:col-span-5 sticky top-24 self-start): Interactive Live FX Settlement Flow Lines & Rolling Odometer Figures */}
           <div className="lg:col-span-5 lg:sticky lg:top-24 self-start space-y-5">
             <div className="rounded-3xl bg-[#060C18] border border-[#10B981]/40 p-6 sm:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.6)] relative overflow-hidden">
               {/* Top Command Deck Status */}
-              <div className="flex items-center justify-between gap-2 mb-5">
+              <div className="flex items-center justify-between gap-2 mb-4">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#10B981]" />
                   <span className="font-mono text-[11px] uppercase tracking-widest text-[#10B981] font-bold">
-                    ORBITAL LIQUIDITY RADAR
+                    LIVE FX SETTLEMENT FLOW
                   </span>
                 </div>
-                <span className="font-mono text-[11px] text-cyan-400">
-                  {current.code}
+                <span className="font-mono text-[11px] text-cyan-400 font-semibold">
+                  {current.routeCapitals}
                 </span>
               </div>
 
-              {/* GPU-Accelerated Interactive Global Liquidity Orbital Visual */}
-              <div className="relative h-56 flex items-center justify-center my-2">
-                {/* Outer Scroll-Driven Orbital Ring */}
-                <motion.div
-                  style={{
-                    rotate: outerRingRotate,
-                    scale: orbitalScale,
-                    willChange: 'transform',
-                  }}
-                  className="w-48 h-48 rounded-full border border-dashed border-[#10B981]/50 flex items-center justify-center"
-                >
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#10B981] -mt-48 shadow-[0_0_12px_#10B981]" />
-                </motion.div>
+              {/* Interactive Live FX Settlement Flow Lines Map Between Financial Capitals */}
+              <div className="relative rounded-2xl bg-[#030712] border border-white/10 p-4 my-2 overflow-hidden">
+                <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-2">
+                  <span>{current.originCity}</span>
+                  <span className="text-[#10B981] font-bold">{current.latency} FINALITY</span>
+                  <span>{current.destCity}</span>
+                </div>
 
-                {/* Inner Counter-Rotating Orbital Ring */}
-                <motion.div
-                  style={{
-                    rotate: innerRingRotate,
-                    willChange: 'transform',
-                  }}
-                  className="absolute w-36 h-36 rounded-full border border-cyan-400/40 flex items-center justify-center"
-                >
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 -ml-36 shadow-[0_0_10px_#06B6D4]" />
-                </motion.div>
+                <svg viewBox="0 0 300 130" className="w-full h-36 overflow-visible">
+                  <defs>
+                    <linearGradient id="corridorArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor={current.accent} stopOpacity="0.95" />
+                      <stop offset="100%" stopColor={current.secondary} stopOpacity="0.95" />
+                    </linearGradient>
+                  </defs>
 
-                {/* Center Total Volume Counter & Active Pair */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-                  <div className="text-[10px] font-mono uppercase tracking-[0.22em] text-slate-400">
-                    TOTAL CORRIDOR VOLUME
+                  {/* Subtle Global Meridian Grid Lines */}
+                  <line x1="20" y1="35" x2="280" y2="35" stroke="rgba(255,255,255,0.05)" />
+                  <line x1="20" y1="65" x2="280" y2="65" stroke="rgba(255,255,255,0.05)" />
+                  <line x1="20" y1="95" x2="280" y2="95" stroke="rgba(255,255,255,0.05)" />
+
+                  {/* All Financial Capital Nodes */}
+                  {[
+                    { label: 'NYC', x: 42, y: 66 },
+                    { label: 'LDN', x: 68, y: 52 },
+                    { label: 'FRA', x: 148, y: 54 },
+                    { label: 'ZRH', x: 155, y: 56 },
+                    { label: 'SIN', x: 232, y: 94 },
+                    { label: 'TYO', x: 260, y: 65 },
+                  ].map((hub) => (
+                    <g key={hub.label}>
+                      <circle cx={hub.x} cy={hub.y} r="3" fill="rgba(255,255,255,0.25)" />
+                      <text
+                        x={hub.x}
+                        y={hub.y + 12}
+                        textAnchor="middle"
+                        fill="rgba(148,163,184,0.7)"
+                        fontSize="7"
+                        fontFamily="monospace"
+                      >
+                        {hub.label}
+                      </text>
+                    </g>
+                  ))}
+
+                  {/* Background Inactive Corridor Arcs */}
+                  {CORRIDORS.map((c) => (
+                    <path
+                      key={c.id}
+                      d={c.arcPath}
+                      fill="none"
+                      stroke="rgba(255,255,255,0.08)"
+                      strokeWidth="1.25"
+                      strokeDasharray="3 3"
+                    />
+                  ))}
+
+                  {/* Active Corridor Animated Settlement Flow Arc */}
+                  <motion.path
+                    key={`arc-${current.id}`}
+                    d={current.arcPath}
+                    fill="none"
+                    stroke="url(#corridorArcGrad)"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    initial={{ pathLength: 0, opacity: 0.4 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ duration: 0.55, ease: 'easeOut' }}
+                  />
+
+                  {/* Origin & Destination Active Capital Beacons */}
+                  <circle
+                    cx={current.startCoord.x}
+                    cy={current.startCoord.y}
+                    r="5.5"
+                    fill={current.accent}
+                  />
+                  <circle
+                    cx={current.endCoord.x}
+                    cy={current.endCoord.y}
+                    r="5.5"
+                    fill={current.secondary}
+                  />
+                </svg>
+
+                {/* Rolling Odometer Tranche Figure Readout */}
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between">
+                  <div>
+                    <div className="text-[9px] font-mono uppercase tracking-widest text-slate-400">
+                      LIVE SETTLEMENT TRANCHE
+                    </div>
+                    <div className="font-mono text-sm sm:text-base font-bold text-white tabular-nums mt-0.5">
+                      <ScrambleText text={current.trancheFigure} triggerKey={current.id} />
+                    </div>
                   </div>
-                  <div className="font-mono text-2xl sm:text-3xl font-extrabold text-white tracking-tight mt-0.5">
-                    $77.7B<span className="text-xs text-[#10B981] ml-1">/MO</span>
-                  </div>
-                  <div className="mt-1.5 px-2.5 py-0.5 rounded-full bg-[#10B981]/15 border border-[#10B981]/40 font-mono text-[10px] text-[#10B981] font-bold">
-                    FOCUS: {current.pair} ({current.latency})
+                  <div className="text-right">
+                    <div className="text-[9px] font-mono uppercase tracking-widest text-slate-400">
+                      MONTHLY VOLUME
+                    </div>
+                    <div className="font-mono text-sm sm:text-base font-bold text-[#10B981] tabular-nums mt-0.5">
+                      <ScrambleText text={current.volume} triggerKey={current.id} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -459,12 +547,14 @@ export default function CorridorReel({ onTriggerPortal, onShaderPulse }) {
                   <span className="text-white font-bold">{current.title}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-slate-400">CORRIDOR VOLUME</span>
-                  <span className="text-[#10B981] font-bold">{current.volume}</span>
+                  <span className="text-slate-400">CORRIDOR PAIR</span>
+                  <span className="text-[#10B981] font-bold">{current.pair}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="text-slate-400">SPREAD / YIELD</span>
-                  <span className="text-cyan-400 font-bold">{current.spread}</span>
+                  <span className="text-cyan-400 font-bold">
+                    <ScrambleText text={current.spread} triggerKey={current.id} />
+                  </span>
                 </div>
               </div>
 
@@ -488,7 +578,7 @@ export default function CorridorReel({ onTriggerPortal, onShaderPulse }) {
                           {item.index} // {item.pair}
                         </div>
                         <div className="font-mono text-[11px] font-semibold truncate max-w-[125px]">
-                          {item.latency} Finality
+                          {item.routeCapitals}
                         </div>
                       </div>
                       <ArrowUpRight className="w-3.5 h-3.5 shrink-0 text-[#10B981]" />
@@ -548,7 +638,7 @@ export default function CorridorReel({ onTriggerPortal, onShaderPulse }) {
                     LIVE CORRIDOR PORTAL // {selectedCorridor.index}
                   </span>
                   <span className="font-mono text-xs text-slate-400">
-                    {selectedCorridor.code}
+                    {selectedCorridor.routeCapitals}
                   </span>
                 </div>
 
@@ -692,7 +782,7 @@ export default function CorridorReel({ onTriggerPortal, onShaderPulse }) {
                       {simulating ? (
                         <>
                           <Activity className="w-4 h-4 animate-spin" />
-                          <span>DISPATCHING QUANTUM LIQUIDITY PACKETS...</span>
+                          <span>DISPATCHING INSTITUTIONAL TRANCHE...</span>
                         </>
                       ) : simCompleted ? (
                         <>

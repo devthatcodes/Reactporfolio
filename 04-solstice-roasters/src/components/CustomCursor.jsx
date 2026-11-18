@@ -1,8 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-export default function CustomCursor({ onVelocityChange }) {
+/**
+ * CustomCursor — Rewritten as "Warm Circular Roastery Wax-Seal Stamp Cursor"
+ * Zero sci-fi crosshair reticles and zero [BRACKET] tags!
+ * Features a warm espresso & terracotta wax-seal stamp ring that gently rotates
+ * and expands into an artisanal circular badge ("TASTE · EXPLORE") when hovering
+ * over coffee bags, buttons, or interactive elements.
+ */
+export default function CustomCursor() {
   const dotRef = useRef(null);
-  const ringRef = useRef(null);
+  const sealRef = useRef(null);
   const [label, setLabel] = useState('');
   const [isHovered, setIsHovered] = useState(false);
   const [isPressed, setIsPressed] = useState(false);
@@ -21,40 +28,24 @@ export default function CustomCursor({ onVelocityChange }) {
     if (!isFinePointer) return;
 
     const pos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    const ring = { x: pos.x, y: pos.y };
-    const prev = { x: pos.x, y: pos.y, t: performance.now() };
+    const seal = { x: pos.x, y: pos.y, angle: 0 };
     let rafId = null;
-    let lastVelUpdate = 0;
 
     const handleMouseMove = (e) => {
       pos.x = e.clientX;
       pos.y = e.clientY;
 
-      const now = performance.now();
-      const dt = Math.max(16, now - prev.t);
-      const dx = pos.x - prev.x;
-      const dy = pos.y - prev.y;
-      const speed = Math.min(2400, Math.round((Math.hypot(dx, dy) / dt) * 1000));
-
-      prev.x = pos.x;
-      prev.y = pos.y;
-      prev.t = now;
-
-      if (onVelocityChange && now - lastVelUpdate > 1000) {
-        lastVelUpdate = now;
-        onVelocityChange(speed);
-      }
-
       const target = e.target?.closest?.(
         '[data-cursor], a, button, input, select, textarea, [role="button"]'
       );
       if (target) {
-        const customLabel = target.getAttribute('data-cursor') || '';
-        setIsHovered((prev) => (prev ? prev : true));
-        setLabel((prev) => (prev === customLabel ? prev : customLabel));
+        const rawLabel = target.getAttribute('data-cursor') || 'TASTE · EXPLORE';
+        const cleanLabel = rawLabel.replace(/\/\//g, '·').replace(/[\[\]]/g, '').trim();
+        setIsHovered(true);
+        setLabel(cleanLabel);
       } else {
-        setIsHovered((prev) => (prev ? false : prev));
-        setLabel((prev) => (prev === '' ? prev : ''));
+        setIsHovered(false);
+        setLabel('');
       }
     };
 
@@ -62,14 +53,15 @@ export default function CustomCursor({ onVelocityChange }) {
     const handleMouseUp = () => setIsPressed(false);
 
     const render = () => {
-      ring.x += (pos.x - ring.x) * 0.18;
-      ring.y += (pos.y - ring.y) * 0.18;
+      seal.x += (pos.x - seal.x) * 0.16;
+      seal.y += (pos.y - seal.y) * 0.16;
+      seal.angle = (seal.angle + 0.35) % 360;
 
       if (dotRef.current) {
         dotRef.current.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0)`;
       }
-      if (ringRef.current) {
-        ringRef.current.style.transform = `translate3d(${ring.x}px, ${ring.y}px, 0)`;
+      if (sealRef.current) {
+        sealRef.current.style.transform = `translate3d(${seal.x}px, ${seal.y}px, 0)`;
       }
       rafId = requestAnimationFrame(render);
     };
@@ -85,41 +77,76 @@ export default function CustomCursor({ onVelocityChange }) {
       window.removeEventListener('mouseup', handleMouseUp);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [isFinePointer, onVelocityChange]);
+  }, [isFinePointer]);
 
   if (!isFinePointer) return null;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[90] overflow-hidden select-none">
-      {/* Precision Inner Dot */}
+      {/* Warm Espresso Bean Inner Point */}
       <div
         ref={dotRef}
         className="fixed top-0 left-0 -ml-1 -mt-1 w-2 h-2 rounded-full bg-terracotta transition-transform duration-75"
       />
 
-      {/* Magnetic Outer Reticle Ring + Contextual Telemetry Badge */}
-      <div ref={ringRef} className="fixed top-0 left-0">
+      {/* Warm Circular Roastery Wax-Seal Stamp Cursor */}
+      <div ref={sealRef} className="fixed top-0 left-0">
         <div
-          className={`relative -translate-x-1/2 -translate-y-1/2 rounded-full border transition-all duration-200 flex items-center justify-center ${
+          className={`relative -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-300 flex items-center justify-center ${
             isPressed
-              ? 'w-8 h-8 border-terracotta bg-terracotta/15 scale-90'
+              ? 'w-11 h-11 bg-terracotta/90 text-cream scale-90 shadow-md'
               : isHovered
-              ? 'w-14 h-14 border-terracotta/90 bg-terracotta/10'
-              : 'w-9 h-9 border-espresso/35 bg-transparent'
+              ? 'w-20 h-20 bg-espresso/95 text-cream border-2 border-terracotta shadow-editorial scale-100'
+              : 'w-9 h-9 border border-dashed border-espresso/45 bg-cream/30'
           }`}
         >
-          {/* Reticle crosshair ticks */}
-          <span className="absolute -top-1 left-1/2 -translate-x-1/2 w-[1px] h-1.5 bg-terracotta/70" />
-          <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-[1px] h-1.5 bg-terracotta/70" />
-          <span className="absolute top-1/2 -left-1 -translate-y-1/2 w-1.5 h-[1px] bg-terracotta/70" />
-          <span className="absolute top-1/2 -right-1 -translate-y-1/2 w-1.5 h-[1px] bg-terracotta/70" />
-        </div>
+          {/* Rotating Wax-Seal SVG Ring */}
+          <svg
+            viewBox="0 0 80 80"
+            className={`w-full h-full transition-transform duration-500 ${
+              isHovered ? 'animate-[spin_12s_linear_infinite] opacity-100' : 'opacity-45'
+            }`}
+          >
+            <circle
+              cx="40"
+              cy="40"
+              r="35"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+              strokeDasharray="3 3"
+              className="text-terracotta"
+            />
+            {isHovered && (
+              <>
+                <defs>
+                  <path
+                    id="wax-seal-cursor-path"
+                    d="M 40, 40 m -27, 0 a 27,27 0 1,1 54,0 a 27,27 0 1,1 -54,0"
+                  />
+                </defs>
+                <text
+                  fill="#FBF8F3"
+                  fontSize="6.3"
+                  fontWeight="600"
+                  letterSpacing="2.1"
+                  className="uppercase font-sans"
+                >
+                  <textPath href="#wax-seal-cursor-path" startOffset="0%">
+                    SOLSTICE ROASTERS · TASTE · EXPLORE ·
+                  </textPath>
+                </text>
+              </>
+            )}
+          </svg>
 
-        {label && (
-          <div className="absolute left-7 -top-3 whitespace-nowrap px-2.5 py-1 rounded-md bg-espresso/95 text-cream border border-terracotta/50 text-[10px] font-mono tracking-[0.16em] uppercase shadow-lg">
-            [ {label} ]
-          </div>
-        )}
+          {/* Center Stamp Emblem */}
+          {isHovered && (
+            <span className="absolute inset-0 flex items-center justify-center text-[8px] font-serif italic tracking-wider text-terracotta px-2 text-center leading-tight">
+              {label.split('·')[0].slice(0, 10)}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -14,8 +14,7 @@ import {
   Grid,
   Radar,
   ArrowUpRight,
-  Compass,
-  Flame,
+  Layers,
 } from 'lucide-react';
 import { COFFEES, GRIND_OPTIONS } from '../data/coffees';
 import CoffeeBagSVG from './CoffeeBagSVG';
@@ -45,195 +44,139 @@ function TastingBar({ label, value, colorClass }) {
 }
 
 /**
- * RotaryArcBagCard
- * Positioned along a gentle 2D/GPU circular arc (translateX, translateY, rotate, scale, opacity)
- * driven purely by Framer Motion useTransform on scrollYProgress with zero React state updates during scroll!
+ * FannedTastingCard
+ * Individual card inside the Interactive Fanned Tasting Deck.
+ * Starts fanned out like a physical hand of letterpress tasting cards
+ * (rotate: -15deg, -7deg, 0deg, 7deg, 15deg, x offsets) and unfolds smoothly
+ * as you scroll down or click any card in the fan.
  */
-function RotaryArcBagCard({
+function FannedTastingCard({
   coffee,
   index,
-  total,
+  fanAngles,
+  fanXOffsets,
+  fanYOffsets,
+  spreadXOffsets,
   scrollYProgress,
+  isManualSpread,
+  activeCardId,
+  onSelectCard,
   onOpenPortal,
   onAddToCart,
 }) {
-  const center = index / Math.max(1, total - 1); // 0.0 -> 1.0 across the 6 single-origin bags
+  const fanRotate = fanAngles[index] ?? 0;
+  const fanX = fanXOffsets[index] ?? 0;
+  const fanY = fanYOffsets[index] ?? 0;
+  const spreadX = spreadXOffsets[index] ?? 0;
 
-  // Gentle circular tasting wheel arc: X sweeps across the wheel, Y dips down along the arc edges
-  const x = useTransform(
+  // Scroll-driven interpolation from Fanned Hand (0) -> Unfolded Spread (1)
+  const scrollRotate = useTransform(
     scrollYProgress,
-    [center - 0.52, center - 0.24, center, center + 0.24, center + 0.52],
-    ['105%', '52%', '0%', '-52%', '-105%']
+    [0.05, 0.55],
+    [fanRotate, 0]
+  );
+  const scrollX = useTransform(
+    scrollYProgress,
+    [0.05, 0.55],
+    [fanX, spreadX]
+  );
+  const scrollY = useTransform(
+    scrollYProgress,
+    [0.05, 0.55],
+    [fanY, 0]
   );
 
-  const y = useTransform(
-    scrollYProgress,
-    [center - 0.45, center - 0.22, center, center + 0.22, center + 0.45],
-    [130, 38, 0, 38, 130]
-  );
-
-  const rotate = useTransform(
-    scrollYProgress,
-    [center - 0.45, center - 0.22, center, center + 0.22, center + 0.45],
-    [22, 9, 0, -9, -22]
-  );
-
-  const scale = useTransform(
-    scrollYProgress,
-    [center - 0.36, center - 0.16, center, center + 0.16, center + 0.36],
-    [0.72, 0.88, 1.0, 0.88, 0.72]
-  );
-
-  const opacity = useTransform(
-    scrollYProgress,
-    [center - 0.36, center - 0.16, center, center + 0.16, center + 0.36],
-    [0, 0.42, 1, 0.42, 0]
-  );
-
-  const bagFloatY = useTransform(
-    scrollYProgress,
-    [center - 0.25, center, center + 0.25],
-    [18, -8, 18]
-  );
-
-  const bagRotate = useTransform(
-    scrollYProgress,
-    [center - 0.25, center, center + 0.25],
-    [-8, 0, 8]
-  );
+  const isSelected = activeCardId === coffee.id;
 
   return (
     <motion.div
       style={{
-        x,
-        y,
-        rotate,
-        scale,
-        opacity,
-        willChange: 'transform, opacity',
+        rotate: isManualSpread ? 0 : scrollRotate,
+        x: isManualSpread ? spreadX : scrollX,
+        y: isManualSpread ? (isSelected ? -14 : 0) : scrollY,
+        zIndex: isSelected ? 40 : 10 + index,
+        willChange: 'transform',
       }}
-      className="absolute inset-0 flex items-center justify-center pointer-events-none px-4"
+      whileHover={{
+        y: -18,
+        scale: 1.04,
+        zIndex: 50,
+        transition: { type: 'spring', stiffness: 260, damping: 18 },
+      }}
+      onClick={() => {
+        soundEngine.playClick();
+        onSelectCard(coffee);
+      }}
+      data-cursor="TASTE · UNFOLD"
+      className={`cursor-pointer w-56 sm:w-64 rounded-3xl bg-cream border-2 p-5 flex flex-col justify-between transition-shadow duration-300 select-none ${
+        isSelected
+          ? 'border-terracotta shadow-editorial ring-2 ring-terracotta/25'
+          : 'border-espresso/15 shadow-card hover:border-terracotta/60 hover:shadow-editorial'
+      }`}
     >
-      <div className="pointer-events-auto relative w-full max-w-4xl rounded-3xl bg-cream border-2 border-espresso/15 shadow-editorial p-6 sm:p-9 grid grid-cols-1 md:grid-cols-12 gap-6 sm:gap-8 items-center text-espresso">
-        {/* Top-Right Lot Index Telemetry */}
-        <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-espresso text-cream text-[10px] font-mono uppercase tracking-[0.22em] border border-terracotta/50 shadow-md">
-          ROTARY WHEEL // 0{index + 1} OF 0{total} • {coffee.lotCode}
+      {/* Top Apothecary Lot Stamp */}
+      <div>
+        <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-widest text-umber/70 pb-2.5 mb-3 border-b border-espresso/10">
+          <span>{coffee.lotCode}</span>
+          <span className="text-terracotta font-semibold">{coffee.elevation}</span>
         </div>
 
-        {/* Left Rotary Botanical Seal Stage + Coffee Bag */}
-        <div className="md:col-span-5 relative flex flex-col items-center justify-center py-6 rounded-2xl bg-cream-dark border border-espresso/10 overflow-hidden">
-          {/* Concentric Botanical Seal Ring behind bag */}
-          <div className="pointer-events-none absolute w-48 h-48 rounded-full border border-dashed border-terracotta/35" />
-          <div className="pointer-events-none absolute w-36 h-36 rounded-full border border-sage/25" />
+        {/* Mini Bag + Botanical Ring */}
+        <div className="relative bg-cream-dark rounded-2xl py-4 flex items-center justify-center mb-3 overflow-hidden border border-espresso/5">
+          <div className="pointer-events-none absolute w-24 h-24 rounded-full border border-dashed border-terracotta/30" />
+          <CoffeeBagSVG coffee={coffee} className="w-24 h-32 relative z-10" compact />
+        </div>
 
-          <motion.div
-            style={{ y: bagFloatY, rotate: bagRotate, willChange: 'transform' }}
-            className="relative z-10 cursor-pointer"
-            onClick={() => {
+        <p className="text-[10px] uppercase tracking-[0.2em] text-terracotta font-semibold">
+          {coffee.origin} · {coffee.process}
+        </p>
+        <h3 className="font-serif text-xl text-espresso mt-0.5 leading-snug">
+          {coffee.name}
+        </h3>
+
+        {/* Tasting Note Pills */}
+        <div className="flex flex-wrap gap-1 mt-2.5">
+          {coffee.notes.map((note) => (
+            <span
+              key={note}
+              className="px-2 py-0.5 rounded-full bg-sage-light text-sage text-[10px] font-medium"
+            >
+              {note}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom Price & Quick Action */}
+      <div className="pt-3 mt-4 border-t border-espresso/10 flex items-center justify-between gap-2">
+        <span className="font-serif text-lg font-semibold text-espresso">
+          ${coffee.price}
+        </span>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            data-cursor="TASTE · NOTES"
+            onClick={(e) => {
+              e.stopPropagation();
               soundEngine.playPortalWipe();
               onOpenPortal(coffee);
             }}
+            className="px-2.5 py-1 rounded-full bg-espresso/10 hover:bg-espresso hover:text-cream text-espresso text-[10px] uppercase tracking-wider font-medium transition-colors"
           >
-            <CoffeeBagSVG coffee={coffee} className="w-36 h-44 sm:w-44 sm:h-52" />
-          </motion.div>
-
-          {/* Flavor Note Chips */}
-          <div className="relative z-20 flex flex-wrap justify-center gap-1.5 mt-3 px-2">
-            {coffee.notes.map((note) => (
-              <span
-                key={note}
-                className="px-3 py-1 rounded-full bg-espresso text-cream text-[11px] font-mono uppercase tracking-wider border border-terracotta/40"
-              >
-                {note}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Lot Telemetry & Direct Actions */}
-        <div className="md:col-span-7 space-y-4 text-left">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-terracotta/15 text-terracotta text-xs font-mono uppercase tracking-wider font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              {coffee.badge} • {coffee.roastCategory}
-            </span>
-            <span className="font-mono text-xs text-umber/75">
-              {coffee.elevation} • {coffee.process}
-            </span>
-          </div>
-
-          <div className="flex items-baseline justify-between gap-4">
-            <div>
-              <h3 className="font-serif text-2xl sm:text-4xl text-espresso leading-tight">
-                {coffee.name}
-              </h3>
-              <p className="text-xs sm:text-sm font-mono text-umber/75 mt-1">
-                {coffee.origin} • {coffee.producer}
-              </p>
-            </div>
-            <span className="font-serif text-3xl sm:text-4xl font-semibold text-terracotta shrink-0">
-              ${coffee.price}
-            </span>
-          </div>
-
-          <p className="text-sm sm:text-base text-umber/85 leading-relaxed">
-            {coffee.description}
-          </p>
-
-          {/* Live Sensory Telemetry Strip */}
-          <div className="grid grid-cols-3 gap-2.5 pt-1">
-            <div className="p-2.5 rounded-xl bg-cream-dark border border-espresso/10">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-umber/60 block">
-                DROP TEMP
-              </span>
-              <span className="font-mono text-sm font-semibold text-espresso">
-                {coffee.dropTemp}
-              </span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-cream-dark border border-espresso/10">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-umber/60 block">
-                AGTRON
-              </span>
-              <span className="font-mono text-sm font-semibold text-terracotta">
-                {coffee.agtron}
-              </span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-cream-dark border border-espresso/10">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-umber/60 block">
-                CLARITY / SWEET
-              </span>
-              <span className="font-mono text-sm font-semibold text-sage">
-                {coffee.sensory.clarity}% / {coffee.sensory.sweetness}%
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 pt-2">
-            <button
-              type="button"
-              data-cursor="ADD MICRO-LOT"
-              onClick={() => {
-                soundEngine.playSuccess();
-                onAddToCart(coffee, GRIND_OPTIONS[0]);
-              }}
-              className="flex-1 py-3.5 px-5 rounded-full bg-terracotta text-cream font-medium text-sm hover:bg-terracotta-dark transition-colors flex items-center justify-center gap-2 shadow-sm"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Whole Bean — ${coffee.price}</span>
-            </button>
-            <button
-              type="button"
-              data-cursor="EXPLORE ORIGIN"
-              onClick={() => {
-                soundEngine.playPortalWipe();
-                onOpenPortal(coffee);
-              }}
-              className="py-3.5 px-5 rounded-full bg-espresso text-cream font-mono text-xs uppercase tracking-wider hover:bg-umber transition-colors flex items-center gap-2"
-            >
-              <Maximize2 className="w-3.5 h-3.5 text-terracotta" />
-              <span>Origin Portal</span>
-            </button>
-          </div>
+            Notes
+          </button>
+          <button
+            type="button"
+            data-cursor="ADD · BAG"
+            onClick={(e) => {
+              e.stopPropagation();
+              soundEngine.playSuccess();
+              onAddToCart(coffee, GRIND_OPTIONS[0]);
+            }}
+            className="px-2.5 py-1 rounded-full bg-terracotta text-cream hover:bg-terracotta-dark text-[10px] uppercase tracking-wider font-medium transition-colors"
+          >
+            + Bag
+          </button>
         </div>
       </div>
     </motion.div>
@@ -241,147 +184,205 @@ function RotaryArcBagCard({
 }
 
 /**
- * RotaryArcPill
- * Pure GPU scroll-linked indicator pill (zero React state updates during scroll)
+ * FannedTastingDeckShowcase
+ * At the top of #shop, features an Interactive Fanned Tasting Deck where the
+ * single-origin coffee cards start stacked and fanned out like a physical hand
+ * of tasting cards (rotate: -15deg, -7deg, 0deg, 7deg, 15deg, x offsets).
+ * As you scroll down (or click any card in the fan), the cards unfold and spread
+ * out smoothly with tactile spring physics.
  */
-function RotaryArcPill({ lot, idx, total, scrollYProgress }) {
-  const center = idx / Math.max(1, total - 1);
-  const opacity = useTransform(
-    scrollYProgress,
-    [center - 0.22, center, center + 0.22],
-    [0.45, 1, 0.45]
-  );
-  const scale = useTransform(
-    scrollYProgress,
-    [center - 0.22, center, center + 0.22],
-    [0.94, 1.06, 0.94]
-  );
-
-  return (
-    <motion.span
-      style={{ opacity, scale, willChange: 'transform, opacity' }}
-      className="px-2.5 py-1 rounded-full text-[10px] font-mono uppercase tracking-wider bg-cream/10 text-cream border border-terracotta/40"
-    >
-      0{idx + 1} // {lot.name.split(' ')[0]}
-    </motion.span>
-  );
-}
-
-/**
- * CurvedBotanicalArcShowcase
- * Sticky scroll-scrubbed Curved Arc / Rotary Carousel Scroll Showcase (`min-h-[210vh]` with `sticky top-20` stage)
- * where scrolling smoothly rotates the 6 single-origin coffee bags along a gentle 2D/GPU circular arc
- * with zero React state updates during scroll!
- */
-function CurvedBotanicalArcShowcase({ coffees, onOpenPortal, onAddToCart }) {
-  const runwayRef = useRef(null);
+function FannedTastingDeckShowcase({ coffees, onOpenPortal, onAddToCart }) {
+  const deckRef = useRef(null);
+  const deckCoffees = coffees.slice(0, 5); // 5-card physical tasting hand (-15, -7, 0, 7, 15 deg)
+  const [isManualSpread, setIsManualSpread] = useState(false);
+  const [selectedCoffee, setSelectedCoffee] = useState(deckCoffees[2] || coffees[0]);
 
   const { scrollYProgress } = useScroll({
-    target: runwayRef,
-    offset: ['start start', 'end end'],
+    target: deckRef,
+    offset: ['start 85%', 'end 25%'],
   });
 
-  const smoothProgress = useSpring(scrollYProgress, {
-    damping: 36,
-    stiffness: 240,
-    mass: 0.38,
+  const smoothScroll = useSpring(scrollYProgress, {
+    stiffness: 180,
+    damping: 20,
+    mass: 0.45,
   });
 
-  // Pure GPU-composited rotary wheel dial & progress bar
-  const wheelRotate = useTransform(smoothProgress, [0, 1], [-75, 75]);
-  const innerSealRotate = useTransform(smoothProgress, [0, 1], [0, 240]);
-  const progressScaleX = useTransform(smoothProgress, [0, 1], [0, 1]);
+  // Exact fan angles requested: -15deg, -7deg, 0deg, 7deg, 15deg
+  const fanAngles = [-15, -7, 0, 7, 15];
+  // Stacked hand X offsets
+  const fanXOffsets = [-115, -58, 0, 58, 115];
+  // Gentle arc Y offsets when fanned
+  const fanYOffsets = [28, 8, 0, 8, 28];
+  // Unfolded spread X offsets across the desktop stage
+  const spreadXOffsets = [-450, -225, 0, 225, 450];
+
+  const handleCardSelect = (coffee) => {
+    setSelectedCoffee(coffee);
+    setIsManualSpread(true);
+  };
 
   return (
-    <div ref={runwayRef} className="relative min-h-[210vh] mb-20">
-      <div className="sticky top-20 h-[calc(100vh-5.5rem)] w-full overflow-hidden rounded-3xl border border-espresso/15 bg-espresso text-cream shadow-editorial flex flex-col justify-between p-5 sm:p-8">
-        {/* Giant Curved Botanical Tasting Wheel Arc SVG in Background */}
-        <motion.div
-          style={{ rotate: wheelRotate, willChange: 'transform' }}
-          className="pointer-events-none absolute left-1/2 -bottom-[420px] -translate-x-1/2 w-[920px] h-[920px] rounded-full border-2 border-dashed border-terracotta/30 flex items-center justify-center"
-        >
-          <div className="w-[740px] h-[740px] rounded-full border border-cream/10" />
-          <div className="w-[560px] h-[560px] rounded-full border border-dashed border-sage/25" />
-        </motion.div>
-
-        {/* Top-Right Rotating Botanical Roastery Seal Watermark */}
-        <motion.div
-          style={{ rotate: innerSealRotate, willChange: 'transform' }}
-          className="pointer-events-none absolute -right-16 -top-16 w-64 h-64 rounded-full border border-terracotta/25 border-dashed flex items-center justify-center"
-        >
-          <div className="w-44 h-44 rounded-full border border-cream/10" />
-        </motion.div>
-
-        {/* Top Sticky Rotary Wheel Telemetry Bar */}
-        <div className="relative z-20 flex flex-wrap items-center justify-between gap-3 border-b border-cream/15 pb-4">
-          <div className="flex items-center gap-2.5">
-            <motion.div style={{ rotate: innerSealRotate, willChange: 'transform' }}>
-              <Compass className="w-4 h-4 text-terracotta" />
-            </motion.div>
-            <span className="text-[11px] font-mono uppercase tracking-[0.22em] text-terracotta font-semibold">
-              ROTARY TASTING WHEEL // CURVED BOTANICAL ARC ({coffees.length} SINGLE ORIGINS)
-            </span>
-          </div>
-
-          {/* 6 Lot Quick-Scrub Indicator Pills (Pure GPU opacity/scale) */}
-          <div className="hidden md:flex items-center gap-1.5">
-            {coffees.map((lot, idx) => (
-              <RotaryArcPill
-                key={lot.id}
-                lot={lot}
-                idx={idx}
-                total={coffees.length}
-                scrollYProgress={smoothProgress}
-              />
-            ))}
-          </div>
+    <div
+      ref={deckRef}
+      className="relative mb-16 rounded-3xl bg-cream-dark/80 border border-espresso/12 p-6 sm:p-10 shadow-editorial overflow-hidden"
+    >
+      {/* Top Bar: Fanned Deck Description & Interactive Unfold Toggle */}
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-espresso/10">
+        <div>
+          <span className="text-xs font-serif italic text-terracotta tracking-wider block">
+            Tactile Apothecary · Interactive Fanned Tasting Deck
+          </span>
+          <h3 className="font-serif text-2xl sm:text-3xl text-espresso mt-0.5">
+            Pull a Tasting Card from the Roaster&apos;s Hand
+          </h3>
+          <p className="text-xs sm:text-sm text-umber/75 mt-1">
+            Scroll down or click any card in the fan to unfold our single-origin harvest deck.
+          </p>
         </div>
 
-        {/* Center 2D/GPU Circular Arc Stage */}
-        <div className="relative flex-1 my-2">
-          {coffees.map((coffee, index) => (
-            <RotaryArcBagCard
-              key={coffee.id}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            data-cursor="TASTE · DECK"
+            onClick={() => {
+              soundEngine.playClick();
+              setIsManualSpread((prev) => !prev);
+            }}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-espresso text-cream text-xs uppercase tracking-wider font-medium hover:bg-umber transition-colors shadow-sm"
+          >
+            <Layers className="w-3.5 h-3.5 text-terracotta" />
+            <span>{isManualSpread ? 'Gather Tasting Fan' : 'Unfold Tasting Deck'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Interactive Fanned Card Stage */}
+      <div className="hidden lg:flex relative h-[430px] items-center justify-center my-4">
+        {/* Subtle Table Mat Arc Guide */}
+        <svg
+          viewBox="0 0 1000 320"
+          fill="none"
+          className="pointer-events-none absolute inset-0 w-full h-full opacity-30"
+          aria-hidden="true"
+        >
+          <path
+            d="M 80 280 Q 500 80 920 280"
+            stroke="#C85A32"
+            strokeWidth="1.5"
+            strokeDasharray="6 6"
+          />
+        </svg>
+
+        {deckCoffees.map((coffee, index) => (
+          <div
+            key={coffee.id}
+            className="absolute flex items-center justify-center"
+          >
+            <FannedTastingCard
               coffee={coffee}
               index={index}
-              total={coffees.length}
-              scrollYProgress={smoothProgress}
+              fanAngles={fanAngles}
+              fanXOffsets={fanXOffsets}
+              fanYOffsets={fanYOffsets}
+              spreadXOffsets={spreadXOffsets}
+              scrollYProgress={smoothScroll}
+              isManualSpread={isManualSpread}
+              activeCardId={selectedCoffee?.id}
+              onSelectCard={handleCardSelect}
               onOpenPortal={onOpenPortal}
               onAddToCart={onAddToCart}
             />
-          ))}
-        </div>
-
-        {/* Bottom Scroll Progress Scrubber Bar */}
-        <div className="relative z-20 pt-3 border-t border-cream/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs font-mono text-cream/75">
-            <Flame className="w-3.5 h-3.5 text-terracotta" />
-            <span>
-              BOTANICAL TASTING WHEEL • <strong className="text-cream">6 MICRO-LOT HARVESTS</strong>
-            </span>
           </div>
-          <div className="w-full sm:w-64 h-1.5 rounded-full bg-cream/15 overflow-hidden">
-            <motion.div
-              style={{
-                scaleX: progressScaleX,
-                transformOrigin: '0% 50%',
-                willChange: 'transform',
-              }}
-              className="h-full w-full bg-terracotta rounded-full"
-            />
-          </div>
-          <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-cream/60">
-            SCROLL TO ROTATE TASTING ARC →
-          </span>
-        </div>
+        ))}
       </div>
+
+      {/* Mobile / Tablet Responsive Fanned Deck Scroller */}
+      <div className="flex lg:hidden gap-4 overflow-x-auto py-4 px-1 snap-x">
+        {deckCoffees.map((coffee, idx) => (
+          <motion.div
+            key={coffee.id}
+            initial={{ rotate: fanAngles[idx] * 0.35, y: 12, opacity: 0 }}
+            whileInView={{ rotate: 0, y: 0, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ type: 'spring', stiffness: 200, damping: 18, delay: idx * 0.06 }}
+            onClick={() => handleCardSelect(coffee)}
+            className="snap-center shrink-0 w-64 rounded-2xl bg-cream border border-espresso/15 p-4 shadow-card"
+          >
+            <div className="flex items-center justify-between text-[10px] font-mono text-umber/70 mb-2">
+              <span>{coffee.lotCode}</span>
+              <span className="text-terracotta">{coffee.elevation}</span>
+            </div>
+            <div className="bg-cream-dark rounded-xl py-3 flex justify-center mb-3">
+              <CoffeeBagSVG coffee={coffee} className="w-24 h-28" compact />
+            </div>
+            <h4 className="font-serif text-lg text-espresso">{coffee.name}</h4>
+            <p className="text-xs text-umber/75">{coffee.origin}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Active Selected Tasting Card Detail Bar */}
+      {selectedCoffee && (
+        <motion.div
+          key={selectedCoffee.id}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+          className="mt-4 pt-5 border-t border-espresso/10 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-cream/80 rounded-2xl p-4 sm:p-5 border border-espresso/10"
+        >
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full bg-terracotta/15 text-terracotta text-xs font-medium">
+                Selected Card · {selectedCoffee.name}
+              </span>
+              <span className="text-xs text-umber/70">
+                {selectedCoffee.origin} · {selectedCoffee.producer} · Drop {selectedCoffee.dropTemp}
+              </span>
+            </div>
+            <p className="text-sm text-umber/85 max-w-2xl">
+              {selectedCoffee.description}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              data-cursor="TASTE · EXPLORE"
+              onClick={() => {
+                soundEngine.playPortalWipe();
+                onOpenPortal(selectedCoffee);
+              }}
+              className="px-4 py-2.5 rounded-full border border-espresso/20 text-espresso hover:bg-espresso hover:text-cream text-xs uppercase tracking-wider font-medium transition-colors"
+            >
+              Read Full Tasting Sheet
+            </button>
+            <button
+              type="button"
+              data-cursor="TASTE · ADD"
+              onClick={() => {
+                soundEngine.playSuccess();
+                onAddToCart(selectedCoffee, GRIND_OPTIONS[0]);
+              }}
+              className="px-5 py-2.5 rounded-full bg-terracotta text-cream hover:bg-terracotta-dark text-xs uppercase tracking-wider font-medium transition-colors shadow-sm"
+            >
+              Add Whole Bean — ${selectedCoffee.price}
+            </button>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
 
+/**
+ * CoffeeCard — Filterable Tasting Grid Card
+ * Hovering a card lifts the coffee bag in 3D and releases rising aroma notes!
+ */
 function CoffeeCard({ coffee, onAddToCart, onOpenPortal }) {
   const [selectedGrind, setSelectedGrind] = useState(GRIND_OPTIONS[0]);
   const [justAdded, setJustAdded] = useState(false);
+  const [isCardHovered, setIsCardHovered] = useState(false);
 
   const handleAdd = () => {
     soundEngine.playSuccess();
@@ -395,7 +396,9 @@ function CoffeeCard({ coffee, onAddToCart, onOpenPortal }) {
       initial={{ opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.15 }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ type: 'spring', stiffness: 200, damping: 18 }}
+      onMouseEnter={() => setIsCardHovered(true)}
+      onMouseLeave={() => setIsCardHovered(false)}
       className="h-full group relative bg-cream border border-espresso/12 rounded-3xl p-6 flex flex-col justify-between shadow-card hover:shadow-editorial hover:border-terracotta/45 transition-all duration-300 overflow-hidden"
     >
       <div className="relative z-10">
@@ -424,11 +427,11 @@ function CoffeeCard({ coffee, onAddToCart, onOpenPortal }) {
           </div>
         </div>
 
-        {/* Bag Illustration Stage — Clickable to launch Origin Portal Takeover */}
+        {/* Bag Illustration Stage — 3D Lift + Rising Aroma Notes on Hover */}
         <div
           role="button"
           tabIndex={0}
-          data-cursor="EXPLORE ORIGIN"
+          data-cursor="TASTE · EXPLORE"
           onClick={() => {
             soundEngine.playPortalWipe();
             onOpenPortal(coffee);
@@ -440,22 +443,112 @@ function CoffeeCard({ coffee, onAddToCart, onOpenPortal }) {
               onOpenPortal(coffee);
             }
           }}
-          className="cursor-pointer relative bg-cream-dark rounded-2xl py-6 px-4 mb-5 flex items-center justify-center border border-espresso/5 group-hover:border-terracotta/30 overflow-hidden transition-colors"
+          style={{ perspective: '900px' }}
+          className="cursor-pointer relative bg-cream-dark rounded-2xl py-7 px-4 mb-5 flex items-center justify-center border border-espresso/5 group-hover:border-terracotta/30 overflow-hidden transition-colors"
         >
           {/* Subtle Botanical Ring Seal behind Bag */}
           <div className="pointer-events-none absolute w-36 h-36 rounded-full border border-dashed border-terracotta/25 group-hover:rotate-45 transition-transform duration-700" />
 
-          <div className="relative z-10 transition-transform duration-300 group-hover:-translate-y-1.5 group-hover:scale-105">
+          {/* Rising Aroma Steam & Floating Flavor Notes on Hover */}
+          <AnimatePresence>
+            {isCardHovered && (
+              <div className="pointer-events-none absolute inset-0 z-20 overflow-hidden">
+                {/* Rising SVG Steam Wisps */}
+                <motion.svg
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 0.55, y: -12 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8, ease: 'easeOut' }}
+                  viewBox="0 0 120 80"
+                  fill="none"
+                  className="absolute top-2 left-1/2 -translate-x-1/2 w-28 h-20 text-terracotta"
+                >
+                  <path
+                    d="M38 72 C30 50, 48 34, 36 12"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeDasharray="3 4"
+                  />
+                  <path
+                    d="M62 76 C52 52, 72 30, 58 6"
+                    stroke="#5E7461"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeDasharray="3 4"
+                  />
+                  <path
+                    d="M84 72 C76 52, 92 36, 80 16"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeDasharray="3 4"
+                  />
+                </motion.svg>
+
+                {/* Floating Aroma Note Badges Rising from the Bag */}
+                {coffee.notes.map((note, idx) => {
+                  const xPositions = ['14%', '50%', '78%'];
+                  return (
+                    <motion.span
+                      key={note}
+                      initial={{ opacity: 0, y: 28, scale: 0.82 }}
+                      animate={{
+                        opacity: [0, 1, 0.92],
+                        y: -6 - idx * 8,
+                        scale: 1,
+                      }}
+                      exit={{ opacity: 0, y: -18, scale: 0.85 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 200,
+                        damping: 16,
+                        delay: idx * 0.07,
+                      }}
+                      style={{ left: xPositions[idx % xPositions.length] }}
+                      className="absolute top-5 -translate-x-1/2 px-2.5 py-0.5 rounded-full bg-espresso/90 text-cream text-[10px] font-serif italic tracking-wide shadow-md border border-terracotta/50 whitespace-nowrap"
+                    >
+                      ✦ {note}
+                    </motion.span>
+                  );
+                })}
+              </div>
+            )}
+          </AnimatePresence>
+
+          {/* 3D Tilted & Lifted Coffee Bag */}
+          <motion.div
+            animate={
+              isCardHovered
+                ? {
+                    y: -10,
+                    rotateX: 8,
+                    rotateY: -10,
+                    rotateZ: -2,
+                    scale: 1.07,
+                  }
+                : {
+                    y: 0,
+                    rotateX: 0,
+                    rotateY: 0,
+                    rotateZ: 0,
+                    scale: 1,
+                  }
+            }
+            transition={{ type: 'spring', stiffness: 220, damping: 16 }}
+            style={{ transformStyle: 'preserve-3d' }}
+            className="relative z-10"
+          >
             <CoffeeBagSVG coffee={coffee} className="w-36 h-44" />
-          </div>
+          </motion.div>
 
           <span className="absolute top-2.5 left-2.5 text-[10px] font-mono uppercase tracking-wider text-umber/70 bg-cream px-2 py-0.5 rounded-md border border-espresso/10">
             {coffee.lotCode}
           </span>
 
-          <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 text-[10px] font-mono uppercase tracking-wider text-cream bg-espresso px-2.5 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+          <span className="absolute bottom-3 left-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-cream bg-espresso px-2.5 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
             <Maximize2 className="w-2.5 h-2.5 text-terracotta" />
-            <span>Origin Portal</span>
+            <span>Tasting Notes</span>
           </span>
 
           <span className="absolute bottom-3 right-3 text-[11px] font-medium text-umber/65 bg-cream px-2.5 py-0.5 rounded-full border border-espresso/10">
@@ -468,7 +561,7 @@ function CoffeeCard({ coffee, onAddToCart, onOpenPortal }) {
           <div>
             <button
               type="button"
-              data-cursor="EXPLORE ORIGIN"
+              data-cursor="TASTE · EXPLORE"
               onClick={() => {
                 soundEngine.playPortalWipe();
                 onOpenPortal(coffee);
@@ -481,7 +574,7 @@ function CoffeeCard({ coffee, onAddToCart, onOpenPortal }) {
               </h3>
             </button>
             <p className="text-xs text-umber/75 mt-1 font-medium">
-              {coffee.origin} • {coffee.elevation} • {coffee.process}
+              {coffee.origin} · {coffee.elevation} · {coffee.process}
             </p>
           </div>
           <span className="font-serif text-2xl font-semibold text-espresso">
@@ -511,7 +604,7 @@ function CoffeeCard({ coffee, onAddToCart, onOpenPortal }) {
         </div>
       </div>
 
-      {/* Grind Selector + Add to Bag + Portal Trigger */}
+      {/* Grind Selector + Add to Bag + Tasting Sheet Trigger */}
       <div className="relative z-10 space-y-3 pt-2 border-t border-espresso/10">
         <div>
           <span className="text-[11px] uppercase tracking-wider text-umber/70 font-semibold block mb-2">
@@ -544,7 +637,7 @@ function CoffeeCard({ coffee, onAddToCart, onOpenPortal }) {
         <div className="flex items-center gap-2">
           <motion.button
             type="button"
-            data-cursor="ADD MICRO-LOT"
+            data-cursor="TASTE · ADD"
             onClick={handleAdd}
             whileTap={{ scale: 0.97 }}
             className={`flex-1 py-3.5 px-4 rounded-full font-medium text-sm flex items-center justify-center gap-2 transition-colors shadow-sm ${
@@ -582,14 +675,14 @@ function CoffeeCard({ coffee, onAddToCart, onOpenPortal }) {
 
           <button
             type="button"
-            data-cursor="EXPLORE ORIGIN"
+            data-cursor="TASTE · EXPLORE"
             onClick={() => {
               soundEngine.playPortalWipe();
               onOpenPortal(coffee);
             }}
             className="p-3.5 rounded-full border border-espresso/20 text-espresso hover:bg-espresso hover:text-cream transition-colors"
-            title="Launch Full-Screen Origin & Sensory Portal"
-            aria-label={`Open ${coffee.name} sensory portal`}
+            title="Open Full-Screen Origin Tasting Sheet"
+            aria-label={`Open ${coffee.name} tasting sheet`}
           >
             <Maximize2 className="w-4 h-4" />
           </button>
@@ -599,7 +692,7 @@ function CoffeeCard({ coffee, onAddToCart, onOpenPortal }) {
   );
 }
 
-// 02 // SENSORY FLAVOR MATRIX (Interactive 2D Terroir & Flavor Coordinate Explorer)
+// Interactive 2D Terroir & Flavor Compass
 function SensoryFlavorMatrix({ coffees, onOpenPortal, onAddToCart }) {
   const [selectedLot, setSelectedLot] = useState(coffees[0]);
 
@@ -614,15 +707,15 @@ function SensoryFlavorMatrix({ coffees, onOpenPortal, onAddToCart }) {
       <div className="lg:col-span-7 flex flex-col justify-between space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <span className="text-[11px] font-mono uppercase tracking-[0.24em] text-terracotta block">
-              02 // SENSORY FLAVOR MATRIX
+            <span className="text-xs font-serif italic tracking-wider text-terracotta block">
+              Cupping Table · Sensory Flavor Compass
             </span>
             <h3 className="font-serif text-2xl sm:text-3xl text-cream mt-0.5">
-              Terroir &amp; Extraction Coordinate Plane
+              Terroir &amp; Extraction Coordinate Map
             </h3>
           </div>
-          <span className="text-xs font-mono text-cream/55">
-            CLICK ANY NODE TO INSPECT LOT
+          <span className="text-xs text-cream/55">
+            Select any origin seal to inspect tasting notes
           </span>
         </div>
 
@@ -634,7 +727,6 @@ function SensoryFlavorMatrix({ coffees, onOpenPortal, onAddToCart }) {
             role="img"
             aria-label="Sensory flavor matrix coordinate plane"
           >
-            {/* Grid Lines */}
             {[60, 130, 200, 270].map((y) => (
               <line
                 key={`h-${y}`}
@@ -660,25 +752,22 @@ function SensoryFlavorMatrix({ coffees, onOpenPortal, onAddToCart }) {
               />
             ))}
 
-            {/* Axes */}
             <line x1="50" y1="295" x2="485" y2="295" stroke="#FBF8F3" strokeOpacity="0.35" />
             <line x1="50" y1="25" x2="50" y2="295" stroke="#FBF8F3" strokeOpacity="0.35" />
 
-            {/* Quadrant Labels */}
-            <text x="65" y="48" fill="#C85A32" fontSize="10" fontFamily="monospace">
-              HIGH FLORAL CLARITY // BRIGHT CITRUS
+            <text x="65" y="48" fill="#C85A32" fontSize="10" fontFamily="Georgia, serif">
+              Bright Bergamot &amp; Floral Clarity
             </text>
-            <text x="295" y="48" fill="#5E7461" fontSize="10" fontFamily="monospace">
-              TROPICAL SWEETNESS // COMPLEX STRUCTURE
+            <text x="295" y="48" fill="#5E7461" fontSize="10" fontFamily="Georgia, serif">
+              Stone Fruit Sweetness &amp; Honeyed Structure
             </text>
-            <text x="295" y="282" fill="#FBF8F3" fillOpacity="0.55" fontSize="10" fontFamily="monospace">
-              SYRUPY CACAO // VELVETY ESPRESSO BODY
+            <text x="295" y="282" fill="#FBF8F3" fillOpacity="0.55" fontSize="10" fontFamily="Georgia, serif">
+              Velvety Cacao &amp; Roasted Hazelnut Body
             </text>
-            <text x="220" y="325" fill="#FBF8F3" fillOpacity="0.65" fontSize="10" fontFamily="monospace">
-              BODY &amp; CARAMELIZATION DENSITY →
+            <text x="200" y="325" fill="#FBF8F3" fillOpacity="0.65" fontSize="10" fontFamily="sans-serif">
+              BODY &amp; CARAMELIZATION DEPTH →
             </text>
 
-            {/* Plotted Micro-Lot Nodes */}
             {coffees.map((lot) => {
               const x = 85 + ((lot.sensory.body - 50) / 50) * 355;
               const y = 270 - ((lot.sensory.acidity - 45) / 55) * 205;
@@ -730,9 +819,9 @@ function SensoryFlavorMatrix({ coffees, onOpenPortal, onAddToCart }) {
                     fill="#FBF8F3"
                     fillOpacity="0.65"
                     fontSize="9"
-                    fontFamily="monospace"
+                    fontFamily="sans-serif"
                   >
-                    {lot.elevation} • {lot.process}
+                    {lot.elevation} · {lot.process}
                   </text>
                 </g>
               );
@@ -741,12 +830,12 @@ function SensoryFlavorMatrix({ coffees, onOpenPortal, onAddToCart }) {
         </div>
       </div>
 
-      {/* Right Selected Lot Telemetry & Portal Launch */}
+      {/* Right Selected Lot Card */}
       <div className="lg:col-span-5 flex flex-col justify-between rounded-2xl bg-cream/5 border border-cream/15 p-6 space-y-5">
         {selectedLot && (
           <>
             <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs font-mono uppercase tracking-widest text-terracotta">
+              <div className="flex items-center justify-between text-xs uppercase tracking-widest text-terracotta">
                 <span>{selectedLot.lotCode}</span>
                 <span>{selectedLot.targetTds}</span>
               </div>
@@ -757,8 +846,8 @@ function SensoryFlavorMatrix({ coffees, onOpenPortal, onAddToCart }) {
                   <h4 className="font-serif text-2xl text-cream">
                     <ScrambleText text={selectedLot.name} triggerKey={selectedLot.id} />
                   </h4>
-                  <p className="text-xs font-mono text-cream/65 mt-0.5">
-                    {selectedLot.origin} • {selectedLot.elevation}
+                  <p className="text-xs text-cream/65 mt-0.5">
+                    {selectedLot.origin} · {selectedLot.elevation}
                   </p>
                   <div className="flex flex-wrap gap-1.5 mt-2">
                     {selectedLot.notes.map((n) => (
@@ -777,7 +866,6 @@ function SensoryFlavorMatrix({ coffees, onOpenPortal, onAddToCart }) {
                 {selectedLot.description}
               </p>
 
-              {/* 6-Axis Mini Readouts */}
               <div className="grid grid-cols-3 gap-2 pt-2">
                 {[
                   { k: 'ACIDITY', v: selectedLot.sensory.acidity },
@@ -788,8 +876,8 @@ function SensoryFlavorMatrix({ coffees, onOpenPortal, onAddToCart }) {
                   { k: 'CLARITY', v: selectedLot.sensory.clarity },
                 ].map((m) => (
                   <div key={m.k} className="p-2.5 rounded-xl bg-cream/5 border border-cream/10">
-                    <span className="text-[9px] font-mono text-cream/45 block">{m.k}</span>
-                    <span className="font-mono text-sm font-semibold text-terracotta">
+                    <span className="text-[9px] text-cream/45 block">{m.k}</span>
+                    <span className="text-sm font-semibold text-terracotta">
                       {m.v} / 100
                     </span>
                   </div>
@@ -800,24 +888,24 @@ function SensoryFlavorMatrix({ coffees, onOpenPortal, onAddToCart }) {
             <div className="flex flex-col sm:flex-row gap-2.5 pt-3 border-t border-cream/10">
               <button
                 type="button"
-                data-cursor="OPEN PORTAL"
+                data-cursor="TASTE · EXPLORE"
                 onClick={() => {
                   soundEngine.playPortalWipe();
                   onOpenPortal(selectedLot);
                 }}
-                className="flex-1 py-3 px-4 rounded-full bg-terracotta text-cream text-xs font-mono uppercase tracking-wider hover:bg-terracotta-dark transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-full bg-terracotta text-cream text-xs uppercase tracking-wider hover:bg-terracotta-dark transition-colors flex items-center justify-center gap-2"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span>Open Full Origin Portal</span>
+                <span>Open Tasting Sheet</span>
               </button>
               <button
                 type="button"
-                data-cursor="ADD MICRO-LOT"
+                data-cursor="TASTE · ADD"
                 onClick={() => {
                   soundEngine.playSuccess();
                   onAddToCart(selectedLot, GRIND_OPTIONS[0]);
                 }}
-                className="py-3 px-4 rounded-full bg-cream/10 hover:bg-cream/20 text-cream text-xs font-mono uppercase tracking-wider transition-colors"
+                className="py-3 px-4 rounded-full bg-cream/10 hover:bg-cream/20 text-cream text-xs uppercase tracking-wider transition-colors"
               >
                 + Bag (${selectedLot.price})
               </button>
@@ -844,29 +932,28 @@ export default function CoffeeShop({
 
   return (
     <section id="origins" className="py-16 sm:py-24 border-b border-espresso/10">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div id="shop" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header + Mode Switcher + Filter Pills */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
           <div className="max-w-2xl">
-            <span className="text-xs font-mono uppercase tracking-[0.22em] text-terracotta font-semibold block mb-2.5">
-              01 // Single-Origin Micro-Lots
+            <span className="text-xs font-serif italic tracking-[0.18em] text-terracotta font-medium block mb-2">
+              Single-Origin Micro-Lot Apothecary
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-espresso font-normal tracking-tight">
-              Rotary Tasting Wheel &amp; Harvest Grid
+              Fanned Tasting Deck &amp; Harvest Collection
             </h2>
             <p className="text-umber/80 mt-3 text-base sm:text-lg">
-              Scroll through our curved botanical tasting wheel arc below or filter the full
-              6-origin harvest grid. Click any lot to launch its full-screen sensory &amp;
-              roast-curve portal.
+              Unfold our physical hand of single-origin tasting cards as you scroll, or hover any
+              bag in the apothecary grid below to lift the pouch in 3D and release its aroma notes.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3 self-start lg:self-auto">
-            {/* View Mode Toggle: 01 // ROTARY WHEEL vs 02 // FLAVOR MATRIX */}
-            <div className="inline-flex items-center gap-1 p-1.5 rounded-full bg-espresso text-cream text-xs font-mono uppercase tracking-wider">
+            {/* View Mode Toggle */}
+            <div className="inline-flex items-center gap-1 p-1.5 rounded-full bg-espresso text-cream text-xs uppercase tracking-wider">
               <button
                 type="button"
-                data-cursor="ROTARY WHEEL"
+                data-cursor="TASTE · DECK"
                 onClick={() => {
                   soundEngine.playClick();
                   onViewModeChange && onViewModeChange('reel');
@@ -878,11 +965,11 @@ export default function CoffeeShop({
                 }`}
               >
                 <Grid className="w-3.5 h-3.5" />
-                <span>01 // Rotary Arc</span>
+                <span>Tasting Deck &amp; Grid</span>
               </button>
               <button
                 type="button"
-                data-cursor="FLAVOR MATRIX"
+                data-cursor="TASTE · COMPASS"
                 onClick={() => {
                   soundEngine.playClick();
                   onViewModeChange && onViewModeChange('matrix');
@@ -894,7 +981,7 @@ export default function CoffeeShop({
                 }`}
               >
                 <Radar className="w-3.5 h-3.5" />
-                <span>02 // Flavor Matrix</span>
+                <span>Flavor Compass</span>
               </button>
             </div>
 
@@ -931,9 +1018,9 @@ export default function CoffeeShop({
           </div>
         </div>
 
-        {/* Sticky Scroll-Scrubbed Curved Botanical Arc / Rotary Tasting Carousel */}
+        {/* Interactive Fanned Tasting Deck at the top of #shop */}
         {viewMode === 'reel' && (
-          <CurvedBotanicalArcShowcase
+          <FannedTastingDeckShowcase
             coffees={COFFEES}
             onOpenPortal={onOpenPortal}
             onAddToCart={onAddToCart}

@@ -1,26 +1,26 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 /**
- * Active Theory–caliber Custom Magnetic Architectural Reticle Cursor
- * Detects `[data-cursor="..."]` attributes on hovered elements and displays
- * dynamic spatial readouts (`[ ENTER MONOGRAPH ]`, `[ SCRUB SOLAR ANGLE ]`, `[ COMMISSION ]`)
+ * Editorial Blend-Mode Ink Lens Cursor
+ * Inspired by Kengo Kuma, Cereal Magazine, and Kinfolk monographs:
+ * A serene mix-blend-difference soft ink circle that smoothly expands into a warm
+ * circular editorial badge reading "View" in italic Cormorant Garamond serif
+ * when hovering over architectural plates.
  */
 export default function CustomCursor() {
-  const dotRef = useRef(null);
-  const ringRef = useRef(null);
-  const labelRef = useRef(null);
-  const [cursorLabel, setCursorLabel] = useState('');
+  const lensRef = useRef(null);
+  const [cursorMode, setCursorMode] = useState('default'); // 'default' | 'plate' | 'link'
+  const [cursorWord, setCursorWord] = useState('View');
   const [isPressed, setIsPressed] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    // Only enable on fine pointer devices
     if (window.matchMedia && !window.matchMedia('(pointer: fine)').matches) {
       return;
     }
 
     const pos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    const ring = { x: pos.x, y: pos.y };
+    const smooth = { x: pos.x, y: pos.y };
     let rafId;
 
     const onMouseMove = (e) => {
@@ -28,12 +28,24 @@ export default function CustomCursor() {
       pos.y = e.clientY;
       if (!isVisible) setIsVisible(true);
 
-      const target = e.target?.closest?.('[data-cursor]');
-      if (target) {
-        setCursorLabel(target.getAttribute('data-cursor') || '');
+      const customTarget = e.target?.closest?.('[data-cursor]');
+      if (customTarget) {
+        const raw = customTarget.getAttribute('data-cursor') || 'View';
+        // Normalize any legacy uppercase labels into poetic editorial words
+        let editorialText = 'View';
+        if (/sun|solar|heliodon|light/i.test(raw)) editorialText = 'Light';
+        else if (/cad|plan|section|layer/i.test(raw)) editorialText = 'Plan';
+        else if (/archive|works|explore/i.test(raw)) editorialText = 'Archive';
+        else if (/ethos|philosophy|studio/i.test(raw)) editorialText = 'Ethos';
+        else if (/view|open|monograph|plate/i.test(raw)) editorialText = 'View';
+        else if (raw.length <= 10) {
+          editorialText = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+        }
+        setCursorWord(editorialText);
+        setCursorMode('plate');
       } else {
         const clickable = e.target?.closest?.('a, button, input, textarea, [role="button"]');
-        setCursorLabel(clickable ? 'SELECT' : '');
+        setCursorMode(clickable ? 'link' : 'default');
       }
     };
 
@@ -41,14 +53,11 @@ export default function CustomCursor() {
     const onMouseUp = () => setIsPressed(false);
 
     const render = () => {
-      ring.x += (pos.x - ring.x) * 0.18;
-      ring.y += (pos.y - ring.y) * 0.18;
+      smooth.x += (pos.x - smooth.x) * 0.16;
+      smooth.y += (pos.y - smooth.y) * 0.16;
 
-      if (dotRef.current) {
-        dotRef.current.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0)`;
-      }
-      if (ringRef.current) {
-        ringRef.current.style.transform = `translate3d(${ring.x}px, ${ring.y}px, 0)`;
+      if (lensRef.current) {
+        lensRef.current.style.transform = `translate3d(${smooth.x}px, ${smooth.y}px, 0)`;
       }
 
       rafId = requestAnimationFrame(render);
@@ -69,48 +78,36 @@ export default function CustomCursor() {
 
   if (!isVisible) return null;
 
-  const hasLabel = Boolean(cursorLabel);
+  const isPlate = cursorMode === 'plate';
+  const isLink = cursorMode === 'link';
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[90] hidden lg:block overflow-hidden">
-      {/* Precision Center Crosshair Dot */}
+    <div
+      className={`pointer-events-none fixed inset-0 z-[90] hidden lg:block overflow-hidden ${
+        isPlate ? '' : 'mix-blend-difference'
+      }`}
+    >
       <div
-        ref={dotRef}
-        className="fixed top-0 left-0 -ml-1.5 -mt-1.5 w-3 h-3 flex items-center justify-center will-change-transform"
-      >
-        <span className="w-1 h-1 bg-bronze rounded-full" />
-      </div>
-
-      {/* Smooth-Lerped Outer Architectural Reticle */}
-      <div
-        ref={ringRef}
-        className="fixed top-0 left-0 will-change-transform flex items-center"
+        ref={lensRef}
+        className="fixed top-0 left-0 will-change-transform flex items-center justify-center"
       >
         <div
-          className={`relative -ml-5 -mt-5 w-10 h-10 border transition-all duration-300 flex items-center justify-center ${
-            isPressed
-              ? 'scale-75 border-bronze bg-bronze/15'
-              : hasLabel
-              ? 'scale-125 border-bronze bg-charcoal/5'
-              : 'scale-100 border-charcoal/35'
+          className={`relative -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+            isPlate
+              ? `w-20 h-20 bg-[#1C1B19]/92 text-[#F6F4F0] border border-[#9A7B4F]/50 shadow-[0_12px_32px_rgba(28,27,25,0.18)] ${
+                  isPressed ? 'scale-90' : 'scale-100'
+                }`
+              : isLink
+              ? `w-9 h-9 bg-[#F6F4F0]/90 ${isPressed ? 'scale-75' : 'scale-100'}`
+              : `w-3.5 h-3.5 bg-[#F6F4F0]/90 ${isPressed ? 'scale-75' : 'scale-100'}`
           }`}
         >
-          {/* Corner architectural ticks */}
-          <span className="absolute -top-0.5 -left-0.5 w-1.5 h-1.5 border-t border-l border-bronze" />
-          <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 border-t border-r border-bronze" />
-          <span className="absolute -bottom-0.5 -left-0.5 w-1.5 h-1.5 border-b border-l border-bronze" />
-          <span className="absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 border-b border-r border-bronze" />
+          {isPlate && (
+            <span className="font-serif italic text-lg tracking-wide text-[#F6F4F0] select-none">
+              {cursorWord}
+            </span>
+          )}
         </div>
-
-        {/* Contextual Spatial Readout Pill */}
-        {hasLabel && (
-          <div
-            ref={labelRef}
-            className="ml-3 -mt-5 px-2.5 py-1 bg-charcoal text-alabaster border border-bronze/40 text-[9px] font-mono uppercase tracking-[0.22em] whitespace-nowrap shadow-lg"
-          >
-            [ {cursorLabel} ]
-          </div>
-        )}
       </div>
     </div>
   );

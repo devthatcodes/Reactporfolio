@@ -9,26 +9,28 @@ import PricingSection from './components/PricingSection';
 import Footer from './components/Footer';
 import SandboxModal from './components/SandboxModal';
 import NeuralShaderCanvas from './components/NeuralShaderCanvas';
-import Preloader from './components/Preloader';
-import HudOverlay, { SHADER_MODES } from './components/HudOverlay';
 import PortalTransition from './components/PortalTransition';
 import CustomCursor from './components/CustomCursor';
 import {
   ScrollPortalSection,
-  ScrollKineticBanner,
+  NeuralCircuitConduit,
 } from './components/ScrollSectionTransition';
 import { playTransition } from './utils/soundEngine';
+
+const SHADER_MODES = [
+  { id: 0, name: 'TENSOR FIELD', badge: 'GLSL // 01' },
+  { id: 1, name: 'QUANTUM FLUX', badge: 'GLSL // 02' },
+  { id: 2, name: 'SYNAPTIC GRID', badge: 'GLSL // 03' },
+];
 
 export default function App() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState('Pro');
   const [shaderMode, setShaderMode] = useState(0);
-  const [fps, setFps] = useState(60);
   const [activePortal, setActivePortal] = useState(null);
-  const [viewMode, setViewMode] = useState('overview'); // 'overview' | 'reel'
   const [activeSection, setActiveSection] = useState('telemetry');
 
-  // Keep Navbar active section indicator synced with scroll position (rAF throttled, zero redundant setState)
+  // Keep Navbar active section indicator synced with scroll position (rAF throttled)
   useEffect(() => {
     const sectionIds = ['telemetry', 'reel', 'platform', 'sdk', 'pricing'];
     let ticking = false;
@@ -70,12 +72,12 @@ export default function App() {
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 150);
+      }, 110);
     }
 
     setTimeout(() => {
       setActivePortal(null);
-    }, 450);
+    }, 350);
   }, []);
 
   const handleOpenModal = (plan = 'Pro') => {
@@ -88,26 +90,13 @@ export default function App() {
     setShaderMode(nextMode);
     triggerPortal({
       code: SHADER_MODES[nextMode].badge,
-      title: `SHADER // ${SHADER_MODES[nextMode].name}`,
-    });
-  };
-
-  const handleToggleViewMode = () => {
-    const nextView = viewMode === 'overview' ? 'reel' : 'overview';
-    setViewMode(nextView);
-    triggerPortal({
-      code: 'VIEW MODE // SWITCH',
-      title: nextView === 'reel' ? 'BLADE RACK FOCUS' : 'FULL PLATFORM OVERVIEW',
-      targetId: nextView === 'reel' ? 'reel' : 'telemetry',
+      title: SHADER_MODES[nextMode].name,
     });
   };
 
   const handleNavigatePortal = (link) => {
-    if (viewMode === 'reel' && link.id !== 'reel') {
-      setViewMode('overview');
-    }
     triggerPortal({
-      code: `PORTAL // ${link.code}`,
+      code: `NODE // ${link.code}`,
       title: link.label,
       targetId: link.id,
     });
@@ -115,26 +104,14 @@ export default function App() {
 
   return (
     <div className="relative min-h-screen bg-[#09090B] text-[#FAFAFA] selection:bg-cyan-400/20 selection:text-cyan-300">
-      {/* Boot Sequence Preloader */}
-      <Preloader />
-
-      {/* Custom Magnetic Reticle Cursor */}
+      {/* Ambient Radial Spotlight Follower */}
       <CustomCursor />
 
       {/* Real-time WebGL GLSL Neural Tensor Field Background */}
-      <NeuralShaderCanvas shaderMode={shaderMode} onFpsUpdate={setFps} />
+      <NeuralShaderCanvas shaderMode={shaderMode} />
 
-      {/* CRT Terminal Scanline & Phosphor Sweep Transition Overlay */}
+      {/* Command-K (⌘K) Center-Out Glass Command Palette Pulse */}
       <PortalTransition activePortal={activePortal} />
-
-      {/* Persistent Peripheral HUD & Shader Switcher */}
-      <HudOverlay
-        fps={fps}
-        shaderMode={shaderMode}
-        onCycleShader={handleCycleShader}
-        viewMode={viewMode}
-        onToggleViewMode={handleToggleViewMode}
-      />
 
       {/* Main Content Layer */}
       <div className="relative z-10">
@@ -142,112 +119,105 @@ export default function App() {
           onOpenModal={() => handleOpenModal('Pro')}
           onNavigatePortal={handleNavigatePortal}
           activeSection={activeSection}
+          shaderName={SHADER_MODES[shaderMode].name}
+          onCycleShader={handleCycleShader}
         />
 
         <main>
-          {viewMode === 'reel' ? (
+          {/* Section 01: Hero Telemetry */}
+          <ScrollPortalSection
+            sectionCode="NODE // 01"
+            sectionLabel="NEURAL TELEMETRY"
+            accentColor="#22D3EE"
+            isFirst
+          >
+            <HeroTelemetry
+              onOpenModal={() => handleOpenModal('Pro')}
+              onNavigateReel={() =>
+                handleNavigatePortal({
+                  id: 'reel',
+                  code: '02',
+                  label: 'TOPOLOGY DECK',
+                })
+              }
+            />
+          </ScrollPortalSection>
+
+          <TrustStrip />
+
+          {/* Animated SVG Neural Circuit Connector 01 -> 02 */}
+          <NeuralCircuitConduit
+            code="CIRCUIT // 01 → 02"
+            label="LIVE TOPOLOGY & CLUSTER INSPECTOR"
+            accent="#22D3EE"
+            secondary="#8B5CF6"
+          />
+
+          {/* Section 02: Split-Screen Scroll-Synced Neural Command Deck */}
+          <ScrollPortalSection
+            sectionCode="NODE // 02"
+            sectionLabel="TOPOLOGY COMMAND DECK"
+            accentColor="#8B5CF6"
+            stickySafe
+          >
             <ArchitectureReel
               onTriggerPortal={triggerPortal}
               onOpenModal={() => handleOpenModal('Enterprise')}
             />
-          ) : (
-            <>
-              {/* Section 01: Hero Telemetry */}
-              <ScrollPortalSection
-                sectionCode="BLADE // 01"
-                sectionLabel="NEURAL TELEMETRY"
-                accentColor="#22D3EE"
-                isFirst
-              >
-                <HeroTelemetry
-                  onOpenModal={() => handleOpenModal('Pro')}
-                  onNavigateReel={() =>
-                    handleNavigatePortal({
-                      id: 'reel',
-                      code: '02',
-                      label: 'ARCHITECTURE REEL',
-                    })
-                  }
-                />
-              </ScrollPortalSection>
+          </ScrollPortalSection>
 
-              <TrustStrip />
+          {/* Animated SVG Neural Circuit Connector 02 -> 03 */}
+          <NeuralCircuitConduit
+            code="CIRCUIT // 02 → 03"
+            label="SEMANTIC CACHE & CIRCUIT FAILOVER"
+            accent="#8B5CF6"
+            secondary="#34D399"
+          />
 
-              {/* Horizontal Neural Data Stream Divider 01 -> 02 */}
-              <ScrollKineticBanner
-                code="STREAM // 01 → 02 BLADE STACK"
-                primaryText="ISOMETRIC HARDWARE BLADE DECK // DETERMINISTIC CONSENSUS // SUB-5MS EDGE ROUTING"
-                secondaryText="SCROLL TO STACK 4 VERIFIED PRODUCTION AI CLUSTERS"
-                accent="#22D3EE"
-              />
+          {/* Section 03: Bento Grid */}
+          <ScrollPortalSection
+            sectionCode="NODE // 03"
+            sectionLabel="CORE PRIMITIVES"
+            accentColor="#34D399"
+          >
+            <BentoGrid />
+          </ScrollPortalSection>
 
-              {/* Section 02: Sticky Isometric Hardware Blade Deck Stack */}
-              <ScrollPortalSection
-                sectionCode="BLADE // 02"
-                sectionLabel="ARCHITECTURE REEL"
-                accentColor="#8B5CF6"
-                stickySafe
-              >
-                <ArchitectureReel
-                  onTriggerPortal={triggerPortal}
-                  onOpenModal={() => handleOpenModal('Enterprise')}
-                />
-              </ScrollPortalSection>
+          {/* Animated SVG Neural Circuit Connector 03 -> 04 */}
+          <NeuralCircuitConduit
+            code="CIRCUIT // 03 → 04"
+            label="DROP-IN GATEWAY SDK SANDBOX"
+            accent="#34D399"
+            secondary="#22D3EE"
+          />
 
-              {/* Horizontal Neural Data Stream Divider 02 -> 03 */}
-              <ScrollKineticBanner
-                code="STREAM // 02 → 03 PRIMITIVES"
-                primaryText="SEMANTIC VECTOR CACHE // CIRCUIT-BREAKER FAILOVER // OPENTELEMETRY WATERFALLS"
-                secondaryText="MULTI-LAYER FOREGROUND PARALLAX // ZERO RUNTIME OVERHEAD"
-                accent="#8B5CF6"
-              />
+          {/* Section 04: SDK Switcher */}
+          <ScrollPortalSection
+            sectionCode="NODE // 04"
+            sectionLabel="SDK SANDBOX"
+            accentColor="#22D3EE"
+          >
+            <SdkSwitcher />
+          </ScrollPortalSection>
 
-              {/* Section 03: Bento Grid */}
-              <ScrollPortalSection
-                sectionCode="BLADE // 03"
-                sectionLabel="CORE PRIMITIVES"
-                accentColor="#34D399"
-              >
-                <BentoGrid />
-              </ScrollPortalSection>
+          {/* Animated SVG Neural Circuit Connector 04 -> 05 */}
+          <NeuralCircuitConduit
+            code="CIRCUIT // 04 → 05"
+            label="PREDICTABLE COMPUTE & VPC TIERS"
+            accent="#22D3EE"
+            secondary="#8B5CF6"
+          />
 
-              {/* Horizontal Neural Data Stream Divider 03 -> 04 */}
-              <ScrollKineticBanner
-                code="STREAM // 03 → 04 SDK SANDBOX"
-                primaryText="DROP-IN GATEWAY SDK // 100% OPENAI COMPATIBLE // ZERO VENDOR LOCK-IN"
-                secondaryText="TYPESCRIPT • PYTHON • CURL • REAL-TIME EDGE VERIFICATION"
-                accent="#34D399"
-              />
-
-              {/* Section 04: SDK Switcher */}
-              <ScrollPortalSection
-                sectionCode="BLADE // 04"
-                sectionLabel="SDK SANDBOX"
-                accentColor="#22D3EE"
-              >
-                <SdkSwitcher />
-              </ScrollPortalSection>
-
-              {/* Horizontal Neural Data Stream Divider 04 -> 05 */}
-              <ScrollKineticBanner
-                code="STREAM // 04 → 05 COMPUTE PRICING"
-                primaryText="PREDICTABLE TOKEN SCALE // DEDICATED VPC ENCLAVES // SOC2 TYPE II & HIPAA"
-                secondaryText="INSTANT SANDBOX PROVISIONING • 99.99% CONTRACTUAL SLA"
-                accent="#F59E0B"
-              />
-
-              {/* Section 05: Pricing Section */}
-              <ScrollPortalSection
-                sectionCode="BLADE // 05"
-                sectionLabel="COMPUTE PRICING"
-                accentColor="#8B5CF6"
-              >
-                <PricingSection
-                  onSelectPlan={(plan) => handleOpenModal(plan)}
-                />
-              </ScrollPortalSection>
-            </>
-          )}
+          {/* Section 05: Pricing Section */}
+          <ScrollPortalSection
+            sectionCode="NODE // 05"
+            sectionLabel="COMPUTE PRICING"
+            accentColor="#8B5CF6"
+          >
+            <PricingSection
+              onSelectPlan={(plan) => handleOpenModal(plan)}
+            />
+          </ScrollPortalSection>
         </main>
 
         <Footer

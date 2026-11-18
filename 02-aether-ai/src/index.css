@@ -21,6 +21,56 @@
     linear-gradient(to bottom, rgba(39, 39, 42, 0.35) 1px, transparent 1px);
 }
 
+/* Linear / Vercel Mouse-Tracked Spotlight Border & Surface Glow */
+.spotlight-card {
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  position: relative;
+}
+
+.spotlight-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: radial-gradient(
+    360px circle at var(--mouse-x) var(--mouse-y),
+    rgba(34, 211, 238, 0.7),
+    rgba(139, 92, 246, 0.35) 45%,
+    transparent 75%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.spotlight-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    440px circle at var(--mouse-x) var(--mouse-y),
+    rgba(34, 211, 238, 0.11),
+    rgba(139, 92, 246, 0.05) 45%,
+    transparent 75%
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.spotlight-card:hover::before,
+.spotlight-card:hover::after {
+  opacity: 1;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

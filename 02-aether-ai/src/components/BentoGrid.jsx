@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import {
   Database,
   GitBranch,
@@ -12,51 +12,46 @@ import {
 import ScrambleText from './ScrambleText';
 import { playHover, playClick } from '../utils/soundEngine';
 
+/**
+ * GlowCard — Linear/Vercel Mouse-Tracked Spotlight Border Card
+ * Sets `--mouse-x` and `--mouse-y` directly on the DOM node on `onMouseMove`
+ * for zero-lag radial border and surface illumination.
+ */
 function GlowCard({
   children,
   className = '',
   parallaxSpeed = 1,
-  direction = 1,
   index = 0,
 }) {
   const cardRef = useRef(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0, rx: 0, ry: 0 });
-  const [hovered, setHovered] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: cardRef,
     offset: ['start end', 'end start'],
   });
 
-  // Pure GPU vertical parallax & scale on scroll
   const yParallax = useTransform(
     scrollYProgress,
     [0, 0.45, 1],
-    [40 * parallaxSpeed, 0, -30 * parallaxSpeed]
+    [32 * parallaxSpeed, 0, -24 * parallaxSpeed]
   );
   const scrollScale = useTransform(
     scrollYProgress,
     [0, 0.25, 0.85, 1],
-    [0.96, 1, 1, 0.97]
+    [0.97, 1, 1, 0.98]
   );
   const scrollOpacity = useTransform(
     scrollYProgress,
-    [0, 0.2, 0.88, 1],
-    [0.25, 1, 1, 0.45]
+    [0, 0.18, 0.88, 1],
+    [0.3, 1, 1, 0.55]
   );
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    const px = x / rect.width;
-    const py = y / rect.height;
-    setMousePos({
-      x,
-      y,
-      rx: (0.5 - py) * 6,
-      ry: (px - 0.5) * 6,
-    });
+    e.currentTarget.style.setProperty('--mouse-x', `${x}px`);
+    e.currentTarget.style.setProperty('--mouse-y', `${y}px`);
   };
 
   return (
@@ -71,32 +66,15 @@ function GlowCard({
     >
       <div
         onMouseMove={handleMouseMove}
-        onMouseEnter={() => {
-          setHovered(true);
-          playHover();
-        }}
-        onMouseLeave={() => {
-          setHovered(false);
-          setMousePos((prev) => ({ ...prev, rx: 0, ry: 0 }));
-        }}
-        style={{
-          transform: `perspective(1000px) rotateX(${mousePos.rx}deg) rotateY(${mousePos.ry}deg)`,
-        }}
-        className="group relative h-full overflow-hidden rounded-2xl border border-[#27272A] bg-[#090D16]/95 p-6 transition-all duration-200 hover:border-cyan-400/60 hover:shadow-[0_20px_60px_rgba(34,211,238,0.12)]"
+        onMouseEnter={playHover}
+        style={{ '--mouse-x': '50%', '--mouse-y': '50%' }}
+        className="spotlight-card group relative h-full overflow-hidden rounded-2xl border border-[#27272A] bg-[#090D16]/95 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.65)] transition-colors duration-200"
       >
         {/* Top Depth Index Tag */}
         <div className="pointer-events-none absolute top-2.5 right-4 font-mono text-[9px] tracking-[0.2em] text-zinc-600">
-          PARALLAX // LAYER 0{index + 1}
+          PRIMITIVE // 0{index + 1}
         </div>
 
-        {/* Mouse-tracking radial glow */}
-        <div
-          className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-300"
-          style={{
-            opacity: hovered ? 1 : 0,
-            background: `radial-gradient(420px circle at ${mousePos.x}px ${mousePos.y}px, rgba(34, 211, 238, 0.16), rgba(139, 92, 246, 0.08) 40%, transparent 70%)`,
-          }}
-        />
         <div className="relative z-10 flex h-full flex-col justify-between">
           {children}
         </div>
@@ -161,24 +139,16 @@ export default function BentoGrid() {
             03 // CORE INFRASTRUCTURE PRIMITIVES
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#FAFAFA] sm:text-4xl">
-            <ScrambleText
-              text="Built for zero-downtime AI at scale."
-              scrambleOnMount={false}
-            />
+            <ScrambleText text="Built for zero-downtime AI at scale." />
           </h2>
           <p className="mt-3 text-base text-zinc-400">
-            Every primitive you need to ship deterministic, observable, and cost-efficient LLM applications — with multi-depth scroll parallax.
+            Every primitive you need to ship deterministic, observable, and cost-efficient LLM applications — with interactive telemetry controls.
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Card 1: Semantic Caching */}
-          <GlowCard
-            className="lg:col-span-7"
-            parallaxSpeed={0.85}
-            direction={-1}
-            index={0}
-          >
+          <GlowCard className="lg:col-span-7" parallaxSpeed={0.85} index={0}>
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -194,7 +164,6 @@ export default function BentoGrid() {
                     <button
                       key={val}
                       type="button"
-                      data-cursor="[ TUNE COSINE ]"
                       onClick={() => {
                         playClick();
                         setThreshold(val);
@@ -245,13 +214,8 @@ export default function BentoGrid() {
             </div>
           </GlowCard>
 
-          {/* Card 2: Multi-Model Failover (Moves at faster parallax offset) */}
-          <GlowCard
-            className="lg:col-span-5"
-            parallaxSpeed={1.35}
-            direction={1}
-            index={1}
-          >
+          {/* Card 2: Multi-Model Failover */}
+          <GlowCard className="lg:col-span-5" parallaxSpeed={1.25} index={1}>
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
@@ -264,7 +228,6 @@ export default function BentoGrid() {
                 </div>
                 <button
                   type="button"
-                  data-cursor="[ TRIGGER FAILOVER ]"
                   onClick={() => {
                     playClick();
                     setOutageSimulated((prev) => !prev);
@@ -307,12 +270,7 @@ export default function BentoGrid() {
           </GlowCard>
 
           {/* Card 3: Trace Inspector */}
-          <GlowCard
-            className="lg:col-span-5"
-            parallaxSpeed={1.25}
-            direction={-1}
-            index={2}
-          >
+          <GlowCard className="lg:col-span-5" parallaxSpeed={1.15} index={2}>
             <div>
               <div className="mb-4 flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-400/30 bg-cyan-400/10 text-cyan-400">
@@ -333,7 +291,6 @@ export default function BentoGrid() {
                     <button
                       key={span.id}
                       type="button"
-                      data-cursor="[ INSPECT SPAN ]"
                       onClick={() => {
                         playClick();
                         setActiveSpan(span.id);
@@ -363,12 +320,7 @@ export default function BentoGrid() {
           </GlowCard>
 
           {/* Card 4: Prompt Versioning */}
-          <GlowCard
-            className="lg:col-span-7"
-            parallaxSpeed={0.9}
-            direction={1}
-            index={3}
-          >
+          <GlowCard className="lg:col-span-7" parallaxSpeed={0.9} index={3}>
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
