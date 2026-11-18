@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowUpRight, MonitorPlay, Sparkles, Code2, Layers, Compass } from 'lucide-react';
+import { ArrowUpRight, MonitorPlay, ArrowDownRight, Sparkles } from 'lucide-react';
 import { PORTFOLIO_PROJECTS } from '../data/projects';
+import soundEngine from '../utils/soundEngine';
 
 export default function HeroPortfolio({
   onOpenTheater,
-  onScrollTo,
+  onNavigate,
   onHoverProject,
 }) {
   const [hoveredIdx, setHoveredIdx] = useState(0);
@@ -16,222 +17,203 @@ export default function HeroPortfolio({
     offset: ['start start', 'end start'],
   });
 
-  // Unique Portfolio Scroll Transition:
-  // As you scroll down from the hero, the 4 stacked site cards fan out horizontally and zoom slightly
-  const titleY = useTransform(scrollYProgress, [0, 1], [0, -70]);
-  const titleOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.12]);
-  const deckY = useTransform(scrollYProgress, [0, 1], [0, -40]);
-  const deckScale = useTransform(scrollYProgress, [0, 0.6, 1], [1, 1.05, 0.95]);
+  // Signature Deontae Work Hero Scroll Choreography:
+  // As you scroll down, "DEONTAE" and "WORK" part horizontally like architectural stage curtains
+  // while the interactive work index rises and scales smoothly.
+  const firstNameX = useTransform(scrollYProgress, [0, 1], ['0%', '-12%']);
+  const lastNameX = useTransform(scrollYProgress, [0, 1], ['0%', '12%']);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.82], [1, 0.12]);
+  const showcaseY = useTransform(scrollYProgress, [0, 1], [0, -55]);
+
+  const activeProj = PORTFOLIO_PROJECTS[hoveredIdx] || PORTFOLIO_PROJECTS[0];
 
   return (
     <section
       id="top"
       ref={heroRef}
-      className="relative min-h-screen flex flex-col justify-between pt-28 sm:pt-36 pb-16 px-5 sm:px-8 max-w-7xl mx-auto"
+      className="relative min-h-screen flex flex-col justify-between pt-28 sm:pt-36 pb-12 px-5 sm:px-8 max-w-7xl mx-auto"
     >
-      <div className="my-auto grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-        {/* Left Editorial & Kinetic Column */}
-        <motion.div
-          style={{ y: titleY, opacity: titleOpacity }}
-          className="lg:col-span-7 will-change-transform"
-        >
+      {/* Top Architectural Status Line */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-5">
+        <div className="flex items-center gap-3">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+          </span>
+          <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-white/65">
+            DEONTAE WORK — PORTFOLIO EDITION 2026
+          </span>
+        </div>
+
+        <div className="flex items-center gap-6 text-[11px] font-mono uppercase tracking-[0.2em] text-white/45">
+          <span>ROLE: FRONT END ENGINEER</span>
+          <span className="hidden sm:inline">FOCUS: UI ARCHITECTURE &amp; 60FPS MOTION</span>
+        </div>
+      </div>
+
+      {/* Center Oversized Editorial + Kinetic Stage */}
+      <motion.div
+        style={{ opacity: heroOpacity }}
+        className="my-auto py-10 sm:py-14 will-change-transform"
+      >
+        {/* Giant Split-Curtain Name Display */}
+        <div className="mb-10 select-none">
           <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#101116] border border-white/10 mb-7"
+            style={{ x: firstNameX }}
+            className="flex flex-wrap items-baseline justify-between gap-4 will-change-transform"
           >
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-xs font-mono uppercase tracking-[0.18em] text-white/80">
-              Selected Works Exhibition · 4 Flagship Builds Live
+            <h1 className="font-display font-extrabold text-5xl sm:text-8xl lg:text-[116px] leading-[0.92] tracking-[-0.04em] text-[#F5F4F0] uppercase">
+              Deontae
+            </h1>
+            <span className="font-serif italic text-2xl sm:text-4xl lg:text-5xl text-[#E2D9C8]/85">
+              Front End Engineer
             </span>
           </motion.div>
 
-          <h1 className="font-display font-extrabold text-4xl sm:text-6xl lg:text-[68px] leading-[1.02] tracking-[-0.03em] text-white mb-6">
-            <span className="block overflow-hidden">
-              <motion.span
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                className="block"
-              >
-                 interactive web
-              </motion.span>
-            </span>
-            <span className="block overflow-hidden">
-              <motion.span
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                transition={{ duration: 0.7, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-                className="block font-serif italic font-normal text-5xl sm:text-7xl lg:text-[78px] text-sky-300"
-              >
-                architecture &amp; motion
-              </motion.span>
-            </span>
-            <span className="block overflow-hidden">
-              <motion.span
-                initial={{ y: '100%' }}
-                animate={{ y: 0 }}
-                transition={{ duration: 0.7, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
-                className="block"
-              >
-                engineered to perform.
-              </motion.span>
-            </span>
-          </h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.35 }}
-            className="text-base sm:text-lg text-white/70 max-w-xl leading-relaxed mb-9"
-          >
-            I design and engineer production-grade web applications where **bespoke visual
-            identities**, **60fps scroll choreography**, and **resilient full-stack architecture**
-            converge. Explore four distinct flagship platforms below—each running live with its own
-            unique motion language.
-          </motion.p>
-
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.45 }}
-            className="flex flex-wrap items-center gap-4"
+            style={{ x: lastNameX }}
+            className="flex flex-wrap items-baseline justify-between gap-4 mt-1 sm:mt-2 will-change-transform"
           >
-            <button
-              type="button"
-              onClick={() => onScrollTo('#work')}
-              className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-white text-black font-display font-bold text-sm hover:bg-sky-300 transition-colors"
-            >
-              <Compass className="w-4 h-4" />
-              <span>Explore All 4 Websites</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => onOpenTheater(PORTFOLIO_PROJECTS[hoveredIdx])}
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-[#101116] border border-white/15 text-white font-medium text-sm hover:border-white/40 transition-colors"
-            >
-              <MonitorPlay className="w-4 h-4 text-sky-400" />
-              <span>Launch Live Interactive Theater</span>
-            </button>
-          </motion.div>
-        </motion.div>
-
-        {/* Right Column: Interactive 4-Site Spatial Deck Selector */}
-        <motion.div
-          style={{ y: deckY, scale: deckScale }}
-          className="lg:col-span-5 will-change-transform"
-        >
-          <div className="rounded-3xl bg-[#101116] border border-white/10 p-5 sm:p-6 shadow-[0_30px_90px_rgba(0,0,0,0.8)]">
-            <div className="flex items-center justify-between border-b border-white/10 pb-3.5 mb-4">
-              <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-white/55">
-                // LIVE PORTFOLIO INDEX (01 — 04)
+            <span className="font-mono text-xs sm:text-sm uppercase tracking-[0.26em] text-white/50 max-w-xs">
+              // INTERACTIVE SYSTEMS, DESIGN ENGINEERING &amp; CREATIVE TECH
+            </span>
+            <div className="font-display font-extrabold text-5xl sm:text-8xl lg:text-[116px] leading-[0.92] tracking-[-0.04em] uppercase flex items-baseline gap-3">
+              <span className="font-serif italic font-normal text-white/70 lowercase">
+                &amp;
               </span>
-              <span className="text-[11px] font-mono text-emerald-400">
-                4 SERVERS ONLINE
+              <span style={{ color: activeProj.accent }} className="transition-colors duration-500">
+                Work.
+              </span>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Lower Hero Grid: Editorial Bio + Interactive 4-Work Preview Selector */}
+        <motion.div
+          style={{ y: showcaseY }}
+          className="grid lg:grid-cols-12 gap-10 items-end pt-6 border-t border-white/10 will-change-transform"
+        >
+          {/* Left 5 Cols: Statement & Primary Actions */}
+          <div className="lg:col-span-5 space-y-6">
+            <p className="text-base sm:text-lg text-white/70 leading-relaxed">
+              I&apos;m <strong className="text-white font-semibold">Deontae Work</strong>, a Front
+              End Engineer specializing in high-craft React architectures, tactile scroll
+              choreography, and sub-second web applications that bridge design precision with
+              production engineering.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3.5">
+              <button
+                type="button"
+                data-cursor="SCROLL WORKS"
+                onClick={() => {
+                  soundEngine.playClick();
+                  onNavigate('#work', 'Selected Works', 'EXHIBITION 01 — 04');
+                }}
+                onMouseEnter={() => soundEngine.playHover()}
+                className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-[#F5F4F0] text-[#060608] font-display font-bold text-xs uppercase tracking-[0.16em] hover:bg-[#E2D9C8] transition-colors"
+              >
+                <span>Explore Selected Works</span>
+                <ArrowDownRight className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                data-cursor="LAUNCH THEATER"
+                onClick={() => {
+                  soundEngine.playClick();
+                  onOpenTheater(activeProj);
+                }}
+                onMouseEnter={() => soundEngine.playHover()}
+                className="inline-flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#0D0E12] border border-white/15 text-xs font-mono uppercase tracking-[0.16em] text-white hover:border-white/40 transition-colors"
+              >
+                <MonitorPlay className="w-3.5 h-3.5" style={{ color: activeProj.accent }} />
+                <span>Live Site Theater</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Right 7 Cols: Horizontal Accordion / Spatial Strip of the 4 Live Portfolio Websites */}
+          <div className="lg:col-span-7">
+            <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.22em] text-white/45 mb-3">
+              <span>// FEATURED LIVE PRODUCTION BUILDS (HOVER TO EXPAND)</span>
+              <span style={{ color: activeProj.accent }}>
+                ACTIVE: {activeProj.number} / 04
               </span>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
               {PORTFOLIO_PROJECTS.map((proj, idx) => {
-                const active = hoveredIdx === idx;
+                const isActive = hoveredIdx === idx;
                 return (
                   <motion.div
                     key={proj.id}
+                    layout
+                    data-cursor={`INSPECT ${proj.number}`}
                     onMouseEnter={() => {
                       setHoveredIdx(idx);
+                      soundEngine.playHover();
                       if (onHoverProject) onHoverProject(proj);
                     }}
-                    onClick={() => onScrollTo(`#project-${proj.id}`)}
-                    animate={{
-                      x: active ? 6 : 0,
+                    onClick={() => {
+                      soundEngine.playClick();
+                      onNavigate(`#project-${proj.id}`, proj.title, `WORK ${proj.number}`);
                     }}
-                    transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-                    className={`cursor-pointer rounded-2xl border p-4 transition-colors ${
-                      active
-                        ? 'bg-white/[0.06] border-white/25'
-                        : 'bg-[#070709]/70 border-white/5 hover:border-white/15'
+                    className={`cursor-pointer rounded-2xl border p-4 flex flex-col justify-between transition-colors min-h-[148px] ${
+                      isActive
+                        ? 'bg-[#12141C] border-white/30 sm:col-span-2'
+                        : 'bg-[#0B0C10]/85 border-white/10 hover:border-white/20 sm:col-span-1'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <span
-                          className="w-8 h-8 rounded-xl flex items-center justify-center font-mono text-xs font-bold text-black shrink-0"
-                          style={{ backgroundColor: proj.accent }}
-                        >
-                          {proj.number}
-                        </span>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-display font-bold text-base text-white truncate">
-                              {proj.title}
-                            </h3>
-                            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-white/5 text-white/60 shrink-0">
-                              {proj.category.split(' ')[0]}
-                            </span>
-                          </div>
-                          <p className="text-xs text-white/55 truncate mt-0.5">
-                            {proj.motionIdentity}
-                          </p>
-                        </div>
-                      </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className="font-mono text-xs font-bold"
+                        style={{ color: proj.accent }}
+                      >
+                        {proj.number}
+                      </span>
+                      <a
+                        href={proj.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-white/45 hover:text-white transition-colors"
+                        title={`Open ${proj.title}`}
+                      >
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
 
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenTheater(proj);
-                          }}
-                          title="Interact Live inside Portfolio"
-                          className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white text-[10px] font-mono uppercase tracking-wider text-white hover:text-black transition-colors"
-                        >
-                          Preview
-                        </button>
-                        <a
-                          href={proj.liveUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          title="Open Standalone Live Site"
-                          className="p-1.5 rounded-lg bg-white/5 hover:bg-white/15 text-white/70 hover:text-white transition-colors"
-                        >
-                          <ArrowUpRight className="w-4 h-4" />
-                        </a>
+                    <div className="mt-4">
+                      <div className="font-display font-bold text-base text-white leading-snug">
+                        {proj.title}
                       </div>
+                      <div className="text-[11px] text-white/50 mt-0.5 line-clamp-1">
+                        {proj.category}
+                      </div>
+                      {isActive && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="mt-2.5 pt-2.5 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-white/70"
+                        >
+                          <span className="truncate">{proj.motionIdentity.split('&')[0]}</span>
+                          <span
+                            className="underline shrink-0 ml-2"
+                            style={{ color: proj.accent }}
+                          >
+                            VIEW →
+                          </span>
+                        </motion.div>
+                      )}
                     </div>
                   </motion.div>
                 );
               })}
             </div>
-
-            <div className="mt-4 pt-3.5 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-white/45">
-              <span>HOVER TO SHIFT AMBIENT PALETTE</span>
-              <span>CLICK TO INSPECT</span>
-            </div>
           </div>
         </motion.div>
-      </div>
-
-      {/* Bottom Metrics Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-10 border-t border-white/10">
-        {[
-          { label: 'Featured Platforms', value: '04 Live Sites' },
-          { label: 'Motion Systems', value: '100% Bespoke' },
-          { label: 'Frame Budget', value: '< 1.0ms GPU' },
-          { label: 'Core Web Vitals', value: '100 / 100' },
-        ].map((item) => (
-          <div key={item.label}>
-            <div className="text-[11px] font-mono uppercase tracking-wider text-white/45">
-              {item.label}
-            </div>
-            <div className="font-display font-bold text-xl sm:text-2xl text-white mt-0.5">
-              {item.value}
-            </div>
-          </div>
-        ))}
-      </div>
+      </motion.div>
     </section>
   );
 }
