@@ -12,6 +12,11 @@ import PortalTransition from './components/PortalTransition';
 import CustomCursor from './components/CustomCursor';
 import SensoryHud from './components/SensoryHud';
 import OriginPortalModal from './components/OriginPortalModal';
+import {
+  VelocitySkewWrapper,
+  ScrollPortalSection,
+  ScrollSensoryMarquee,
+} from './components/ScrollRoastTransition';
 import { COFFEES } from './data/coffees';
 
 export default function App() {
@@ -129,20 +134,68 @@ export default function App() {
         onPortalNavigate={handlePortalNavigate}
       />
 
-      <main className="relative z-10 flex-1">
-        <Hero
-          roastMode={roastMode}
-          onSelectRoastMode={setRoastMode}
-          onPortalNavigate={handlePortalNavigate}
-        />
-        <CoffeeShop
-          onAddToCart={handleAddToCart}
-          onOpenPortal={(coffee) => setPortalCoffee(coffee)}
-          viewMode={shopViewMode}
-          onViewModeChange={setShopViewMode}
-        />
-        <BrewGuide />
-        <TastingRoomAndSub />
+      <main className="relative z-10 flex-1 overflow-x-clip">
+        <VelocitySkewWrapper>
+          <ScrollPortalSection
+            code="STAGE 00 // CHARGE & RAMP"
+            label="BOTANICAL & ROAST CURVE TELEMETRY"
+            tempRange="94°C → 198.2°C"
+            disableEntryClip
+          >
+            <Hero
+              roastMode={roastMode}
+              onSelectRoastMode={setRoastMode}
+              onPortalNavigate={handlePortalNavigate}
+            />
+          </ScrollPortalSection>
+
+          <ScrollSensoryMarquee
+            topLine="FIRST CRACK 196.4°C • EXOTHERMIC ESTER RELEASE • HIGH-ALTITUDE MICRO-LOTS •"
+            bottomLine="GEDEB ETHIOPIA 2,150M • HUILA PINK BOURBON 1,850M • TARRAZÚ HONEY 1,720M •"
+            badge="PORTAL 01 // 3D LOT FLIGHT"
+          />
+
+          <ScrollPortalSection
+            code="STAGE 01 // MAILLARD & FLIGHT"
+            label="SINGLE-ORIGIN 3D MICRO-LOT SHOWCASE"
+            tempRange="178°C → 204.5°C"
+          >
+            <CoffeeShop
+              onAddToCart={handleAddToCart}
+              onOpenPortal={(coffee) => setPortalCoffee(coffee)}
+              viewMode={shopViewMode}
+              onViewModeChange={setShopViewMode}
+            />
+          </ScrollPortalSection>
+
+          <ScrollSensoryMarquee
+            topLine="DIALED-IN EXTRACTION • 1.42% TARGET TDS • 21.0% EXTRACTION YIELD •"
+            bottomLine="V60 CONE SPIRAL POUR • AEROPRESS VACUUM STEEP • 9-BAR BOTTOMLESS ESPRESSO •"
+            badge="PORTAL 03 // EXTRACTION LAB"
+          />
+
+          <ScrollPortalSection
+            code="STAGE 03 // EXTRACTION LAB"
+            label="REAL-TIME POUR & BREW TELEMETRY"
+            tempRange="92°C → 94°C WATER"
+          >
+            <BrewGuide />
+          </ScrollPortalSection>
+
+          <ScrollSensoryMarquee
+            topLine="PORTLAND SLOW BAR • SE DIVISION ROASTERY • WEEKLY GUIDED CUPPINGS •"
+            bottomLine="LORING 12KG CAST-IRON DRUM • ROASTED MONDAY & THURSDAY • 48H DISPATCH •"
+            badge="PORTAL 04 // TASTING ROOM"
+          />
+
+          <ScrollPortalSection
+            code="STAGE 04 // TASTING ROOM & DISPATCH"
+            label="SLOW BAR CUPPING & SUBSCRIPTION"
+            tempRange="AGTRON 55.8 → 68.4"
+          >
+            <TastingRoomAndSub />
+          </ScrollPortalSection>
+        </VelocitySkewWrapper>
       </main>
 
       <div className="relative z-10">

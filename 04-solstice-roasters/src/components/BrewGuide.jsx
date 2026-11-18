@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
 import { Clock, Droplets, Flame, Play, Pause, RotateCcw, Scale, SlidersHorizontal } from 'lucide-react';
 import { BREW_RECIPES } from '../data/coffees';
 import ScrambleText from './ScrambleText';
@@ -11,118 +11,124 @@ function formatTime(totalSec) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-function BrewDiagramSVG({ recipeId, isRunning }) {
+function BrewDiagramSVG({ recipeId, isRunning, scrollProgress }) {
+  const scrollRotation = useTransform(scrollProgress, [0, 1], [-12, 12]);
+  const liquidLevelScale = useTransform(scrollProgress, [0.15, 0.85], [0.4, 1.15]);
+
   return (
-    <svg
-      viewBox="0 0 220 200"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-44 h-40 mx-auto"
-      aria-hidden="true"
-    >
-      {/* Warm circular backdrop */}
-      <circle cx="110" cy="100" r="82" fill="#F2ECE1" stroke="#1E1612" strokeOpacity="0.1" />
+    <motion.div style={{ rotateZ: scrollRotation }}>
+      <svg
+        viewBox="0 0 220 200"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-44 h-40 mx-auto"
+        aria-hidden="true"
+      >
+        {/* Warm circular backdrop */}
+        <circle cx="110" cy="100" r="82" fill="#F2ECE1" stroke="#1E1612" strokeOpacity="0.1" />
 
-      {recipeId === 'v60' && (
-        <g>
-          {/* Carafe */}
-          <path
-            d="M78 118H142L152 162C153 168 148 172 142 172H78C72 172 67 168 68 162L78 118Z"
-            fill="#FBF8F3"
-            stroke="#1E1612"
-            strokeWidth="2"
-          />
-          <path
-            d="M74 146H146L150 164C151 168 147 171 142 171H78C73 171 69 168 70 164L74 146Z"
-            fill="#C85A32"
-            fillOpacity="0.28"
-          />
-          {/* V60 Cone */}
-          <path d="M62 56H158L124 114H96L62 56Z" fill="#FBF8F3" stroke="#1E1612" strokeWidth="2" />
-          <line x1="75" y1="68" x2="102" y2="112" stroke="#C85A32" strokeOpacity="0.4" strokeWidth="1.5" />
-          <line x1="145" y1="68" x2="118" y2="112" stroke="#C85A32" strokeOpacity="0.4" strokeWidth="1.5" />
-          {/* Animated Pour Stream */}
-          <motion.path
-            d="M110 24V56"
-            stroke="#C85A32"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeDasharray="4 4"
-            animate={isRunning ? { strokeDashoffset: [0, -16] } : { strokeDashoffset: 0 }}
-            transition={{ duration: 0.6, repeat: Infinity, ease: 'linear' }}
-          />
-        </g>
-      )}
-
-      {recipeId === 'aeropress' && (
-        <g>
-          {/* Mug */}
-          <rect x="74" y="124" width="72" height="46" rx="6" fill="#FBF8F3" stroke="#1E1612" strokeWidth="2" />
-          <path
-            d="M146 134H156C161 134 164 138 164 144C164 150 161 154 156 154H146"
-            stroke="#1E1612"
-            strokeWidth="2"
-          />
-          {/* AeroPress Chamber */}
-          <rect
-            x="84"
-            y="64"
-            width="52"
-            height="60"
-            rx="3"
-            fill="#3A2A22"
-            fillOpacity="0.14"
-            stroke="#1E1612"
-            strokeWidth="2"
-          />
-          {/* Plunger */}
-          <motion.g
-            animate={isRunning ? { y: [0, 14, 0] } : { y: 0 }}
-            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <rect
-              x="90"
-              y="34"
-              width="40"
-              height="34"
-              rx="2"
-              fill="#5E7461"
-              fillOpacity="0.35"
+        {recipeId === 'v60' && (
+          <g>
+            {/* Carafe */}
+            <path
+              d="M78 118H142L152 162C153 168 148 172 142 172H78C72 172 67 168 68 162L78 118Z"
+              fill="#FBF8F3"
               stroke="#1E1612"
               strokeWidth="2"
             />
-            <line x1="78" y1="34" x2="142" y2="34" stroke="#1E1612" strokeWidth="3" strokeLinecap="round" />
-          </motion.g>
-        </g>
-      )}
+            <motion.path
+              style={{ scaleY: liquidLevelScale, transformOrigin: '110px 171px' }}
+              d="M74 146H146L150 164C151 168 147 171 142 171H78C73 171 69 168 70 164L74 146Z"
+              fill="#C85A32"
+              fillOpacity="0.34"
+            />
+            {/* V60 Cone */}
+            <path d="M62 56H158L124 114H96L62 56Z" fill="#FBF8F3" stroke="#1E1612" strokeWidth="2" />
+            <line x1="75" y1="68" x2="102" y2="112" stroke="#C85A32" strokeOpacity="0.4" strokeWidth="1.5" />
+            <line x1="145" y1="68" x2="118" y2="112" stroke="#C85A32" strokeOpacity="0.4" strokeWidth="1.5" />
+            {/* Animated Pour Stream */}
+            <motion.path
+              d="M110 24V56"
+              stroke="#C85A32"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeDasharray="4 4"
+              animate={isRunning ? { strokeDashoffset: [0, -16] } : { strokeDashoffset: 0 }}
+              transition={{ duration: 0.6, repeat: Infinity, ease: 'linear' }}
+            />
+          </g>
+        )}
 
-      {recipeId === 'espresso' && (
-        <g>
-          {/* Grouphead */}
-          <rect x="74" y="38" width="72" height="22" rx="4" fill="#3A2A22" />
-          {/* Portafilter */}
-          <rect x="84" y="60" width="52" height="16" rx="3" fill="#1E1612" />
-          <line x1="136" y1="68" x2="174" y2="68" stroke="#1E1612" strokeWidth="5" strokeLinecap="round" />
-          {/* Dual Espresso Stream */}
-          <motion.path
-            d="M104 76V122M116 76V122"
-            stroke="#C85A32"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            animate={isRunning ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.7 }}
-            transition={{ duration: 1, repeat: Infinity }}
-          />
-          {/* Demitasse Cup */}
-          <path
-            d="M82 122H138L130 162C129 167 124 170 118 170H102C96 170 91 167 90 162L82 122Z"
-            fill="#FBF8F3"
-            stroke="#1E1612"
-            strokeWidth="2"
-          />
-          <path d="M86 132H134" stroke="#C85A32" strokeWidth="3" />
-        </g>
-      )}
-    </svg>
+        {recipeId === 'aeropress' && (
+          <g>
+            {/* Mug */}
+            <rect x="74" y="124" width="72" height="46" rx="6" fill="#FBF8F3" stroke="#1E1612" strokeWidth="2" />
+            <path
+              d="M146 134H156C161 134 164 138 164 144C164 150 161 154 156 154H146"
+              stroke="#1E1612"
+              strokeWidth="2"
+            />
+            {/* AeroPress Chamber */}
+            <rect
+              x="84"
+              y="64"
+              width="52"
+              height="60"
+              rx="3"
+              fill="#3A2A22"
+              fillOpacity="0.14"
+              stroke="#1E1612"
+              strokeWidth="2"
+            />
+            {/* Plunger */}
+            <motion.g
+              animate={isRunning ? { y: [0, 14, 0] } : { y: 0 }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <rect
+                x="90"
+                y="34"
+                width="40"
+                height="34"
+                rx="2"
+                fill="#5E7461"
+                fillOpacity="0.35"
+                stroke="#1E1612"
+                strokeWidth="2"
+              />
+              <line x1="78" y1="34" x2="142" y2="34" stroke="#1E1612" strokeWidth="3" strokeLinecap="round" />
+            </motion.g>
+          </g>
+        )}
+
+        {recipeId === 'espresso' && (
+          <g>
+            {/* Grouphead */}
+            <rect x="74" y="38" width="72" height="22" rx="4" fill="#3A2A22" />
+            {/* Portafilter */}
+            <rect x="84" y="60" width="52" height="16" rx="3" fill="#1E1612" />
+            <line x1="136" y1="68" x2="174" y2="68" stroke="#1E1612" strokeWidth="5" strokeLinecap="round" />
+            {/* Dual Espresso Stream */}
+            <motion.path
+              d="M104 76V122M116 76V122"
+              stroke="#C85A32"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              animate={isRunning ? { opacity: [0.4, 1, 0.4] } : { opacity: 0.7 }}
+              transition={{ duration: 1, repeat: Infinity }}
+            />
+            {/* Demitasse Cup */}
+            <path
+              d="M82 122H138L130 162C129 167 124 170 118 170H102C96 170 91 167 90 162L82 122Z"
+              fill="#FBF8F3"
+              stroke="#1E1612"
+              strokeWidth="2"
+            />
+            <path d="M86 132H134" stroke="#C85A32" strokeWidth="3" />
+          </g>
+        )}
+      </svg>
+    </motion.div>
   );
 }
 
@@ -130,6 +136,23 @@ export default function BrewGuide() {
   const [activeTab, setActiveTab] = useState(BREW_RECIPES[0].id);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
+  const sectionRef = useRef(null);
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  });
+  const smoothScroll = useSpring(scrollYProgress, {
+    damping: 32,
+    stiffness: 220,
+    mass: 0.4,
+  });
+
+  // Differential foreground parallax for Left Equipment Stage vs Right Timeline
+  const leftColumnY = useTransform(smoothScroll, [0, 0.5, 1], [65, 0, -55]);
+  const leftColumnRotateY = useTransform(smoothScroll, [0, 0.5, 1], [10, 0, -8]);
+  const rightColumnY = useTransform(smoothScroll, [0, 0.5, 1], [115, 0, -90]);
+  const rightColumnRotateY = useTransform(smoothScroll, [0, 0.5, 1], [-10, 0, 8]);
 
   const recipe = BREW_RECIPES.find((r) => r.id === activeTab) || BREW_RECIPES[0];
 
@@ -162,7 +185,12 @@ export default function BrewGuide() {
   const progressPercent = Math.min(100, Math.round((elapsedSeconds / recipe.totalSeconds) * 100));
 
   return (
-    <section id="brew-guide" className="py-16 sm:py-24 bg-cream-dark/50 border-b border-espresso/10">
+    <section
+      ref={sectionRef}
+      id="brew-guide"
+      className="py-16 sm:py-24 bg-cream-dark/50 border-b border-espresso/10 overflow-hidden"
+      style={{ perspective: '1500px' }}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header + Method Tabs */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
@@ -210,7 +238,7 @@ export default function BrewGuide() {
           </div>
         </div>
 
-        {/* Main Interactive Brew Card */}
+        {/* Main Interactive Brew Card with Differential 3D Scroll Parallax */}
         <AnimatePresence mode="wait">
           <motion.div
             key={recipe.id}
@@ -219,9 +247,17 @@ export default function BrewGuide() {
             exit={{ opacity: 0, y: -14 }}
             transition={{ duration: 0.3 }}
             className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-cream/90 backdrop-blur-sm rounded-3xl border border-espresso/12 p-6 sm:p-10 shadow-editorial"
+            style={{ transformStyle: 'preserve-3d' }}
           >
             {/* Left Specs & Live Timer */}
-            <div className="lg:col-span-5 flex flex-col justify-between space-y-6 lg:border-r lg:border-espresso/10 lg:pr-8">
+            <motion.div
+              style={{
+                y: leftColumnY,
+                rotateY: leftColumnRotateY,
+                transformStyle: 'preserve-3d',
+              }}
+              className="lg:col-span-5 flex flex-col justify-between space-y-6 lg:border-r lg:border-espresso/10 lg:pr-8"
+            >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <span className="text-xs uppercase tracking-wider font-semibold text-terracotta">
@@ -235,7 +271,11 @@ export default function BrewGuide() {
 
                 {/* Brew Diagram */}
                 <div className="my-6">
-                  <BrewDiagramSVG recipeId={recipe.id} isRunning={isRunning} />
+                  <BrewDiagramSVG
+                    recipeId={recipe.id}
+                    isRunning={isRunning}
+                    scrollProgress={smoothScroll}
+                  />
                 </div>
 
                 {/* 4 Spec Tiles */}
@@ -347,10 +387,17 @@ export default function BrewGuide() {
                   />
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Right Step-by-Step Timeline */}
-            <div className="lg:col-span-7 flex flex-col justify-center space-y-4">
+            <motion.div
+              style={{
+                y: rightColumnY,
+                rotateY: rightColumnRotateY,
+                transformStyle: 'preserve-3d',
+              }}
+              className="lg:col-span-7 flex flex-col justify-center space-y-4"
+            >
               <div className="flex items-center justify-between mb-1">
                 <h4 className="font-serif text-xl text-espresso">Step-by-Step Pour Timeline</h4>
                 <span className="text-xs font-mono text-umber/65">CLICK ANY PHASE TO SCRUB</span>
@@ -370,7 +417,7 @@ export default function BrewGuide() {
                         soundEngine.playClick();
                         setElapsedSeconds(step.startSec);
                       }}
-                      whileHover={{ x: 3 }}
+                      whileHover={{ x: 5, scale: 1.01 }}
                       className={`w-full text-left p-5 rounded-2xl border transition-all flex gap-4 items-start ${
                         isCurrent
                           ? 'bg-cream-dark border-terracotta shadow-sm'
@@ -412,7 +459,7 @@ export default function BrewGuide() {
                   );
                 })}
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </AnimatePresence>
       </div>

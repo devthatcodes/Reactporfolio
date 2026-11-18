@@ -12,6 +12,11 @@ import Preloader from './components/Preloader';
 import TelemetryHud from './components/TelemetryHud';
 import PortalTransition from './components/PortalTransition';
 import CustomCursor from './components/CustomCursor';
+import {
+  VelocitySkewWrapper,
+  ScrollPortalSection,
+  ScrollQuantumTicker,
+} from './components/ScrollLiquidityTransition';
 
 export default function App() {
   const [signInOpen, setSignInOpen] = useState(false);
@@ -117,20 +122,76 @@ export default function App() {
         onNavigatePortal={handleNavigatePortal}
       />
 
-      <main className="flex-1 relative z-10">
-        <HeroSection
-          onOpenAccount={openAccountModal}
-          networkMode={networkMode}
-          onSelectNetworkMode={(id) => {
-            setNetworkMode(id);
-            triggerShaderPulse();
-          }}
-          onShaderPulse={triggerShaderPulse}
-        />
-        <CorridorReel onTriggerPortal={triggerPortal} onShaderPulse={triggerShaderPulse} />
-        <VirtualCardShowcase onShaderPulse={triggerShaderPulse} />
-        <WorkflowTabs onShaderPulse={triggerShaderPulse} />
-        <SecurityGrid onOpenAccount={openAccountModal} />
+      <main className="flex-1 relative z-10 overflow-x-clip">
+        <VelocitySkewWrapper>
+          <ScrollPortalSection
+            sectionIndex="01"
+            portalLabel="QUANTUM FX STREAM"
+            accentColor="#10B981"
+            isFirst
+          >
+            <HeroSection
+              onOpenAccount={openAccountModal}
+              networkMode={networkMode}
+              onSelectNetworkMode={(id) => {
+                setNetworkMode(id);
+                triggerShaderPulse();
+              }}
+              onShaderPulse={triggerShaderPulse}
+            />
+          </ScrollPortalSection>
+
+          <ScrollQuantumTicker
+            primaryText="ATOMIC SETTLEMENT // ZERO CORRESPONDENT HOPS // 38MS FINALITY"
+            secondaryText="JPY ⇄ GBP 0.005194 · USD ⇄ EUR 0.9214 · USDC ⇄ SEPA 1.0000 · T-BILL REPO 4.85% APY"
+            accent="#10B981"
+          />
+
+          <ScrollPortalSection
+            sectionIndex="02"
+            portalLabel="3D CORRIDOR FLIGHT TUNNEL"
+            accentColor="#06B6D4"
+            isTallTunnel
+          >
+            <CorridorReel onTriggerPortal={triggerPortal} onShaderPulse={triggerShaderPulse} />
+          </ScrollPortalSection>
+
+          <ScrollQuantumTicker
+            primaryText="PROGRAMMABLE TITANIUM // CRYPTOGRAPHIC SPEND GUARDRAILS // 0% FX MARKUP"
+            secondaryText="VISA INFINITE INSTITUTIONAL · MASTERCARD WORLD ELITE · <180MS NODE ENFORCEMENT"
+            accent="#06B6D4"
+          />
+
+          <ScrollPortalSection
+            sectionIndex="03"
+            portalLabel="HOLOGRAPHIC CARD ORBIT"
+            accentColor="#3B82F6"
+          >
+            <VirtualCardShowcase onShaderPulse={triggerShaderPulse} />
+          </ScrollPortalSection>
+
+          <ScrollQuantumTicker
+            primaryText="AUTONOMOUS TREASURY OS // OVERNIGHT T-BILL REPO // ZK-EXPENSE QUORUMS"
+            secondaryText="SEPA INSTANT RT1 · BOJ ZENGIN ATOMIC · CHAPS DIRECT · FEDWIRE T+0 RECALL"
+            accent="#10B981"
+          />
+
+          <ScrollPortalSection
+            sectionIndex="04"
+            portalLabel="AUTONOMOUS WORKFLOW ENGINE"
+            accentColor="#10B981"
+          >
+            <WorkflowTabs onShaderPulse={triggerShaderPulse} />
+          </ScrollPortalSection>
+
+          <ScrollPortalSection
+            sectionIndex="05"
+            portalLabel="SOVEREIGN ZK-SECURITY MESH"
+            accentColor="#06B6D4"
+          >
+            <SecurityGrid onOpenAccount={openAccountModal} />
+          </ScrollPortalSection>
+        </VelocitySkewWrapper>
       </main>
 
       <Footer />

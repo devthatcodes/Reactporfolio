@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useRef } from 'react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import {
   Database,
   GitBranch,
@@ -12,9 +12,54 @@ import {
 import ScrambleText from './ScrambleText';
 import { playHover, playClick } from '../utils/soundEngine';
 
-function GlowCard({ children, className = '' }) {
+function GlowCard({
+  children,
+  className = '',
+  parallaxSpeed = 1,
+  direction = 1,
+  index = 0,
+}) {
+  const cardRef = useRef(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0, rx: 0, ry: 0 });
   const [hovered, setHovered] = useState(false);
+
+  const { scrollYProgress } = useScroll({
+    target: cardRef,
+    offset: ['start end', 'end start'],
+  });
+
+  const smoothScroll = useSpring(scrollYProgress, {
+    stiffness: 160,
+    damping: 28,
+    mass: 0.25,
+  });
+
+  // Differential vertical parallax & 3D perspective unfold on scroll
+  const yParallax = useTransform(
+    smoothScroll,
+    [0, 0.45, 1],
+    [85 * parallaxSpeed, 0, -65 * parallaxSpeed]
+  );
+  const scrollRotateX = useTransform(
+    smoothScroll,
+    [0, 0.35, 0.75, 1],
+    [22, 0, 0, -14]
+  );
+  const scrollRotateY = useTransform(
+    smoothScroll,
+    [0, 0.38, 0.75, 1],
+    [direction * 10, 0, 0, direction * -6]
+  );
+  const scrollScale = useTransform(
+    smoothScroll,
+    [0, 0.32, 0.8, 1],
+    [0.88, 1, 1, 0.93]
+  );
+  const scrollOpacity = useTransform(
+    smoothScroll,
+    [0, 0.22, 0.82, 1],
+    [0, 1, 1, 0.25]
+  );
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -25,41 +70,58 @@ function GlowCard({ children, className = '' }) {
     setMousePos({
       x,
       y,
-      rx: (0.5 - py) * 7,
-      ry: (px - 0.5) * 7,
+      rx: (0.5 - py) * 8,
+      ry: (px - 0.5) * 8,
     });
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.45 }}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => {
-        setHovered(true);
-        playHover();
-      }}
-      onMouseLeave={() => {
-        setHovered(false);
-        setMousePos((prev) => ({ ...prev, rx: 0, ry: 0 }));
-      }}
+      ref={cardRef}
       style={{
-        transform: `perspective(1000px) rotateX(${mousePos.rx}deg) rotateY(${mousePos.ry}deg)`,
+        y: yParallax,
+        rotateX: scrollRotateX,
+        rotateY: scrollRotateY,
+        scale: scrollScale,
+        opacity: scrollOpacity,
+        transformPerspective: 1200,
         transformStyle: 'preserve-3d',
       }}
-      className={`group relative overflow-hidden rounded-2xl border border-[#27272A] bg-[#111115]/90 p-6 backdrop-blur-md transition-colors hover:border-cyan-400/50 ${className}`}
+      className={`will-change-transform ${className}`}
     >
-      {/* Mouse-tracking radial glow */}
       <div
-        className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-300"
-        style={{
-          opacity: hovered ? 1 : 0,
-          background: `radial-gradient(420px circle at ${mousePos.x}px ${mousePos.y}px, rgba(34, 211, 238, 0.14), rgba(139, 92, 246, 0.07) 40%, transparent 70%)`,
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => {
+          setHovered(true);
+          playHover();
         }}
-      />
-      <div className="relative z-10 flex h-full flex-col justify-between">{children}</div>
+        onMouseLeave={() => {
+          setHovered(false);
+          setMousePos((prev) => ({ ...prev, rx: 0, ry: 0 }));
+        }}
+        style={{
+          transform: `perspective(1000px) rotateX(${mousePos.rx}deg) rotateY(${mousePos.ry}deg)`,
+          transformStyle: 'preserve-3d',
+        }}
+        className="group relative h-full overflow-hidden rounded-2xl border border-[#27272A] bg-[#111115]/90 p-6 backdrop-blur-md transition-all duration-200 hover:border-cyan-400/60 hover:shadow-[0_20px_60px_rgba(34,211,238,0.12)]"
+      >
+        {/* Top Depth Index Tag */}
+        <div className="pointer-events-none absolute top-2.5 right-4 font-mono text-[9px] tracking-[0.2em] text-zinc-600">
+          PARALLAX // LAYER 0{index + 1}
+        </div>
+
+        {/* Mouse-tracking radial glow */}
+        <div
+          className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-300"
+          style={{
+            opacity: hovered ? 1 : 0,
+            background: `radial-gradient(420px circle at ${mousePos.x}px ${mousePos.y}px, rgba(34, 211, 238, 0.16), rgba(139, 92, 246, 0.08) 40%, transparent 70%)`,
+          }}
+        />
+        <div className="relative z-10 flex h-full flex-col justify-between">
+          {children}
+        </div>
+      </div>
     </motion.div>
   );
 }
@@ -78,10 +140,38 @@ export default function BentoGrid() {
   const [canarySplit, setCanarySplit] = useState(20);
 
   const spans = [
-    { id: 'gateway.auth', label: 'gateway.auth', ms: '2ms', width: '12%', color: 'bg-cyan-400', detail: 'JWT + Rate Limit Verified' },
-    { id: 'cache.lookup', label: 'cache.lookup', ms: '6ms', width: '24%', color: 'bg-emerald-400', detail: 'Cosine 0.88 (Miss → Origin)' },
-    { id: 'llm.stream', label: 'llm.stream', ms: '184ms', width: '82%', color: 'bg-violet-400', detail: 'claude-3-5-sonnet • 412 tok' },
-    { id: 'guardrail.pii', label: 'guardrail.pii', ms: '4ms', width: '16%', color: 'bg-amber-400', detail: '0 PII Entities Redacted' },
+    {
+      id: 'gateway.auth',
+      label: 'gateway.auth',
+      ms: '2ms',
+      width: '12%',
+      color: 'bg-cyan-400',
+      detail: 'JWT + Rate Limit Verified',
+    },
+    {
+      id: 'cache.lookup',
+      label: 'cache.lookup',
+      ms: '6ms',
+      width: '24%',
+      color: 'bg-emerald-400',
+      detail: 'Cosine 0.88 (Miss → Origin)',
+    },
+    {
+      id: 'llm.stream',
+      label: 'llm.stream',
+      ms: '184ms',
+      width: '82%',
+      color: 'bg-violet-400',
+      detail: 'claude-3-5-sonnet • 412 tok',
+    },
+    {
+      id: 'guardrail.pii',
+      label: 'guardrail.pii',
+      ms: '4ms',
+      width: '16%',
+      color: 'bg-amber-400',
+      detail: '0 PII Entities Redacted',
+    },
   ];
 
   return (
@@ -92,23 +182,33 @@ export default function BentoGrid() {
             03 // CORE INFRASTRUCTURE PRIMITIVES
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#FAFAFA] sm:text-4xl">
-            <ScrambleText text="Built for zero-downtime AI at scale." scrambleOnMount={false} />
+            <ScrambleText
+              text="Built for zero-downtime AI at scale."
+              scrambleOnMount={false}
+            />
           </h2>
           <p className="mt-3 text-base text-zinc-400">
-            Every primitive you need to ship deterministic, observable, and cost-efficient LLM applications.
+            Every primitive you need to ship deterministic, observable, and cost-efficient LLM applications — with multi-depth scroll parallax.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Card 1: Semantic Caching */}
-          <GlowCard className="lg:col-span-7">
+          <GlowCard
+            className="lg:col-span-7"
+            parallaxSpeed={0.85}
+            direction={-1}
+            index={0}
+          >
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-400/30 bg-cyan-400/10 text-cyan-400">
                     <Database className="h-4 w-4" />
                   </div>
-                  <h3 className="text-lg font-bold text-[#FAFAFA]">Semantic Caching</h3>
+                  <h3 className="text-lg font-bold text-[#FAFAFA]">
+                    Semantic Caching
+                  </h3>
                 </div>
                 <div className="flex items-center gap-1 rounded-lg border border-[#27272A] bg-[#09090B] p-0.5 font-mono text-[11px]">
                   {['0.92', '0.95', '0.98'].map((val) => (
@@ -121,7 +221,9 @@ export default function BentoGrid() {
                         setThreshold(val);
                       }}
                       className={`rounded-md px-2 py-0.5 transition-colors ${
-                        threshold === val ? 'bg-[#1D1D24] text-cyan-300' : 'text-zinc-500 hover:text-zinc-300'
+                        threshold === val
+                          ? 'bg-[#1D1D24] text-cyan-300'
+                          : 'text-zinc-500 hover:text-zinc-300'
                       }`}
                     >
                       cos ≥ {val}
@@ -138,7 +240,9 @@ export default function BentoGrid() {
               <div className="flex items-center justify-between text-zinc-400">
                 <span>&quot;Summarize Q3 ARR growth drivers&quot;</span>
                 <span className="text-emerald-400">
-                  {threshold === '0.98' ? '0.96 (Miss → 620ms)' : '0.96 (HIT • 11ms)'}
+                  {threshold === '0.98'
+                    ? '0.96 (Miss → 620ms)'
+                    : '0.96 (HIT • 11ms)'}
                 </span>
               </div>
               <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#18181D]">
@@ -149,21 +253,35 @@ export default function BentoGrid() {
                 />
               </div>
               <div className="mt-2.5 flex justify-between text-[11px] text-zinc-500">
-                <span>Est. Monthly Savings: {threshold === '0.92' ? '$4,820' : threshold === '0.95' ? '$3,910' : '$1,640'}</span>
+                <span>
+                  Est. Monthly Savings:{' '}
+                  {threshold === '0.92'
+                    ? '$4,820'
+                    : threshold === '0.95'
+                      ? '$3,910'
+                      : '$1,640'}
+                </span>
                 <span>Edge Vector Store</span>
               </div>
             </div>
           </GlowCard>
 
-          {/* Card 2: Multi-Model Failover */}
-          <GlowCard className="lg:col-span-5">
+          {/* Card 2: Multi-Model Failover (Moves at faster parallax offset) */}
+          <GlowCard
+            className="lg:col-span-5"
+            parallaxSpeed={1.35}
+            direction={1}
+            index={1}
+          >
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-violet-400/30 bg-violet-400/10 text-violet-400">
                     <ShieldAlert className="h-4 w-4" />
                   </div>
-                  <h3 className="text-lg font-bold text-[#FAFAFA]">Multi-Model Failover</h3>
+                  <h3 className="text-lg font-bold text-[#FAFAFA]">
+                    Multi-Model Failover
+                  </h3>
                 </div>
                 <button
                   type="button"
@@ -210,7 +328,12 @@ export default function BentoGrid() {
           </GlowCard>
 
           {/* Card 3: Trace Inspector */}
-          <GlowCard className="lg:col-span-5">
+          <GlowCard
+            className="lg:col-span-5"
+            parallaxSpeed={1.25}
+            direction={-1}
+            index={2}
+          >
             <div>
               <div className="mb-4 flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-400/30 bg-cyan-400/10 text-cyan-400">
@@ -240,9 +363,14 @@ export default function BentoGrid() {
                         selected ? 'bg-[#18181D]' : 'hover:bg-[#111115]'
                       }`}
                     >
-                      <span className="w-24 shrink-0 truncate text-zinc-400">{span.label}</span>
+                      <span className="w-24 shrink-0 truncate text-zinc-400">
+                        {span.label}
+                      </span>
                       <div className="h-2 flex-1 rounded-full bg-[#18181D]">
-                        <div className={`h-full rounded-full ${span.color}`} style={{ width: span.width }} />
+                        <div
+                          className={`h-full rounded-full ${span.color}`}
+                          style={{ width: span.width }}
+                        />
                       </div>
                       <span className="w-11 text-right text-zinc-300">{span.ms}</span>
                     </button>
@@ -256,14 +384,21 @@ export default function BentoGrid() {
           </GlowCard>
 
           {/* Card 4: Prompt Versioning */}
-          <GlowCard className="lg:col-span-7">
+          <GlowCard
+            className="lg:col-span-7"
+            parallaxSpeed={0.9}
+            direction={1}
+            index={3}
+          >
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-violet-400/30 bg-violet-400/10 text-violet-400">
                     <GitBranch className="h-4 w-4" />
                   </div>
-                  <h3 className="text-lg font-bold text-[#FAFAFA]">Prompt Versioning &amp; Canary Splits</h3>
+                  <h3 className="text-lg font-bold text-[#FAFAFA]">
+                    Prompt Versioning &amp; Canary Splits
+                  </h3>
                 </div>
                 <span className="inline-flex items-center gap-1 rounded-full border border-violet-400/30 bg-violet-400/10 px-2.5 py-0.5 font-mono text-[11px] text-violet-300">
                   <Sparkles className="h-3 w-3" /> Live A/B
@@ -302,7 +437,9 @@ export default function BentoGrid() {
                 </div>
                 <div className="rounded-lg border border-[#27272A] bg-[#111115] px-3 py-2">
                   <span className="text-zinc-500">v2.5 Eval Accuracy</span>
-                  <p className="mt-0.5 text-sm font-semibold text-emerald-400">95.8% (+4.4%)</p>
+                  <p className="mt-0.5 text-sm font-semibold text-emerald-400">
+                    95.8% (+4.4%)
+                  </p>
                 </div>
               </div>
             </div>

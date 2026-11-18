@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ArrowRight } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform, useSpring } from 'framer-motion';
+import { Check, ArrowRight, Compass } from 'lucide-react';
 
 const TYPOLOGIES = ['Residential', 'Cultural', 'Hospitality', 'Interior'];
 
 export default function ContactSection() {
+  const sectionRef = useRef(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -13,6 +14,21 @@ export default function ContactSection() {
     message: '',
   });
   const [submitted, setSubmitted] = useState(false);
+
+  const { scrollYProgress: rawProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  });
+
+  const smoothProgress = useSpring(rawProgress, { stiffness: 160, damping: 30 });
+
+  // Differential scroll parallax for Left Studio Info vs Right Commission Dossier Card
+  const leftColumnY = useTransform(smoothProgress, [0, 0.5, 1], [80, 0, -50]);
+  const rightCardY = useTransform(smoothProgress, [0, 0.48, 1], [140, 0, -75]);
+  const rightCardRotateX = useTransform(smoothProgress, [0.05, 0.42, 0.85, 1], [22, 0, 0, -10]);
+  const rightCardRotateY = useTransform(smoothProgress, [0.05, 0.42, 0.85, 1], [-14, 0, 0, 8]);
+  const rightCardScale = useTransform(smoothProgress, [0.05, 0.42, 0.85, 1], [0.9, 1, 1, 0.95]);
+  const plaqueParallaxY = useTransform(smoothProgress, [0, 0.5, 1], [110, 0, -110]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -32,10 +48,17 @@ export default function ContactSection() {
   };
 
   return (
-    <section id="contact" className="relative z-10 py-24 md:py-32 bg-alabaster/85 backdrop-blur-[2px] border-t border-charcoal/10">
-      <div className="max-w-[1360px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-16">
-        {/* Left Column: Studio Info */}
-        <div className="lg:col-span-5 space-y-10">
+    <section
+      ref={sectionRef}
+      id="contact"
+      className="relative z-10 py-24 md:py-32 bg-alabaster/85 backdrop-blur-[2px] border-t border-charcoal/10 overflow-hidden"
+    >
+      <div className="max-w-[1360px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-16 items-start [perspective:1600px]">
+        {/* Left Column: Studio Info with Scroll Parallax */}
+        <motion.div
+          style={{ y: leftColumnY }}
+          className="lg:col-span-5 space-y-10 will-change-transform"
+        >
           <div>
             <div className="flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-taupe mb-3">
               <span className="font-mono text-bronze">04</span>
@@ -51,15 +74,15 @@ export default function ContactSection() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-6 border-t border-charcoal/10 text-xs leading-relaxed">
-            <div className="space-y-2">
-              <p className="uppercase tracking-[0.2em] text-bronze">Kyoto Atelier</p>
+            <div className="p-5 bg-stone/70 border border-charcoal/10 space-y-2">
+              <p className="uppercase tracking-[0.2em] text-bronze font-mono">Kyoto Atelier</p>
               <p className="text-charcoal font-medium">Nakagyo-ku, Yanaginobanba</p>
               <p className="text-taupe">Kyoto 604-8006, Japan</p>
               <p className="text-taupe font-mono pt-1">+81 75 555 0148</p>
             </div>
 
-            <div className="space-y-2">
-              <p className="uppercase tracking-[0.2em] text-bronze">Copenhagen Atelier</p>
+            <div className="p-5 bg-stone/70 border border-charcoal/10 space-y-2">
+              <p className="uppercase tracking-[0.2em] text-bronze font-mono">Copenhagen Atelier</p>
               <p className="text-charcoal font-medium">Bredgade 45, 2. sal</p>
               <p className="text-taupe">1260 København K, Denmark</p>
               <p className="text-taupe font-mono pt-1">+45 33 55 01 92</p>
@@ -75,11 +98,30 @@ export default function ContactSection() {
               studio@kansoatelier.com
             </a>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Right Column: Minimalist Form */}
-        <div className="lg:col-span-7">
-          <div className="bg-stone border border-charcoal/10 p-7 sm:p-10 md:p-12">
+        {/* Right Column: Minimalist Commission Dossier Form with 3D Scroll Flip-In */}
+        <motion.div
+          style={{
+            y: rightCardY,
+            rotateX: rightCardRotateX,
+            rotateY: rightCardRotateY,
+            scale: rightCardScale,
+            transformPerspective: 1600,
+            transformStyle: 'preserve-3d',
+          }}
+          className="lg:col-span-7 relative will-change-transform"
+        >
+          {/* Floating Parallax Telemetry Stamp */}
+          <motion.div
+            style={{ y: plaqueParallaxY }}
+            className="hidden sm:flex items-center gap-2.5 absolute -top-5 right-6 z-20 px-4 py-1.5 bg-charcoal text-alabaster border border-bronze/60 text-[9px] font-mono uppercase tracking-[0.22em] shadow-xl"
+          >
+            <Compass className="w-3.5 h-3.5 text-bronze" />
+            <span>DOSSIER INTAKE // 2025–2026 COMMISSIONS</span>
+          </motion.div>
+
+          <div className="bg-stone border border-charcoal/15 p-7 sm:p-10 md:p-12 shadow-[0_28px_70px_rgba(28,27,25,0.12)]">
             <AnimatePresence mode="wait">
               {submitted ? (
                 <motion.div
@@ -100,10 +142,10 @@ export default function ContactSection() {
                       Thank you, {formData.name}.
                     </h3>
                     <p className="text-sm text-taupe leading-relaxed max-w-md">
-                      Our partners in Kyoto and Copenhagen review all new {formData.typology.toLowerCase()}{' '}
-                      inquiries personally and will respond to{' '}
-                      <span className="text-charcoal">{formData.email}</span> within three
-                      business days.
+                      Our partners in Kyoto and Copenhagen review all new{' '}
+                      {formData.typology.toLowerCase()} inquiries personally and will respond to{' '}
+                      <span className="text-charcoal">{formData.email}</span> within three business
+                      days.
                     </p>
                   </div>
                   <button
@@ -237,7 +279,7 @@ export default function ContactSection() {
               )}
             </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

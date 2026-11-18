@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useRef } from 'react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { Calendar, CheckCircle2, Clock, Mail, MapPin, Sparkles } from 'lucide-react';
 
 export default function TastingRoomAndSub() {
@@ -12,6 +12,30 @@ export default function TastingRoomAndSub() {
   const [bags, setBags] = useState(2);
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+
+  const tastingRef = useRef(null);
+  const subRef = useRef(null);
+
+  const { scrollYProgress: tastingScroll } = useScroll({
+    target: tastingRef,
+    offset: ['start end', 'end start'],
+  });
+  const smoothTasting = useSpring(tastingScroll, { damping: 32, stiffness: 220 });
+
+  const archCardY = useTransform(smoothTasting, [0, 0.5, 1], [85, 0, -75]);
+  const archCardRotateY = useTransform(smoothTasting, [0, 0.5, 1], [14, 0, -12]);
+  const archCardRotateX = useTransform(smoothTasting, [0, 0.5, 1], [10, 0, -8]);
+  const sunParallaxY = useTransform(smoothTasting, [0, 1], [28, -28]);
+  const infoColY = useTransform(smoothTasting, [0, 0.5, 1], [125, 0, -95]);
+
+  const { scrollYProgress: subScroll } = useScroll({
+    target: subRef,
+    offset: ['start end', 'end start'],
+  });
+  const smoothSub = useSpring(subScroll, { damping: 32, stiffness: 220 });
+  const subScale = useTransform(smoothSub, [0, 0.45, 1], [0.88, 1, 0.94]);
+  const subRotateX = useTransform(smoothSub, [0, 0.45, 1], [15, 0, -10]);
+  const ringRotate = useTransform(smoothSub, [0, 1], [0, 160]);
 
   const basePricePerBag = 21;
   const discountedPerBag = (basePricePerBag * 0.85).toFixed(2);
@@ -26,15 +50,22 @@ export default function TastingRoomAndSub() {
   return (
     <>
       {/* Tasting Room Section */}
-      <section id="tasting-room" className="py-16 sm:py-24 border-b border-espresso/10">
+      <section
+        ref={tastingRef}
+        id="tasting-room"
+        className="py-16 sm:py-24 border-b border-espresso/10 overflow-hidden"
+        style={{ perspective: '1600px' }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            {/* Architectural Tasting Bar SVG */}
+            {/* Architectural Tasting Bar SVG with 3D Scroll Tilt */}
             <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.6 }}
+              style={{
+                y: archCardY,
+                rotateY: archCardRotateY,
+                rotateX: archCardRotateX,
+                transformStyle: 'preserve-3d',
+              }}
               className="lg:col-span-6"
             >
               <div className="rounded-3xl bg-cream-dark border border-espresso/12 p-6 sm:p-8 shadow-editorial">
@@ -53,9 +84,11 @@ export default function TastingRoomAndSub() {
                     strokeOpacity="0.16"
                     strokeWidth="2"
                   />
-                  {/* Sunburst through window */}
-                  <circle cx="240" cy="118" r="36" fill="#C85A32" fillOpacity="0.16" />
-                  <circle cx="240" cy="118" r="20" fill="#C85A32" fillOpacity="0.3" />
+                  {/* Scroll-Parallax Sunburst through window */}
+                  <motion.g style={{ y: sunParallaxY }}>
+                    <circle cx="240" cy="118" r="36" fill="#C85A32" fillOpacity="0.18" />
+                    <circle cx="240" cy="118" r="20" fill="#C85A32" fillOpacity="0.34" />
+                  </motion.g>
                   {/* Hanging pendant lights */}
                   <line x1="185" y1="30" x2="185" y2="92" stroke="#1E1612" strokeWidth="1.5" />
                   <path d="M172 92H198L192 104H178L172 92Z" fill="#3A2A22" />
@@ -94,12 +127,9 @@ export default function TastingRoomAndSub() {
               </div>
             </motion.div>
 
-            {/* Right Info & Cupping Reservation */}
+            {/* Right Info & Cupping Reservation with Differential Parallax */}
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.6 }}
+              style={{ y: infoColY }}
               className="lg:col-span-6 space-y-6"
             >
               <span className="text-xs uppercase tracking-[0.22em] text-terracotta font-semibold block">
@@ -193,13 +223,26 @@ export default function TastingRoomAndSub() {
         </div>
       </section>
 
-      {/* Subscription Banner */}
-      <section id="subscribe" className="py-16 sm:py-24">
+      {/* Subscription Banner with 3D Scroll Perspective */}
+      <section
+        ref={subRef}
+        id="subscribe"
+        className="py-16 sm:py-24"
+        style={{ perspective: '1600px' }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-3xl bg-espresso text-cream p-8 sm:p-12 lg:p-14 overflow-hidden shadow-editorial">
-            {/* Subtle decorative sun ring */}
-            <div
-              className="absolute -right-24 -top-24 w-72 h-72 rounded-full border border-terracotta/25 pointer-events-none"
+          <motion.div
+            style={{
+              scale: subScale,
+              rotateX: subRotateX,
+              transformStyle: 'preserve-3d',
+            }}
+            className="relative rounded-3xl bg-espresso text-cream p-8 sm:p-12 lg:p-14 overflow-hidden shadow-editorial"
+          >
+            {/* Scroll-rotated decorative sun ring */}
+            <motion.div
+              style={{ rotate: ringRotate }}
+              className="absolute -right-24 -top-24 w-72 h-72 rounded-full border border-terracotta/35 border-dashed pointer-events-none"
               aria-hidden="true"
             />
             <div
@@ -323,7 +366,7 @@ export default function TastingRoomAndSub() {
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
     </>

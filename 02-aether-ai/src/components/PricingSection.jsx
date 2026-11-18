@@ -1,5 +1,11 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef } from 'react';
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+  useSpring,
+} from 'framer-motion';
 import { Check, Sparkles, ChevronDown } from 'lucide-react';
 import ScrambleText from './ScrambleText';
 import { playHover, playClick } from '../utils/soundEngine';
@@ -59,6 +65,161 @@ const COMPARISON_ROWS = [
   { feature: 'PII Guardrails & Redaction', starter: '—', pro: 'Included', enterprise: 'Custom Policies' },
 ];
 
+function PricingCard({ tier, idx, annual, onSelectPlan }) {
+  const cardRef = useRef(null);
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0, gx: 50, gy: 50 });
+
+  const { scrollYProgress } = useScroll({
+    target: cardRef,
+    offset: ['start end', 'end start'],
+  });
+
+  const smoothScroll = useSpring(scrollYProgress, {
+    stiffness: 150,
+    damping: 26,
+    mass: 0.25,
+  });
+
+  // Center card (idx === 1) rises faster and sits closer in 3D space
+  const isCenter = idx === 1;
+  const sideOffset = idx === 0 ? -1 : idx === 2 ? 1 : 0;
+
+  const y = useTransform(
+    smoothScroll,
+    [0, 0.42, 1],
+    [isCenter ? 130 : 75, isCenter ? -10 : 0, isCenter ? -90 : -45]
+  );
+  const rotateX = useTransform(
+    smoothScroll,
+    [0, 0.36, 0.78, 1],
+    [22, 0, 0, -14]
+  );
+  const rotateY = useTransform(
+    smoothScroll,
+    [0, 0.38, 0.78, 1],
+    [sideOffset * -15, 0, 0, sideOffset * 8]
+  );
+  const scale = useTransform(
+    smoothScroll,
+    [0, 0.36, 0.8, 1],
+    [0.86, isCenter ? 1.03 : 1, isCenter ? 1.03 : 1, 0.92]
+  );
+
+  const price = annual ? tier.annualPrice : tier.monthlyPrice;
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    setTilt({
+      rx: (0.5 - py) * 9,
+      ry: (px - 0.5) * 9,
+      gx: px * 100,
+      gy: py * 100,
+    });
+  };
+
+  return (
+    <motion.div
+      ref={cardRef}
+      style={{
+        y,
+        rotateX,
+        rotateY,
+        scale,
+        transformPerspective: 1200,
+        transformStyle: 'preserve-3d',
+      }}
+      className="will-change-transform h-full"
+    >
+      <div
+        onMouseEnter={playHover}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setTilt({ rx: 0, ry: 0, gx: 50, gy: 50 })}
+        style={{
+          transform: `perspective(1000px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
+          transformStyle: 'preserve-3d',
+        }}
+        className={`group relative flex h-full flex-col justify-between rounded-2xl border p-7 backdrop-blur-md transition-colors duration-200 ${
+          tier.popular
+            ? 'border-cyan-400/60 bg-[#111115]/95 shadow-[0_25px_70px_rgba(34,211,238,0.14)]'
+            : 'border-[#27272A] bg-[#111115]/85 hover:border-cyan-400/40'
+        }`}
+      >
+        {/* Cursor Spotlight */}
+        <div
+          className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{
+            background: `radial-gradient(380px circle at ${tilt.gx}% ${tilt.gy}%, rgba(34,211,238,0.13), transparent 70%)`,
+          }}
+        />
+
+        {tier.popular && (
+          <div className="absolute -top-3 right-6 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#22D3EE] to-[#8B5CF6] px-3 py-0.5 text-[11px] font-bold text-[#09090B]">
+            <Sparkles className="h-3 w-3" />
+            <span>Most Popular</span>
+          </div>
+        )}
+
+        <div className="relative z-10">
+          <h3 className="text-lg font-bold text-[#FAFAFA]">{tier.name}</h3>
+          <p className="mt-1.5 text-sm text-zinc-400">{tier.description}</p>
+
+          <div className="mt-6 flex items-baseline gap-1.5">
+            {price !== null ? (
+              <>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={`${tier.name}-${price}`}
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.18 }}
+                    className="font-mono text-4xl font-extrabold text-[#FAFAFA]"
+                  >
+                    ${price}
+                  </motion.span>
+                </AnimatePresence>
+                <span className="text-sm text-zinc-500">/ month</span>
+              </>
+            ) : (
+              <span className="font-mono text-4xl font-extrabold text-[#FAFAFA]">
+                Custom
+              </span>
+            )}
+          </div>
+
+          <ul className="mt-6 space-y-3 border-t border-[#27272A] pt-6 text-sm text-zinc-300">
+            {tier.features.map((feat) => (
+              <li key={feat} className="flex items-start gap-2.5">
+                <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
+                <span>{feat}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <button
+          type="button"
+          data-cursor="[ SELECT PLAN ]"
+          onMouseEnter={playHover}
+          onClick={() => {
+            playClick();
+            onSelectPlan(tier.name);
+          }}
+          className={`relative z-10 mt-8 w-full rounded-xl py-2.5 text-sm font-semibold transition-all ${
+            tier.popular
+              ? 'bg-gradient-to-r from-[#22D3EE] to-[#8B5CF6] text-[#09090B] hover:opacity-90'
+              : 'border border-[#27272A] bg-[#09090B] text-[#FAFAFA] hover:border-cyan-400/50'
+          }`}
+        >
+          {tier.cta}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function PricingSection({ onSelectPlan }) {
   const [annual, setAnnual] = useState(true);
   const [showComparison, setShowComparison] = useState(false);
@@ -71,7 +232,10 @@ export default function PricingSection({ onSelectPlan }) {
             05 // COMPUTE PRICING
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#FAFAFA] sm:text-4xl">
-            <ScrambleText text="Predictable pricing that scales with tokens." scrambleOnMount={false} />
+            <ScrambleText
+              text="Predictable pricing that scales with tokens."
+              scrambleOnMount={false}
+            />
           </h2>
           <p className="mt-3 text-base text-zinc-400">
             Start free in seconds. Upgrade when your production traffic demands edge caching and SLAs.
@@ -111,90 +275,21 @@ export default function PricingSection({ onSelectPlan }) {
           </div>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
-          {TIERS.map((tier) => {
-            const price = annual ? tier.annualPrice : tier.monthlyPrice;
-            return (
-              <motion.div
-                key={tier.name}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.4 }}
-                onMouseEnter={playHover}
-                className={`relative flex flex-col justify-between rounded-2xl border p-7 backdrop-blur-md transition-all hover:-translate-y-1 ${
-                  tier.popular
-                    ? 'border-cyan-400/50 bg-[#111115]/95 shadow-2xl shadow-cyan-500/10'
-                    : 'border-[#27272A] bg-[#111115]/80 hover:border-zinc-700'
-                }`}
-              >
-                {tier.popular && (
-                  <div className="absolute -top-3 right-6 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-[#22D3EE] to-[#8B5CF6] px-3 py-0.5 text-[11px] font-bold text-[#09090B]">
-                    <Sparkles className="h-3 w-3" />
-                    <span>Most Popular</span>
-                  </div>
-                )}
-
-                <div>
-                  <h3 className="text-lg font-bold text-[#FAFAFA]">{tier.name}</h3>
-                  <p className="mt-1.5 text-sm text-zinc-400">{tier.description}</p>
-
-                  <div className="mt-6 flex items-baseline gap-1.5">
-                    {price !== null ? (
-                      <>
-                        <AnimatePresence mode="wait">
-                          <motion.span
-                            key={`${tier.name}-${price}`}
-                            initial={{ opacity: 0, y: -8 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 8 }}
-                            transition={{ duration: 0.18 }}
-                            className="font-mono text-4xl font-extrabold text-[#FAFAFA]"
-                          >
-                            ${price}
-                          </motion.span>
-                        </AnimatePresence>
-                        <span className="text-sm text-zinc-500">/ month</span>
-                      </>
-                    ) : (
-                      <span className="font-mono text-4xl font-extrabold text-[#FAFAFA]">Custom</span>
-                    )}
-                  </div>
-
-                  <ul className="mt-6 space-y-3 border-t border-[#27272A] pt-6 text-sm text-zinc-300">
-                    {tier.features.map((feat) => (
-                      <li key={feat} className="flex items-start gap-2.5">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
-                        <span>{feat}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <button
-                  type="button"
-                  data-cursor="[ SELECT PLAN ]"
-                  onMouseEnter={playHover}
-                  onClick={() => {
-                    playClick();
-                    onSelectPlan(tier.name);
-                  }}
-                  className={`mt-8 w-full rounded-xl py-2.5 text-sm font-semibold transition-all ${
-                    tier.popular
-                      ? 'bg-gradient-to-r from-[#22D3EE] to-[#8B5CF6] text-[#09090B] hover:opacity-90'
-                      : 'border border-[#27272A] bg-[#09090B] text-[#FAFAFA] hover:border-cyan-400/50'
-                  }`}
-                >
-                  {tier.cta}
-                </button>
-              </motion.div>
-            );
-          })}
+        {/* 3D Scroll-Parallax Pricing Cards */}
+        <div className="mt-14 grid gap-6 lg:grid-cols-3">
+          {TIERS.map((tier, idx) => (
+            <PricingCard
+              key={tier.name}
+              tier={tier}
+              idx={idx}
+              annual={annual}
+              onSelectPlan={onSelectPlan}
+            />
+          ))}
         </div>
 
         {/* Interactive Feature Comparison Toggle */}
-        <div className="mt-10 text-center">
+        <div className="mt-12 text-center">
           <button
             type="button"
             onMouseEnter={playHover}
@@ -206,7 +301,9 @@ export default function PricingSection({ onSelectPlan }) {
           >
             <span>{showComparison ? 'Hide' : 'Compare'} full plan specifications</span>
             <ChevronDown
-              className={`h-3.5 w-3.5 transition-transform ${showComparison ? 'rotate-180' : ''}`}
+              className={`h-3.5 w-3.5 transition-transform ${
+                showComparison ? 'rotate-180' : ''
+              }`}
             />
           </button>
 
@@ -231,10 +328,18 @@ export default function PricingSection({ onSelectPlan }) {
                     <tbody className="divide-y divide-[#27272A]/70 text-xs sm:text-sm">
                       {COMPARISON_ROWS.map((row) => (
                         <tr key={row.feature} className="hover:bg-[#16161C]">
-                          <td className="px-5 py-3.5 font-medium text-zinc-200">{row.feature}</td>
-                          <td className="px-5 py-3.5 font-mono text-zinc-400">{row.starter}</td>
-                          <td className="px-5 py-3.5 font-mono text-cyan-300">{row.pro}</td>
-                          <td className="px-5 py-3.5 font-mono text-zinc-300">{row.enterprise}</td>
+                          <td className="px-5 py-3.5 font-medium text-zinc-200">
+                            {row.feature}
+                          </td>
+                          <td className="px-5 py-3.5 font-mono text-zinc-400">
+                            {row.starter}
+                          </td>
+                          <td className="px-5 py-3.5 font-mono text-cyan-300">
+                            {row.pro}
+                          </td>
+                          <td className="px-5 py-3.5 font-mono text-zinc-300">
+                            {row.enterprise}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

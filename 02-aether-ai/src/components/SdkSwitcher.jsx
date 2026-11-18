@@ -1,5 +1,11 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef } from 'react';
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+  useSpring,
+} from 'framer-motion';
 import { Check, Copy, Play, Terminal } from 'lucide-react';
 import ScrambleText from './ScrambleText';
 import { playHover, playClick } from '../utils/soundEngine';
@@ -63,6 +69,29 @@ export default function SdkSwitcher() {
   const [copied, setCopied] = useState(false);
   const [testOutput, setTestOutput] = useState(null);
   const [running, setRunning] = useState(false);
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
+
+  const sectionRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  });
+
+  const smoothScroll = useSpring(scrollYProgress, {
+    stiffness: 150,
+    damping: 28,
+    mass: 0.25,
+  });
+
+  // Left copy column scroll parallax
+  const leftY = useTransform(smoothScroll, [0, 0.5, 1], [60, 0, -50]);
+  const leftRotateY = useTransform(smoothScroll, [0, 0.4, 1], [12, 0, -8]);
+
+  // Right 3D code terminal scroll parallax (opposite depth vector)
+  const rightY = useTransform(smoothScroll, [0, 0.45, 1], [120, 0, -95]);
+  const rightRotateX = useTransform(smoothScroll, [0, 0.38, 0.78, 1], [20, 0, 0, -14]);
+  const rightRotateY = useTransform(smoothScroll, [0, 0.4, 0.78, 1], [-16, 0, 0, 10]);
+  const rightScale = useTransform(smoothScroll, [0, 0.35, 0.8, 1], [0.88, 1, 1, 0.92]);
 
   const handleCopy = () => {
     playClick();
@@ -88,17 +117,44 @@ export default function SdkSwitcher() {
     }, 450);
   };
 
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    setTilt({
+      rx: (0.5 - py) * 8,
+      ry: (px - 0.5) * 8,
+    });
+  };
+
   return (
-    <section id="sdk" className="relative border-t border-[#27272A]/80 py-20 sm:py-28">
+    <section
+      id="sdk"
+      ref={sectionRef}
+      className="relative border-t border-[#27272A]/80 py-20 sm:py-28"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-12 lg:grid-cols-12">
-          {/* Left Copy */}
-          <div className="lg:col-span-5">
+        <div
+          style={{ perspective: '1400px' }}
+          className="grid items-center gap-12 lg:grid-cols-12"
+        >
+          {/* Left Copy with Scroll Parallax */}
+          <motion.div
+            style={{
+              y: leftY,
+              rotateY: leftRotateY,
+              transformStyle: 'preserve-3d',
+            }}
+            className="lg:col-span-5 will-change-transform"
+          >
             <span className="font-mono text-xs uppercase tracking-[0.2em] text-cyan-400">
               04 // DROP-IN SDK SANDBOX
             </span>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#FAFAFA] sm:text-4xl">
-              <ScrambleText text="Two lines to full observability." scrambleOnMount={false} />
+              <ScrambleText
+                text="Two lines to full observability."
+                scrambleOnMount={false}
+              />
             </h2>
             <p className="mt-4 text-base leading-relaxed text-zinc-400">
               Swap your base URL or drop in the Aether SDK. Works seamlessly with your existing OpenAI, Anthropic, and LangChain workflows with zero vendor lock-in.
@@ -118,11 +174,28 @@ export default function SdkSwitcher() {
                 </li>
               ))}
             </ul>
-          </div>
+          </motion.div>
 
-          {/* Right Interactive Code Block */}
-          <div className="lg:col-span-7">
-            <div className="overflow-hidden rounded-2xl border border-[#27272A] bg-[#111115]/95 shadow-2xl backdrop-blur-xl">
+          {/* Right Interactive 3D Code Block with Counter-Parallax */}
+          <motion.div
+            style={{
+              y: rightY,
+              rotateX: rightRotateX,
+              rotateY: rightRotateY,
+              scale: rightScale,
+              transformStyle: 'preserve-3d',
+            }}
+            className="lg:col-span-7 will-change-transform"
+          >
+            <div
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => setTilt({ rx: 0, ry: 0 })}
+              style={{
+                transform: `perspective(1100px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
+                transformStyle: 'preserve-3d',
+              }}
+              className="overflow-hidden rounded-2xl border border-[#27272A] bg-[#111115]/95 shadow-[0_30px_80px_rgba(0,0,0,0.85)] backdrop-blur-xl transition-colors duration-200 hover:border-cyan-400/50"
+            >
               {/* Header Bar with Framer Motion layoutId tabs */}
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#27272A] bg-[#09090B]/80 px-4 py-3">
                 <div className="flex items-center gap-1 rounded-lg border border-[#27272A] bg-[#111115] p-1">
@@ -138,13 +211,19 @@ export default function SdkSwitcher() {
                           setActiveTab(lang);
                         }}
                         className={`relative rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                          isActive ? 'text-[#FAFAFA]' : 'text-zinc-400 hover:text-zinc-200'
+                          isActive
+                            ? 'text-[#FAFAFA]'
+                            : 'text-zinc-400 hover:text-zinc-200'
                         }`}
                       >
                         {isActive && (
                           <motion.span
                             layoutId="sdk-pill"
-                            transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                            transition={{
+                              type: 'spring',
+                              stiffness: 380,
+                              damping: 30,
+                            }}
                             className="absolute inset-0 rounded-md bg-[#27272A]"
                           />
                         )}
@@ -189,9 +268,14 @@ export default function SdkSwitcher() {
 
               {/* Code Content */}
               <div className="relative overflow-x-auto p-5">
-                <div className="mb-2 flex items-center gap-1.5 font-mono text-[11px] text-zinc-500">
-                  <Terminal className="h-3 w-3" />
-                  <span>{SNIPPETS[activeTab].filename}</span>
+                <div className="mb-2 flex items-center justify-between font-mono text-[11px] text-zinc-500">
+                  <span className="flex items-center gap-1.5">
+                    <Terminal className="h-3 w-3" />
+                    <span>{SNIPPETS[activeTab].filename}</span>
+                  </span>
+                  <span className="text-[10px] text-cyan-400/70">
+                    3D TERMINAL // Z-SYNCED
+                  </span>
                 </div>
                 <AnimatePresence mode="wait">
                   <motion.pre
@@ -227,7 +311,7 @@ export default function SdkSwitcher() {
                 )}
               </AnimatePresence>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

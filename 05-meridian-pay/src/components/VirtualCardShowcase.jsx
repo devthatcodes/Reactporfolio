@@ -1,6 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { Lock, Unlock, Shield, Sliders, Wifi, Sparkles } from 'lucide-react';
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+  useScroll,
+  useMotionValueEvent,
+} from 'framer-motion';
+import { Lock, Unlock, Shield, Sliders, Wifi, Sparkles, Orbit } from 'lucide-react';
 import ScrambleText from './ScrambleText';
 import { soundEngine } from '../utils/soundEngine';
 
@@ -49,10 +56,41 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
   const [isFrozen, setIsFrozen] = useState(false);
   const [requireReceipt, setRequireReceipt] = useState(true);
   const [foilCoords, setFoilCoords] = useState({ x: 50, y: 50, angle: 135 });
+  const [isHoveringCard, setIsHoveringCard] = useState(false);
 
+  const sectionRef = useRef(null);
   const cardRef = useRef(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
+
+  // Scroll-scrubbed 3D orbital rotation for the titanium card
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  });
+
+  const scrollOrbitY = useSpring(
+    useTransform(scrollYProgress, [0, 0.5, 1], [-28, 0, 18]),
+    { stiffness: 180, damping: 28 }
+  );
+  const scrollOrbitX = useSpring(
+    useTransform(scrollYProgress, [0, 0.5, 1], [20, 0, -10]),
+    { stiffness: 180, damping: 28 }
+  );
+  const scrollOrbitZ = useTransform(scrollYProgress, [0, 0.5, 1], [-4, 0, 3]);
+  const floatRingY = useTransform(scrollYProgress, [0, 1], [70, -70]);
+  const panelParallaxY = useTransform(scrollYProgress, [0, 0.5, 1], [45, 0, -35]);
+
+  // Automatically sweep holographic foil across the card as you scroll when not hovering
+  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
+    if (!isHoveringCard) {
+      setFoilCoords({
+        x: Math.round(15 + latest * 70),
+        y: Math.round(80 - latest * 60),
+        angle: Math.round(105 + latest * 95),
+      });
+    }
+  });
 
   const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [14, -14]), {
     stiffness: 240,
@@ -65,6 +103,7 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
 
   const handleMouseMove = (e) => {
     if (!cardRef.current) return;
+    setIsHoveringCard(true);
     const rect = cardRef.current.getBoundingClientRect();
     const xPct = (e.clientX - rect.left) / rect.width - 0.5;
     const yPct = (e.clientY - rect.top) / rect.height - 0.5;
@@ -78,6 +117,7 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
   };
 
   const handleMouseLeave = () => {
+    setIsHoveringCard(false);
     mouseX.set(0);
     mouseY.set(0);
     setFoilCoords({ x: 50, y: 50, angle: 135 });
@@ -89,7 +129,11 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
   const sliderPct = ((spendLimit - 5000) / (250000 - 5000)) * 100;
 
   return (
-    <section id="cards" className="relative py-24 lg:py-32 border-b border-white/10">
+    <section
+      id="cards"
+      ref={sectionRef}
+      className="relative py-24 lg:py-32 border-b border-white/10 overflow-hidden"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-2xl mb-12 lg:mb-16">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-[11px] font-mono font-semibold uppercase tracking-widest text-cyan-400 mb-3">
@@ -106,129 +150,149 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          {/* Left: 3D Gyroscopic Tilt Interactive Card with Iridescent Holographic Foil Shimmer */}
-          <div className="lg:col-span-6 flex flex-col items-center">
-            <div style={{ perspective: 1150 }} className="w-full max-w-[440px]">
+          {/* Left: Scroll-Driven 3D Orbital + Cursor Gyroscopic Tilt Interactive Card */}
+          <div className="lg:col-span-6 flex flex-col items-center relative">
+            {/* Floating Parallax Orbital Telemetry Badge */}
+            <motion.div
+              style={{ y: floatRingY }}
+              className="pointer-events-none hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#070D19]/90 border border-cyan-400/35 text-[10px] font-mono text-cyan-300 mb-4 shadow-[0_0_25px_rgba(6,182,212,0.2)]"
+            >
+              <Orbit className="w-3.5 h-3.5 text-[#10B981] animate-spin" />
+              <span>3D SCROLL ORBIT + GYRO FOIL SHIMMER ACTIVE</span>
+            </motion.div>
+
+            <div style={{ perspective: 1200 }} className="w-full max-w-[440px]">
+              {/* Outer Scroll-Driven 3D Orbital Wrapper */}
               <motion.div
-                ref={cardRef}
-                data-cursor="ROTATE 3D CARD"
-                onMouseMove={handleMouseMove}
-                onMouseLeave={handleMouseLeave}
-                style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-                className={`relative w-full aspect-[1.586/1] rounded-3xl bg-gradient-to-br ${theme.bgClass} p-6 sm:p-7 shadow-[0_30px_80px_rgba(0,0,0,0.85)] overflow-hidden select-none cursor-pointer border border-white/20`}
+                style={{
+                  rotateY: scrollOrbitY,
+                  rotateX: scrollOrbitX,
+                  rotateZ: scrollOrbitZ,
+                  transformStyle: 'preserve-3d',
+                }}
               >
-                {/* Live Iridescent Holographic Foil Shimmer Layer */}
-                <div
-                  className="pointer-events-none absolute inset-0 opacity-40 mix-blend-screen transition-opacity duration-200"
-                  style={{
-                    background: `radial-gradient(circle at ${foilCoords.x}% ${foilCoords.y}%, rgba(16, 185, 129, 0.45), rgba(6, 182, 212, 0.28) 38%, rgba(59, 130, 246, 0.15) 65%, transparent 85%), linear-gradient(${foilCoords.angle}deg, transparent 20%, rgba(255,255,255,0.18) 50%, transparent 80%)`,
-                  }}
-                />
-
-                {/* Bespoke Geometric Quantum SVG Pattern Overlay */}
-                <svg
-                  className="absolute inset-0 w-full h-full opacity-20 pointer-events-none"
-                  viewBox="0 0 400 250"
-                  fill="none"
-                  aria-hidden="true"
+                {/* Inner Cursor-Driven 3D Tilt Card */}
+                <motion.div
+                  ref={cardRef}
+                  data-cursor="ROTATE 3D CARD"
+                  onMouseMove={handleMouseMove}
+                  onMouseLeave={handleMouseLeave}
+                  style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
+                  className={`relative w-full aspect-[1.586/1] rounded-3xl bg-gradient-to-br ${theme.bgClass} p-6 sm:p-7 shadow-[0_30px_80px_rgba(0,0,0,0.85)] overflow-hidden select-none cursor-pointer border border-white/20`}
                 >
-                  <circle cx="340" cy="40" r="140" stroke="white" strokeWidth="1" />
-                  <circle cx="340" cy="40" r="95" stroke="#10B981" strokeWidth="0.85" />
-                  <circle
-                    cx="340"
-                    cy="40"
-                    r="55"
-                    stroke="#06B6D4"
-                    strokeWidth="0.75"
-                    strokeDasharray="4 4"
+                  {/* Live Iridescent Holographic Foil Shimmer Layer */}
+                  <div
+                    className="pointer-events-none absolute inset-0 opacity-45 mix-blend-screen transition-opacity duration-200"
+                    style={{
+                      background: `radial-gradient(circle at ${foilCoords.x}% ${foilCoords.y}%, rgba(16, 185, 129, 0.5), rgba(6, 182, 212, 0.32) 38%, rgba(59, 130, 246, 0.18) 65%, transparent 85%), linear-gradient(${foilCoords.angle}deg, transparent 20%, rgba(255,255,255,0.22) 50%, transparent 80%)`,
+                    }}
                   />
-                  <path d="M-20 210 Q 180 120 420 220" stroke="white" strokeWidth="1" />
-                </svg>
 
-                {/* Frozen Overlay */}
-                {isFrozen && (
-                  <div className="absolute inset-0 bg-[#030712]/80 backdrop-blur-md z-20 flex flex-col items-center justify-center gap-2">
-                    <div className="w-12 h-12 rounded-full bg-[#10B981]/15 border border-[#10B981]/40 flex items-center justify-center">
-                      <Lock className="w-5 h-5 text-[#10B981]" />
-                    </div>
-                    <span className="font-mono text-xs font-bold tracking-widest text-[#10B981] uppercase">
-                      CRYPTOGRAPHIC FREEZE ACTIVE
-                    </span>
-                  </div>
-                )}
+                  {/* Bespoke Geometric Quantum SVG Pattern Overlay */}
+                  <svg
+                    className="absolute inset-0 w-full h-full opacity-20 pointer-events-none"
+                    viewBox="0 0 400 250"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <circle cx="340" cy="40" r="140" stroke="white" strokeWidth="1" />
+                    <circle cx="340" cy="40" r="95" stroke="#10B981" strokeWidth="0.85" />
+                    <circle
+                      cx="340"
+                      cy="40"
+                      r="55"
+                      stroke="#06B6D4"
+                      strokeWidth="0.75"
+                      strokeDasharray="4 4"
+                    />
+                    <path d="M-20 210 Q 180 120 420 220" stroke="white" strokeWidth="1" />
+                  </svg>
 
-                <div className="relative z-10 h-full flex flex-col justify-between">
-                  {/* Top Row */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M4 18V6L12 13L20 6V18"
-                            stroke={theme.accentColor}
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
+                  {/* Frozen Overlay */}
+                  {isFrozen && (
+                    <div className="absolute inset-0 bg-[#030712]/80 backdrop-blur-md z-20 flex flex-col items-center justify-center gap-2">
+                      <div className="w-12 h-12 rounded-full bg-[#10B981]/15 border border-[#10B981]/40 flex items-center justify-center">
+                        <Lock className="w-5 h-5 text-[#10B981]" />
                       </div>
-                      <span className={`font-bold text-sm tracking-tight ${theme.textColor}`}>
-                        Meridian
+                      <span className="font-mono text-xs font-bold tracking-widest text-[#10B981] uppercase">
+                        CRYPTOGRAPHIC FREEZE ACTIVE
                       </span>
                     </div>
-                    <span
-                      className={`font-mono text-[10px] tracking-wider px-2.5 py-1 rounded-full bg-black/30 border border-white/20 ${theme.subTextColor}`}
-                    >
-                      {theme.badge}
-                    </span>
-                  </div>
+                  )}
 
-                  {/* Middle Row: Holographic EMV Chip & Contactless + Gyro Telemetry */}
-                  <div className="flex items-center justify-between my-auto">
-                    <div className="w-12 h-9 rounded-md bg-gradient-to-br from-amber-200/90 via-emerald-200/80 to-cyan-300/85 border border-white/40 flex items-center justify-center shadow-inner">
-                      <div className="w-8 h-6 border border-slate-900/30 rounded-[3px] grid grid-cols-2 gap-px p-0.5">
-                        <div className="border-r border-slate-900/25" />
-                        <div />
+                  <div className="relative z-10 h-full flex flex-col justify-between">
+                    {/* Top Row */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                            <path
+                              d="M4 18V6L12 13L20 6V18"
+                              stroke={theme.accentColor}
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <span className={`font-bold text-sm tracking-tight ${theme.textColor}`}>
+                          Meridian
+                        </span>
                       </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-[10px] text-white/60">
-                        FOIL {foilCoords.x}% · {foilCoords.y}%
+                      <span
+                        className={`font-mono text-[10px] tracking-wider px-2.5 py-1 rounded-full bg-black/30 border border-white/20 ${theme.subTextColor}`}
+                      >
+                        {theme.badge}
                       </span>
-                      <Wifi className={`w-5 h-5 rotate-90 opacity-85 ${theme.textColor}`} />
                     </div>
-                  </div>
 
-                  {/* Bottom Row */}
-                  <div className="space-y-3">
-                    <div
-                      className={`font-mono text-lg sm:text-xl tracking-[0.2em] ${theme.textColor} tabular-nums`}
-                    >
-                      4921 •••• •••• {theme.last4}
-                    </div>
-                    <div className="flex items-end justify-between">
-                      <div>
-                        <div
-                          className={`text-[10px] font-mono uppercase tracking-wider opacity-70 ${theme.subTextColor}`}
-                        >
-                          Authorized Entity
-                        </div>
-                        <div
-                          className={`font-mono text-xs font-semibold tracking-wide ${theme.textColor}`}
-                        >
-                          {theme.holder}
+                    {/* Middle Row: Holographic EMV Chip & Contactless + Gyro Telemetry */}
+                    <div className="flex items-center justify-between my-auto">
+                      <div className="w-12 h-9 rounded-md bg-gradient-to-br from-amber-200/90 via-emerald-200/80 to-cyan-300/85 border border-white/40 flex items-center justify-center shadow-inner">
+                        <div className="w-8 h-6 border border-slate-900/30 rounded-[3px] grid grid-cols-2 gap-px p-0.5">
+                          <div className="border-r border-slate-900/25" />
+                          <div />
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div
-                          className={`font-mono text-[10px] font-bold tracking-wider ${theme.textColor}`}
-                        >
-                          {theme.network}
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-[10px] text-white/60">
+                          FOIL {foilCoords.x}% · {foilCoords.y}%
+                        </span>
+                        <Wifi className={`w-5 h-5 rotate-90 opacity-85 ${theme.textColor}`} />
+                      </div>
+                    </div>
+
+                    {/* Bottom Row */}
+                    <div className="space-y-3">
+                      <div
+                        className={`font-mono text-lg sm:text-xl tracking-[0.2em] ${theme.textColor} tabular-nums`}
+                      >
+                        4921 •••• •••• {theme.last4}
+                      </div>
+                      <div className="flex items-end justify-between">
+                        <div>
+                          <div
+                            className={`text-[10px] font-mono uppercase tracking-wider opacity-70 ${theme.subTextColor}`}
+                          >
+                            Authorized Entity
+                          </div>
+                          <div
+                            className={`font-mono text-xs font-semibold tracking-wide ${theme.textColor}`}
+                          >
+                            {theme.holder}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div
+                            className={`font-mono text-[10px] font-bold tracking-wider ${theme.textColor}`}
+                          >
+                            {theme.network}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               </motion.div>
             </div>
 
@@ -265,8 +329,8 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
             </div>
           </div>
 
-          {/* Right: Interactive Spend-Limit Slider & Cryptographic Controls */}
-          <div className="lg:col-span-6">
+          {/* Right: Interactive Spend-Limit Slider & Cryptographic Controls with Parallax Counter-Motion */}
+          <motion.div style={{ y: panelParallaxY }} className="lg:col-span-6">
             <div className="bg-[#070D19]/90 backdrop-blur-xl rounded-3xl border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.65)] p-6 sm:p-8 space-y-7">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -394,7 +458,7 @@ export default function VirtualCardShowcase({ onShaderPulse }) {
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

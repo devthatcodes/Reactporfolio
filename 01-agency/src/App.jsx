@@ -12,6 +12,11 @@ import CustomCursor from './components/CustomCursor';
 import Preloader from './components/Preloader';
 import PortalTransition from './components/PortalTransition';
 import HudOverlay from './components/HudOverlay';
+import {
+  VelocitySkewWrapper,
+  ScrollSectionPortal,
+  ScrollKineticRibbon,
+} from './components/ScrollChoreography';
 import soundEngine from './utils/soundEngine';
 
 export default function App() {
@@ -128,34 +133,77 @@ export default function App() {
         onToggleSound={handleToggleSound}
       />
 
-      <main className="relative z-10">
-        {viewMode === 'stream' ? (
-          <div className="pt-16">
-            <CaseHighlightsSection
-              onOpenInquiry={(data) => handleOpenInquiry(data)}
-              onTriggerPortal={triggerPortal}
-              onSelectShader={setShaderPreset}
-              forceStreamLayout={true}
-            />
-          </div>
-        ) : (
-          <>
-            <HeroSection
-              onOpenInquiry={() => handleOpenInquiry()}
-              onTriggerPortal={triggerPortal}
-              onSelectShader={setShaderPreset}
-            />
-            <CaseHighlightsSection
-              onOpenInquiry={(data) => handleOpenInquiry(data)}
-              onTriggerPortal={triggerPortal}
-              onSelectShader={setShaderPreset}
-            />
-            <ServicesSection onInquireService={handleInquireService} />
-            <ProcessSection />
-            <ScopeEstimatorSection onLockEstimate={(data) => handleOpenInquiry(data)} />
-          </>
-        )}
-      </main>
+      {/* Real-Time Scroll-Velocity 3D Skew & Foreground Section Transitions */}
+      <VelocitySkewWrapper>
+        <main className="relative z-10">
+          {viewMode === 'stream' ? (
+            <div className="pt-16">
+              <CaseHighlightsSection
+                onOpenInquiry={(data) => handleOpenInquiry(data)}
+                onTriggerPortal={triggerPortal}
+                onSelectShader={setShaderPreset}
+                forceStreamLayout={true}
+              />
+            </div>
+          ) : (
+            <>
+              <HeroSection
+                onOpenInquiry={() => handleOpenInquiry()}
+                onTriggerPortal={triggerPortal}
+                onSelectShader={setShaderPreset}
+              />
+
+              <ScrollKineticRibbon
+                topText="SELECTED PORTALS // 3D Z-TUNNEL WORK STREAM //"
+                bottomText="SCROLL DOWN TO FLY THROUGH INTERACTIVE CASE STUDIES //"
+                accent="#C8FF32"
+              />
+
+              <CaseHighlightsSection
+                onOpenInquiry={(data) => handleOpenInquiry(data)}
+                onTriggerPortal={triggerPortal}
+                onSelectShader={setShaderPreset}
+              />
+
+              <ScrollKineticRibbon
+                topText="CAPABILITIES // FULL-STACK & WEBGL ARCHITECTURE //"
+                bottomText="DESIGN SYSTEMS · EDGE APPS · CUSTOM GLSL SHADERS //"
+                accent="#6366F1"
+              />
+
+              <ScrollSectionPortal
+                sectionNumber="02"
+                sectionTag="CAPABILITIES MATRIX"
+                accent="#C8FF32"
+              >
+                <ServicesSection onInquireService={handleInquireService} />
+              </ScrollSectionPortal>
+
+              <ScrollKineticRibbon
+                topText="ENGINEERING CADENCE // ZERO HANDOFF FRICTION //"
+                bottomText="DISCOVERY · ARCHITECTURE · CRAFT & MOTION · LAUNCH //"
+                accent="#00EBFF"
+              />
+
+              <ScrollSectionPortal
+                sectionNumber="03"
+                sectionTag="EXECUTION VELOCITY"
+                accent="#6366F1"
+              >
+                <ProcessSection />
+              </ScrollSectionPortal>
+
+              <ScrollSectionPortal
+                sectionNumber="04"
+                sectionTag="INVESTMENT TELEMETRY"
+                accent="#C8FF32"
+              >
+                <ScopeEstimatorSection onLockEstimate={(data) => handleOpenInquiry(data)} />
+              </ScrollSectionPortal>
+            </>
+          )}
+        </main>
+      </VelocitySkewWrapper>
 
       <div className="relative z-10">
         <Footer onOpenInquiry={() => handleOpenInquiry()} />

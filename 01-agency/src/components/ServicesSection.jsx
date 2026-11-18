@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Minus, ArrowUpRight } from 'lucide-react';
+import ScrambleText from './ScrambleText';
+import soundEngine from '../utils/soundEngine';
 
 const SERVICES = [
   {
@@ -69,16 +71,18 @@ export default function ServicesSection({ onInquireService }) {
   const [openId, setOpenId] = useState('brand-systems');
 
   const toggle = (id) => {
+    soundEngine.playClick();
     setOpenId((prev) => (prev === id ? null : id));
   };
 
   return (
-    <section id="services" className="relative py-24 sm:py-32 px-5 sm:px-8 max-w-7xl mx-auto">
+    <section id="services" className="relative py-20 sm:py-28 px-5 sm:px-8 max-w-7xl mx-auto">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.6 }}
+        initial={{ opacity: 0, y: 36, rotateX: 16 }}
+        whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+        viewport={{ once: false, amount: 0.25 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+        style={{ transformPerspective: 1200 }}
         className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14"
       >
         <div>
@@ -86,7 +90,7 @@ export default function ServicesSection({ onInquireService }) {
             // Capabilities
           </span>
           <h2 className="font-display font-bold text-3xl sm:text-5xl tracking-tight text-ivory">
-            Precision craft across
+            <ScrambleText text="Precision craft across" scrambleOnMount={false} />
             <br />
             the modern web stack.
           </h2>
@@ -97,17 +101,37 @@ export default function ServicesSection({ onInquireService }) {
         </p>
       </motion.div>
 
-      <div className="border-t border-ivory/10">
-        {SERVICES.map((service) => {
+      <div className="border-t border-ivory/10" style={{ perspective: '1400px' }}>
+        {SERVICES.map((service, idx) => {
           const isOpen = openId === service.id;
           return (
-            <div
+            <motion.div
               key={service.id}
-              className="border-b border-ivory/10 transition-colors"
+              initial={{
+                opacity: 0,
+                x: idx % 2 === 0 ? -50 : 50,
+                rotateX: 16,
+                scale: 0.96,
+              }}
+              whileInView={{
+                opacity: 1,
+                x: 0,
+                rotateX: 0,
+                scale: 1,
+              }}
+              viewport={{ once: false, amount: 0.2 }}
+              transition={{
+                duration: 0.55,
+                delay: idx * 0.06,
+                ease: [0.22, 1, 0.36, 1],
+              }}
+              className="border-b border-ivory/10 transition-colors will-change-transform"
             >
               <button
                 type="button"
+                data-cursor={`CAPABILITY ${service.number}`}
                 onClick={() => toggle(service.id)}
+                onMouseEnter={() => soundEngine.playHover()}
                 aria-expanded={isOpen}
                 className="w-full py-7 sm:py-8 flex items-center justify-between gap-6 text-left group focus:outline-none"
               >
@@ -125,7 +149,7 @@ export default function ServicesSection({ onInquireService }) {
                         isOpen ? 'text-ivory' : 'text-ivory/80 group-hover:text-ivory'
                       }`}
                     >
-                      {service.title}
+                      <ScrambleText text={service.title} scrambleOnMount={false} />
                     </h3>
                     <p className="text-sm text-ivory/55 mt-1 hidden sm:block">
                       {service.tagline}
@@ -136,7 +160,7 @@ export default function ServicesSection({ onInquireService }) {
                 <div
                   className={`w-10 h-10 rounded-full border flex items-center justify-center shrink-0 transition-all ${
                     isOpen
-                      ? 'bg-lime border-lime text-obsidian'
+                      ? 'bg-lime border-lime text-obsidian shadow-[0_0_20px_rgba(200,255,50,0.3)]'
                       : 'bg-surface border-ivory/15 text-ivory/75 group-hover:border-lime/50 group-hover:text-lime'
                   }`}
                 >
@@ -164,6 +188,7 @@ export default function ServicesSection({ onInquireService }) {
                           </span>
                           <button
                             type="button"
+                            data-cursor="SCOPE CAPABILITY"
                             onClick={() => onInquireService(service.title)}
                             className="inline-flex items-center gap-1.5 text-xs font-display font-semibold uppercase tracking-wider text-lime hover:text-ivory transition-colors"
                           >
@@ -192,7 +217,7 @@ export default function ServicesSection({ onInquireService }) {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </motion.div>
           );
         })}
       </div>

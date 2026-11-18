@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Sparkles, Terminal, Zap, Compass } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { ArrowRight, Sparkles, Terminal, Zap, Compass, ChevronsDown } from 'lucide-react';
 import ScrambleText from './ScrambleText';
 import soundEngine from '../utils/soundEngine';
 
@@ -12,7 +12,7 @@ const HEADLINE_LINES = [
 
 const MARQUEE_ITEMS = [
   'WEBGL & GLSL SHADERS',
-  'ACTIVE PORTAL TRANSITIONS',
+  'SCROLL-DRIVEN 3D PORTALS',
   'FULL-STACK EDGE APPS',
   'KINETIC DESIGN SYSTEMS',
   '60FPS INTERACTION ARCHITECTURE',
@@ -22,8 +22,31 @@ const MARQUEE_ITEMS = [
 ];
 
 export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectShader }) {
+  const sectionRef = useRef(null);
   const [cardTilt, setCardTilt] = useState({ x: 0, y: 0 });
   const [activeNode, setActiveNode] = useState(1);
+
+  // Foreground Scroll Choreography for Hero
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start'],
+  });
+
+  const smoothScroll = useSpring(scrollYProgress, { damping: 32, stiffness: 220 });
+
+  // Left editorial column splits & tilts in 3D as you scroll down
+  const line0X = useTransform(smoothScroll, [0, 1], [0, -110]);
+  const line1X = useTransform(smoothScroll, [0, 1], [0, 95]);
+  const line2X = useTransform(smoothScroll, [0, 1], [0, -65]);
+  const leftOpacity = useTransform(smoothScroll, [0, 0.75], [1, 0.12]);
+  const leftRotateX = useTransform(smoothScroll, [0, 1], [0, 24]);
+  const leftScale = useTransform(smoothScroll, [0, 1], [1, 0.88]);
+
+  // Right 3D Console zooms forward & rotates in 3D space on scroll
+  const consoleY = useTransform(smoothScroll, [0, 1], [0, -135]);
+  const consoleScale = useTransform(smoothScroll, [0, 0.6, 1], [1, 1.12, 0.9]);
+  const consoleRotateY = useTransform(smoothScroll, [0, 1], [0, -24]);
+  const consoleRotateX = useTransform(smoothScroll, [0, 1], [0, 16]);
 
   const jumpWithPortal = (selector, label, shader = 1) => {
     soundEngine.playTransition();
@@ -48,9 +71,13 @@ export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectSh
     setCardTilt({ x: -ny * 12, y: nx * 14 });
   };
 
+  const lineTransforms = [line0X, line1X, line2X];
+
   return (
     <section
       id="top"
+      ref={sectionRef}
+      style={{ perspective: '1600px' }}
       className="relative min-h-screen flex flex-col justify-between pt-28 sm:pt-36 pb-0 overflow-hidden"
     >
       {/* Subtle Grid Overlay */}
@@ -58,8 +85,16 @@ export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectSh
 
       <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 w-full my-auto py-10 sm:py-16">
         <div className="grid lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-          {/* Left Editorial Column */}
-          <div className="lg:col-span-7">
+          {/* Left Editorial Column with Scroll-Scrubbed 3D Split */}
+          <motion.div
+            style={{
+              opacity: leftOpacity,
+              rotateX: leftRotateX,
+              scale: leftScale,
+              transformStyle: 'preserve-3d',
+            }}
+            className="lg:col-span-7 will-change-transform"
+          >
             {/* Live Availability & Shader Status Badge */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
@@ -72,14 +107,18 @@ export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectSh
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-lime" />
               </span>
               <span className="text-[11px] font-mono uppercase tracking-[0.18em] text-ivory/90">
-                <ScrambleText text="VESPERA LAB // WEBGL2 + GLSL PIPELINE ACTIVE" duration={700} />
+                <ScrambleText text="VESPERA LAB // SCROLL-DRIVEN 3D PORTALS ACTIVE" duration={700} />
               </span>
             </motion.div>
 
-            {/* Staggered Kinetic Headline */}
+            {/* Staggered Kinetic Headline with Differential Horizontal Scroll Split */}
             <h1 className="font-display font-bold text-4xl sm:text-6xl lg:text-[68px] leading-[1.03] tracking-[-0.03em] text-ivory mb-7">
               {HEADLINE_LINES.map((line, index) => (
-                <span key={line} className="block overflow-hidden">
+                <motion.span
+                  key={line}
+                  style={{ x: lineTransforms[index] }}
+                  className="block overflow-hidden will-change-transform"
+                >
                   <motion.span
                     initial={{ y: '100%', opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
@@ -101,7 +140,7 @@ export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectSh
                       line
                     )}
                   </motion.span>
-                </span>
+                </motion.span>
               ))}
             </h1>
 
@@ -112,8 +151,8 @@ export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectSh
               className="text-base sm:text-lg text-ivory/75 max-w-xl leading-relaxed mb-9"
             >
               Vespera Digital is an interactive creative technology &amp; product engineering
-              studio. We fuse custom GLSL shaders, choreographed portal transitions, and
-              sub-second edge architecture into unforgettable web experiences.
+              studio. Scroll down to fly through our 3D project tunnel—every card, section, and
+              shader morphs dynamically with your scroll velocity.
             </motion.p>
 
             {/* CTAs */}
@@ -131,7 +170,7 @@ export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectSh
                 className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-lime text-obsidian font-display font-semibold text-sm sm:text-base hover:bg-ivory transition-all shadow-[0_0_32px_rgba(200,255,50,0.28)]"
               >
                 <Compass className="w-4 h-4" />
-                <span>Explore 3D Work Stream</span>
+                <span>Enter 3D Scroll Stream</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
@@ -148,34 +187,39 @@ export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectSh
                 Start a Project
               </button>
             </motion.div>
-          </div>
+          </motion.div>
 
-          {/* Right 3D Interactive Shader & Runtime Console Card */}
+          {/* Right 3D Interactive Shader & Runtime Console Card with Scroll-Driven 3D Zoom */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              rotateX: cardTilt.x,
-              rotateY: cardTilt.y,
+            style={{
+              y: consoleY,
+              scale: consoleScale,
+              rotateY: consoleRotateY,
+              rotateX: consoleRotateX,
+              transformStyle: 'preserve-3d',
             }}
-            transition={{ duration: 0.35, ease: 'easeOut' }}
             onMouseMove={handleMouseMove}
             onMouseLeave={() => setCardTilt({ x: 0, y: 0 })}
-            style={{ transformStyle: 'preserve-3d', perspective: '1200px' }}
-            className="lg:col-span-5"
+            className="lg:col-span-5 will-change-transform"
           >
-            <div className="relative rounded-2xl bg-surface/85 backdrop-blur-xl border border-ivory/15 p-6 shadow-[0_25px_70px_rgba(0,0,0,0.65)] overflow-hidden">
+            <motion.div
+              animate={{
+                rotateX: cardTilt.x,
+                rotateY: cardTilt.y,
+              }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="relative rounded-2xl bg-surface/85 backdrop-blur-xl border border-ivory/15 p-6 shadow-[0_25px_70px_rgba(0,0,0,0.65)] overflow-hidden"
+            >
               <div className="absolute top-0 right-0 w-44 h-44 bg-indigoGlow/20 blur-3xl pointer-events-none" />
               <div className="flex items-center justify-between border-b border-ivory/10 pb-4 mb-5">
                 <div className="flex items-center gap-2">
                   <Terminal className="w-4 h-4 text-lime" />
                   <span className="text-xs font-mono uppercase tracking-wider text-ivory/70">
-                    vespera.glsl.v4.8
+                    vespera.scroll.3d
                   </span>
                 </div>
                 <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-lime/15 text-lime border border-lime/30">
-                  60FPS SHADER LOCK
+                  SCROLL INERTIA ACTIVE
                 </span>
               </div>
 
@@ -210,7 +254,6 @@ export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectSh
                     transition={{ duration: 1.8, delay: 0.5 }}
                   />
 
-                  {/* Interactive clickable shader preset nodes */}
                   <g
                     className="cursor-pointer"
                     onClick={() => {
@@ -279,7 +322,7 @@ export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectSh
                   </g>
                 </svg>
                 <div className="text-[10px] font-mono text-ivory/45 text-center mt-1">
-                  [ CLICK NODES ABOVE TO MORPH LIVE WEBGL SHADER ]
+                  [ SCROLL DOWN TO FLY THROUGH 3D PORTALS ]
                 </div>
               </div>
 
@@ -295,7 +338,7 @@ export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectSh
                 <div className="rounded-xl bg-obsidian/70 border border-ivory/10 p-3">
                   <div className="flex items-center gap-1.5 text-ivory/50 text-[11px] mb-1">
                     <Sparkles className="w-3 h-3 text-indigoGlow" />
-                    <span>Shader FPS</span>
+                    <span>Scroll 3D</span>
                   </div>
                   <div className="font-display font-bold text-lg text-ivory">60 FPS</div>
                 </div>
@@ -304,9 +347,20 @@ export default function HeroSection({ onOpenInquiry, onTriggerPortal, onSelectSh
                   <div className="font-display font-bold text-lg text-lime">99.99%</div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
+
+        {/* Scroll Prompt Indicator */}
+        <motion.div
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          className="mt-10 flex items-center justify-center gap-2 text-[11px] font-mono uppercase tracking-[0.26em] text-lime/80"
+        >
+          <ChevronsDown className="w-4 h-4" />
+          <span>SCROLL TO ENGAGE 3D PORTAL FLIGHT</span>
+          <ChevronsDown className="w-4 h-4" />
+        </motion.div>
       </div>
 
       {/* Kinetic Capability Marquee Strip */}

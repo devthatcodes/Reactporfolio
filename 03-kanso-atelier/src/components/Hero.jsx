@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { ArrowDown, Sun } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import { ArrowDown, Sun, Compass } from 'lucide-react';
 import ScrambleText from './ScrambleText';
 import { soundEngine } from '../utils/soundEngine';
 
@@ -18,7 +18,21 @@ const fadeUp = {
 };
 
 export default function Hero({ onNavigatePortal }) {
+  const sectionRef = useRef(null);
   const [mouseNorm, setMouseNorm] = useState({ x: 0.65, y: 0.28 });
+
+  // Multi-layer foreground parallax driven by scroll
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start start', 'end start'],
+  });
+
+  const titleParallaxY = useTransform(scrollYProgress, [0, 1], [0, -110]);
+  const copyParallaxY = useTransform(scrollYProgress, [0, 1], [0, -55]);
+  const monolithParallaxY = useTransform(scrollYProgress, [0, 1], [0, 85]);
+  const monolithRotateY = useTransform(scrollYProgress, [0, 1], [0, -14]);
+  const monolithRotateX = useTransform(scrollYProgress, [0, 1], [0, 10]);
+  const plaqueParallaxY = useTransform(scrollYProgress, [0, 1], [0, -145]);
 
   const handleMonolithMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -33,17 +47,19 @@ export default function Hero({ onNavigatePortal }) {
 
   return (
     <section
+      ref={sectionRef}
       id="top"
       className="relative z-10 min-h-screen pt-28 pb-16 md:pt-36 md:pb-24 flex flex-col justify-between overflow-hidden bg-architectural-grid"
     >
       <div className="max-w-[1360px] w-full mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center my-auto">
-        {/* Left Column: Editorial & Kinetic Typography */}
+        {/* Left Column: Editorial & Kinetic Typography with Differential Scroll Parallax */}
         <div className="lg:col-span-7 space-y-8 relative z-10">
           <motion.div
             variants={fadeUp}
             initial="hidden"
             animate="visible"
             custom={0.05}
+            style={{ y: copyParallaxY }}
             className="flex items-center gap-4 text-xs uppercase tracking-[0.24em] text-taupe"
           >
             <span className="inline-block w-8 h-[1px] bg-bronze" />
@@ -53,94 +69,117 @@ export default function Hero({ onNavigatePortal }) {
             />
           </motion.div>
 
-          <motion.h1
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={0.18}
-            className="font-serif text-5xl sm:text-6xl md:text-7xl xl:text-[5.25rem] font-normal leading-[1.03] tracking-[-0.015em] text-charcoal"
-          >
-            Quiet spaces shaped by{' '}
-            <span className="italic text-bronze font-normal">light</span>, timber, and stone.
-          </motion.h1>
-
-          <motion.p
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={0.32}
-            className="max-w-xl text-sm sm:text-base leading-relaxed text-taupe font-light"
-          >
-            Operating between Kyoto and Copenhagen, Kanso Atelier crafts residences, cultural
-            pavilions, and sanctuaries rooted in material honesty, quiet proportion, and the
-            choreographed passage of natural daylight.
-          </motion.p>
-
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            custom={0.44}
-            className="pt-2 flex flex-wrap items-center gap-8"
-          >
-            <a
-              href="#works"
-              data-cursor="ENTER ARCHIVE"
-              onMouseEnter={() => soundEngine.playHoverTick(1.0)}
-              onClick={(e) => {
-                e.preventDefault();
-                soundEngine.playPortalSweep();
-                if (onNavigatePortal) {
-                  onNavigatePortal({
-                    index: '02',
-                    label: 'Works',
-                    href: '#works',
-                    sectionTitle: 'MONOGRAPH ARCHIVE',
-                  });
-                }
-              }}
-              className="group inline-flex items-center gap-3 px-7 py-3.5 bg-charcoal text-alabaster text-xs uppercase tracking-[0.2em] hover:bg-bronze transition-colors duration-300"
+          <motion.div style={{ y: titleParallaxY }} className="will-change-transform">
+            <motion.h1
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={0.18}
+              className="font-serif text-5xl sm:text-6xl md:text-7xl xl:text-[5.25rem] font-normal leading-[1.03] tracking-[-0.015em] text-charcoal"
             >
-              <span>Selected Monographs</span>
-              <span className="text-alabaster/60 group-hover:translate-x-1 transition-transform">
-                →
-              </span>
-            </a>
+              Quiet spaces shaped by{' '}
+              <span className="italic text-bronze font-normal">light</span>, timber, and stone.
+            </motion.h1>
+          </motion.div>
 
-            <a
-              href="#philosophy"
-              data-cursor="STUDIO ETHOS"
-              onMouseEnter={() => soundEngine.playHoverTick(1.1)}
-              onClick={(e) => {
-                e.preventDefault();
-                soundEngine.playPortalSweep();
-                if (onNavigatePortal) {
-                  onNavigatePortal({
-                    index: '03',
-                    label: 'Philosophy',
-                    href: '#philosophy',
-                    sectionTitle: 'SPATIAL ETHOS',
-                  });
-                }
-              }}
-              className="text-xs uppercase tracking-[0.2em] text-charcoal/80 hover:text-bronze border-b border-charcoal/20 hover:border-bronze pb-1 transition-colors"
+          <motion.div style={{ y: copyParallaxY }} className="space-y-8 will-change-transform">
+            <motion.p
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={0.32}
+              className="max-w-xl text-sm sm:text-base leading-relaxed text-taupe font-light"
             >
-              Spatial Philosophy
-            </a>
+              Operating between Kyoto and Copenhagen, Kanso Atelier crafts residences, cultural
+              pavilions, and sanctuaries rooted in material honesty, quiet proportion, and the
+              choreographed passage of natural daylight.
+            </motion.p>
+
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              custom={0.44}
+              className="pt-2 flex flex-wrap items-center gap-8"
+            >
+              <a
+                href="#works"
+                data-cursor="ENTER ARCHIVE"
+                onMouseEnter={() => soundEngine.playHoverTick(1.0)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  soundEngine.playPortalSweep();
+                  if (onNavigatePortal) {
+                    onNavigatePortal({
+                      index: '02',
+                      label: 'Works',
+                      href: '#works',
+                      sectionTitle: 'MONOGRAPH ARCHIVE',
+                    });
+                  }
+                }}
+                className="group inline-flex items-center gap-3 px-7 py-3.5 bg-charcoal text-alabaster text-xs uppercase tracking-[0.2em] hover:bg-bronze transition-colors duration-300"
+              >
+                <span>Selected Monographs</span>
+                <span className="text-alabaster/60 group-hover:translate-x-1 transition-transform">
+                  →
+                </span>
+              </a>
+
+              <a
+                href="#philosophy"
+                data-cursor="STUDIO ETHOS"
+                onMouseEnter={() => soundEngine.playHoverTick(1.1)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  soundEngine.playPortalSweep();
+                  if (onNavigatePortal) {
+                    onNavigatePortal({
+                      index: '03',
+                      label: 'Philosophy',
+                      href: '#philosophy',
+                      sectionTitle: 'SPATIAL ETHOS',
+                    });
+                  }
+                }}
+                className="text-xs uppercase tracking-[0.2em] text-charcoal/80 hover:text-bronze border-b border-charcoal/20 hover:border-bronze pb-1 transition-colors"
+              >
+                Spatial Philosophy
+              </a>
+            </motion.div>
           </motion.div>
         </div>
 
-        {/* Right Column: Interactive Solar Monolith & Caustic Raytracer Study */}
+        {/* Right Column: Interactive Solar Monolith & Caustic Raytracer Study with 3D Scroll Pitch */}
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-          className="lg:col-span-5 relative"
+          style={{
+            y: monolithParallaxY,
+            rotateY: monolithRotateY,
+            rotateX: monolithRotateX,
+            transformPerspective: 1400,
+            transformStyle: 'preserve-3d',
+          }}
+          className="lg:col-span-5 relative will-change-transform"
         >
+          {/* Floating Foreground Parallax Telemetry Plaque */}
+          <motion.div
+            style={{ y: plaqueParallaxY }}
+            className="hidden sm:flex items-center gap-3 absolute -left-8 bottom-12 z-30 px-4 py-2.5 bg-charcoal text-alabaster border border-bronze/50 shadow-xl"
+          >
+            <Compass className="w-4 h-4 text-bronze animate-spin [animation-duration:18s]" />
+            <div className="text-[9px] font-mono uppercase tracking-[0.2em]">
+              <div className="text-bronze">SOLAR DATUM // 1:100</div>
+              <div>SHADOW VECTOR {shadowShift > 0 ? `+${shadowShift}` : shadowShift}MM</div>
+            </div>
+          </motion.div>
+
           <div
             onMouseMove={handleMonolithMove}
             data-cursor="STEER SOLAR AXIS"
-            className="relative bg-stone/90 backdrop-blur-sm border border-charcoal/15 p-6 sm:p-10 aspect-[4/5] flex items-center justify-center overflow-hidden cursor-crosshair"
+            className="relative bg-stone/90 backdrop-blur-sm border border-charcoal/15 p-6 sm:p-10 aspect-[4/5] flex items-center justify-center overflow-hidden cursor-crosshair shadow-lg"
           >
             {/* Dynamic cursor-steered warm sunbeam gradient */}
             <div
@@ -345,7 +384,7 @@ export default function Hero({ onNavigatePortal }) {
           <span className="text-bronze">·</span>
           <span>Copenhagen</span>
           <span className="hidden sm:inline text-charcoal/30">|</span>
-          <span className="hidden sm:inline text-bronze">GLSL CAUSTIC FIELD ACTIVE</span>
+          <span className="hidden sm:inline text-bronze">SCROLL TO SCRUB 3D ARCHITECTURE</span>
         </div>
 
         <a

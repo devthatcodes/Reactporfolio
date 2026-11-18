@@ -1,11 +1,12 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useRef } from 'react';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 
 const PILLARS = [
   {
     number: '01',
     title: 'Material Honesty',
     subtitle: 'Tactile permanence',
+    datum: 'SPEC // HINOKI & RAMMED EARTH',
     description:
       'We build with unvarnished hinoki, Danish clay brick, rammed earth, and honed granite—materials that record time gracefully and invite touch without synthetic ornament.',
     icon: (
@@ -21,6 +22,7 @@ const PILLARS = [
     number: '02',
     title: 'Natural Light',
     subtitle: 'Choreographed shadow',
+    datum: 'SPEC // SAWTOOTH CLERESTORY',
     description:
       'Daylight is our primary structural element. Through deep eaves, sawtooth clerestories, and calibrated apertures, we shape rooms that shift quietly from dawn to dusk.',
     icon: (
@@ -36,6 +38,7 @@ const PILLARS = [
     number: '03',
     title: 'Spatial Stillness',
     subtitle: 'Measured proportion',
+    datum: 'SPEC // MA NEGATIVE THRESHOLD',
     description:
       'Guided by Japanese ma (negative space) and Nordic restraint, every threshold is stripped of excess so human presence, silence, and landscape come into focus.',
     icon: (
@@ -48,18 +51,102 @@ const PILLARS = [
   },
 ];
 
+function PillarParallaxCard({ pillar, index, scrollYProgress }) {
+  // Differential column speeds & staggered 3D flip-in
+  const yStart = 90 + index * 45;
+  const yEnd = -35 - index * 25;
+
+  const y = useTransform(scrollYProgress, [0, 0.48, 1], [yStart, 0, yEnd]);
+  const rotateX = useTransform(scrollYProgress, [0.05, 0.42, 0.78, 1], [28, 0, 0, -16]);
+  const rotateY = useTransform(
+    scrollYProgress,
+    [0.05, 0.42, 0.78, 1],
+    [(index - 1) * -18, 0, 0, (index - 1) * 12]
+  );
+  const scale = useTransform(scrollYProgress, [0.05, 0.42, 0.8, 1], [0.88, 1, 1, 0.93]);
+  const opacity = useTransform(scrollYProgress, [0.04, 0.3, 0.85, 0.98], [0, 1, 1, 0.25]);
+
+  return (
+    <motion.article
+      style={{
+        y,
+        rotateX,
+        rotateY,
+        scale,
+        opacity,
+        transformPerspective: 1400,
+        transformStyle: 'preserve-3d',
+      }}
+      className="relative bg-alabaster/95 border border-charcoal/15 p-8 sm:p-10 flex flex-col justify-between gap-8 shadow-[0_22px_50px_rgba(28,27,25,0.09)] hover:border-bronze/60 transition-colors will-change-transform"
+    >
+      {/* Top CAD Datum Header */}
+      <div className="flex items-center justify-between text-[9px] font-mono uppercase tracking-[0.22em] text-taupe border-b border-charcoal/10 pb-3">
+        <span className="text-bronze">PILLAR // {pillar.number}</span>
+        <span>{pillar.datum}</span>
+      </div>
+
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h3 className="font-serif text-2xl sm:text-3xl text-charcoal">
+            {pillar.title}
+          </h3>
+          <p className="text-[11px] uppercase tracking-[0.2em] text-bronze font-mono mt-1.5">
+            {pillar.subtitle}
+          </p>
+        </div>
+        <div className="opacity-90 shrink-0 p-2 bg-stone border border-charcoal/10">
+          {pillar.icon}
+        </div>
+      </div>
+
+      <p className="text-sm leading-relaxed text-taupe font-light">
+        {pillar.description}
+      </p>
+
+      {/* Bottom Corner Structural Index */}
+      <div className="pt-3 border-t border-charcoal/10 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.2em] text-taupe">
+        <span>TOLERANCE ±0.5MM</span>
+        <span className="text-charcoal">AXIS 0{index + 1}</span>
+      </div>
+    </motion.article>
+  );
+}
+
 export default function Philosophy() {
+  const studioRef = useRef(null);
+  const pillarsRef = useRef(null);
+
+  const { scrollYProgress: rawStudioProgress } = useScroll({
+    target: studioRef,
+    offset: ['start end', 'end start'],
+  });
+  const studioProgress = useSpring(rawStudioProgress, { stiffness: 160, damping: 28 });
+
+  const leftColY = useTransform(studioProgress, [0, 0.5, 1], [65, 0, -55]);
+  const rightCol1Y = useTransform(studioProgress, [0, 0.5, 1], [110, 0, -35]);
+  const rightCol2Y = useTransform(studioProgress, [0, 0.5, 1], [155, 0, -75]);
+  const studioRotateX = useTransform(studioProgress, [0, 0.35, 0.75, 1], [14, 0, 0, -12]);
+
+  const { scrollYProgress: rawPillarsProgress } = useScroll({
+    target: pillarsRef,
+    offset: ['start end', 'end start'],
+  });
+  const pillarsProgress = useSpring(rawPillarsProgress, { stiffness: 160, damping: 28 });
+
+  const headerParallaxY = useTransform(pillarsProgress, [0, 0.5, 1], [50, 0, -45]);
+
   return (
     <>
-      {/* 01 Studio Overview Strip */}
-      <section id="studio" className="relative z-10 py-20 md:py-28 border-t border-charcoal/10 bg-alabaster/80 backdrop-blur-[2px]">
-        <div className="max-w-[1360px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+      {/* 01 Studio Overview Strip with Differential Column Scroll Parallax */}
+      <section
+        ref={studioRef}
+        id="studio"
+        className="relative z-10 py-20 md:py-28 border-t border-charcoal/10 bg-alabaster/85 backdrop-blur-[2px] overflow-hidden"
+      >
+        <div className="max-w-[1360px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start [perspective:1400px]">
           <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.7 }}
-            className="lg:col-span-4"
+            style={{ y: leftColY, rotateX: studioRotateX }}
+            className="lg:col-span-4 will-change-transform"
           >
             <div className="flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-taupe mb-4">
               <span className="font-mono text-bronze">01</span>
@@ -68,38 +155,55 @@ export default function Philosophy() {
             <h2 className="font-serif text-3xl md:text-4xl text-charcoal leading-tight">
               Two latitudes, one quiet discipline.
             </h2>
+            <div className="mt-6 inline-flex items-center gap-3 px-3.5 py-1.5 bg-stone border border-charcoal/15 text-[10px] font-mono uppercase tracking-[0.2em] text-bronze">
+              <span>KYOTO 35.01°N</span>
+              <span>↔</span>
+              <span>COPENHAGEN 55.67°N</span>
+            </div>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 18 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.7, delay: 0.12 }}
-            className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-8 text-sm leading-relaxed text-taupe font-light"
-          >
-            <p>
-              Founded in 2018 by Haruki Sato and Astrid Lindholm, Kanso Atelier bridges the
-              timber joinery traditions of Kyoto with the tactile masonry and daylight rigor of
-              Copenhagen.
-            </p>
-            <p>
-              We take on a deliberate handful of commissions each year—private residences,
-              cultural archives, and intimate sanctuaries—shepherding every project from site
-              topography to custom bronze hardware.
-            </p>
-          </motion.div>
+          <div className="lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-8 text-sm leading-relaxed text-taupe font-light">
+            <motion.div
+              style={{ y: rightCol1Y, rotateX: studioRotateX }}
+              className="p-6 bg-stone/70 border border-charcoal/10 shadow-sm will-change-transform"
+            >
+              <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-bronze mb-2">
+                01.A // TIMBER &amp; MASONRY
+              </div>
+              <p>
+                Founded in 2018 by Haruki Sato and Astrid Lindholm, Kanso Atelier bridges the
+                timber joinery traditions of Kyoto with the tactile masonry and daylight rigor of
+                Copenhagen.
+              </p>
+            </motion.div>
+
+            <motion.div
+              style={{ y: rightCol2Y, rotateX: studioRotateX }}
+              className="p-6 bg-stone/70 border border-charcoal/10 shadow-sm will-change-transform"
+            >
+              <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-bronze mb-2">
+                01.B // BESPOKE COMMISSIONS
+              </div>
+              <p>
+                We take on a deliberate handful of commissions each year—private residences,
+                cultural archives, and intimate sanctuaries—shepherding every project from site
+                topography to custom bronze hardware.
+              </p>
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* 03 Philosophy / Ethos Strip */}
-      <section id="philosophy" className="relative z-10 py-20 md:py-28 bg-stone/85 backdrop-blur-[2px] border-y border-charcoal/10">
+      {/* 03 Philosophy / Ethos Strip with 3D Card Flip-In & Column Parallax */}
+      <section
+        ref={pillarsRef}
+        id="philosophy"
+        className="relative z-10 py-24 md:py-32 bg-stone/85 backdrop-blur-[2px] border-y border-charcoal/10 overflow-hidden"
+      >
         <div className="max-w-[1360px] mx-auto px-6 md:px-12">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={{ duration: 0.7 }}
-            className="flex flex-col md:flex-row md:items-end justify-between pb-12 border-b border-charcoal/10 gap-6"
+            style={{ y: headerParallaxY }}
+            className="flex flex-col md:flex-row md:items-end justify-between pb-12 border-b border-charcoal/10 gap-6 will-change-transform"
           >
             <div>
               <div className="flex items-center gap-3 text-xs uppercase tracking-[0.22em] text-taupe mb-3">
@@ -116,35 +220,14 @@ export default function Philosophy() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-charcoal/10">
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 [perspective:1600px]">
             {PILLARS.map((pillar, idx) => (
-              <motion.article
+              <PillarParallaxCard
                 key={pillar.number}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.7, delay: idx * 0.12 }}
-                className="pt-10 pb-8 md:py-12 md:px-10 first:md:pl-0 last:md:pr-0 flex flex-col justify-between gap-8"
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <span className="text-xs font-mono text-bronze tracking-[0.2em]">
-                      {pillar.number}
-                    </span>
-                    <h3 className="font-serif text-2xl sm:text-3xl text-charcoal mt-2">
-                      {pillar.title}
-                    </h3>
-                    <p className="text-[11px] uppercase tracking-[0.2em] text-taupe mt-1">
-                      {pillar.subtitle}
-                    </p>
-                  </div>
-                  <div className="opacity-85">{pillar.icon}</div>
-                </div>
-
-                <p className="text-sm leading-relaxed text-taupe font-light">
-                  {pillar.description}
-                </p>
-              </motion.article>
+                pillar={pillar}
+                index={idx}
+                scrollYProgress={pillarsProgress}
+              />
             ))}
           </div>
         </div>

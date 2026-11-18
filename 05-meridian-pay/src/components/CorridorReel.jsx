@@ -1,17 +1,23 @@
 import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useSpring,
+  useTransform,
+  useMotionValueEvent,
+} from 'framer-motion';
 import {
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
-  Zap,
   Globe2,
-  ShieldCheck,
-  Cpu,
   X,
   Play,
   CheckCircle2,
   Activity,
+  Sparkles,
+  Layers,
 } from 'lucide-react';
 import ScrambleText from './ScrambleText';
 import { soundEngine } from '../utils/soundEngine';
@@ -139,10 +145,60 @@ export default function CorridorReel({ onTriggerPortal, onShaderPulse }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedCorridor, setSelectedCorridor] = useState(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
-  const [trancheM, setTrancheM] = useState(25); // $25M default simulation tranche
+  const [trancheM, setTrancheM] = useState(25);
   const [simulating, setSimulating] = useState(false);
   const [simCompleted, setSimCompleted] = useState(false);
+  const [scrollDepthPct, setScrollDepthPct] = useState(0);
+
+  const tunnelRef = useRef(null);
   const cardContainerRef = useRef(null);
+
+  // Sticky Scroll-Scrubbed 3D Corridor Tunnel
+  const { scrollYProgress } = useScroll({
+    target: tunnelRef,
+    offset: ['start start', 'end end'],
+  });
+
+  const smoothScroll = useSpring(scrollYProgress, {
+    stiffness: 180,
+    damping: 30,
+    mass: 0.35,
+  });
+
+  // Automatically scrub through the 4 global settlement corridors as the user scrolls down the 280vh tunnel
+  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
+    const pct = Math.max(0, Math.min(100, Math.round(latest * 100)));
+    setScrollDepthPct(pct);
+    const nextIdx = Math.min(
+      CORRIDORS.length - 1,
+      Math.max(0, Math.floor(latest * CORRIDORS.length))
+    );
+    if (nextIdx !== activeIndex) {
+      setActiveIndex(nextIdx);
+      if (onShaderPulse) onShaderPulse();
+    }
+  });
+
+  // Scroll-driven 3D camera transforms for the main corridor portal card
+  const scrollRotateY = useTransform(
+    smoothScroll,
+    [0, 0.25, 0.5, 0.75, 1],
+    [-12, 10, -10, 12, 0]
+  );
+  const scrollRotateX = useTransform(
+    smoothScroll,
+    [0, 0.25, 0.5, 0.75, 1],
+    [10, -6, 8, -8, 0]
+  );
+  const scrollScale = useTransform(
+    smoothScroll,
+    [0, 0.15, 0.5, 0.85, 1],
+    [0.92, 1.02, 0.98, 1.02, 0.95]
+  );
+  const tunnelRingScale = useTransform(smoothScroll, [0, 0.5, 1], [0.85, 1.35, 1.75]);
+  const tunnelRingRotate = useTransform(smoothScroll, [0, 1], [0, 140]);
+  const floatBadgeY1 = useTransform(smoothScroll, [0, 1], [55, -65]);
+  const floatBadgeY2 = useTransform(smoothScroll, [0, 1], [-45, 55]);
 
   const current = CORRIDORS[activeIndex];
 
@@ -150,6 +206,20 @@ export default function CorridorReel({ onTriggerPortal, onShaderPulse }) {
     soundEngine.playClick();
     if (onShaderPulse) onShaderPulse();
     setActiveIndex((prev) => (prev + dir + CORRIDORS.length) % CORRIDORS.length);
+  };
+
+  const jumpToCorridorScroll = (idx) => {
+    soundEngine.playClick();
+    if (onShaderPulse) onShaderPulse();
+    setActiveIndex(idx);
+    if (tunnelRef.current) {
+      const rect = tunnelRef.current.getBoundingClientRect();
+      const tunnelTop = window.scrollY + rect.top;
+      const scrollableDistance = tunnelRef.current.offsetHeight - window.innerHeight;
+      const targetScroll =
+        tunnelTop + scrollableDistance * ((idx + 0.35) / CORRIDORS.length);
+      window.scrollTo({ top: targetScroll, behavior: 'smooth' });
+    }
   };
 
   const openCorridorPortal = (corridor, idx) => {
@@ -199,237 +269,339 @@ export default function CorridorReel({ onTriggerPortal, onShaderPulse }) {
   return (
     <section
       id="corridors"
-      className="relative py-24 lg:py-32 border-b border-white/10 overflow-hidden"
+      ref={tunnelRef}
+      className="relative min-h-[280vh] border-b border-white/10"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Section Header */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-14">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#10B981]/10 border border-[#10B981]/30 text-[11px] font-mono uppercase tracking-widest text-[#10B981] mb-3">
-              <Globe2 className="w-3.5 h-3.5" />
-              <span>02 // INTERACTIVE CORRIDOR CASE REEL</span>
-            </div>
-            <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">
-              <ScrambleText text="Global Liquidity Corridors." />
-            </h2>
-            <p className="text-slate-400 text-sm sm:text-base mt-3 max-w-2xl">
-              Explore Meridian’s live institutional settlement corridors. Tilt and inspect any
-              corridor card or launch its full-screen interactive settlement portal.
-            </p>
-          </div>
+      {/* Sticky 3D Scroll-Scrubbed Viewport Stage */}
+      <div className="sticky top-16 min-h-[calc(100vh-4rem)] flex items-center py-10 lg:py-14 overflow-hidden">
+        {/* Background 3D Scroll-Driven Wireframe Tunnel Rings */}
+        <motion.div
+          style={{ scale: tunnelRingScale, rotateZ: tunnelRingRotate }}
+          className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-20"
+        >
+          <div className="w-[680px] h-[680px] rounded-full border border-dashed border-[#10B981]/50" />
+          <div className="absolute w-[480px] h-[480px] rounded-full border border-cyan-400/40" />
+        </motion.div>
 
-          {/* Reel Navigation Controls */}
-          <div className="flex items-center gap-3 self-start lg:self-auto">
-            <div className="font-mono text-xs text-slate-400 mr-2">
-              CORRIDOR <span className="text-white font-bold">0{activeIndex + 1}</span> / 0
-              {CORRIDORS.length}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+          {/* Section Header + Live Scroll-Scrubbed Progress Bar */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#10B981]/10 border border-[#10B981]/30 text-[11px] font-mono uppercase tracking-widest text-[#10B981] mb-3">
+                <Globe2 className="w-3.5 h-3.5" />
+                <span>02 // SCROLL-SCRUBBED 3D CORRIDOR FLIGHT TUNNEL</span>
+              </div>
+              <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">
+                <ScrambleText text="Global Liquidity Corridors." />
+              </h2>
+              <p className="text-slate-400 text-sm sm:text-base mt-2 max-w-2xl">
+                Scroll down to fly through all 4 live institutional settlement corridors in 3D
+                Z-space, or click any corridor to launch its full-screen interactive portal.
+              </p>
             </div>
-            <button
-              type="button"
-              data-cursor="PREV CORRIDOR"
-              onMouseEnter={() => soundEngine.playHover(0.9)}
-              onClick={() => cycleCorridor(-1)}
-              aria-label="Previous corridor"
-              className="w-11 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 flex items-center justify-center text-white transition-all active:scale-95"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
-              data-cursor="NEXT CORRIDOR"
-              onMouseEnter={() => soundEngine.playHover(1.1)}
-              onClick={() => cycleCorridor(1)}
-              aria-label="Next corridor"
-              className="w-11 h-11 rounded-xl bg-[#10B981]/15 hover:bg-[#10B981]/25 border border-[#10B981]/40 flex items-center justify-center text-[#10B981] transition-all active:scale-95"
-            >
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
 
-        {/* 3D Velocity-Tilted Featured Corridor Showcase + Selector Matrix */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* Left 7 Cols: Interactive 3D Perspective Portal Stage */}
-          <div
-            ref={cardContainerRef}
-            onMouseMove={handleMouseMove}
-            onMouseLeave={() => setTilt({ x: 0, y: 0 })}
-            style={{ perspective: 1200 }}
-            className="lg:col-span-7 flex"
-          >
-            <motion.div
-              key={current.id}
-              initial={{ opacity: 0, rotateY: -8, scale: 0.96 }}
-              animate={{
-                opacity: 1,
-                rotateX: tilt.x,
-                rotateY: tilt.y,
-                scale: 1,
-              }}
-              transition={{ type: 'spring', stiffness: 180, damping: 22 }}
-              onClick={() => openCorridorPortal(current, activeIndex)}
-              data-cursor="LAUNCH CORRIDOR"
-              className="relative w-full rounded-3xl bg-gradient-to-br from-[#0B1325]/95 via-[#070D19]/95 to-[#030712]/95 border border-white/15 hover:border-[#10B981]/60 p-7 sm:p-10 shadow-[0_25px_70px_rgba(0,0,0,0.65)] cursor-pointer overflow-hidden group flex flex-col justify-between min-h-[420px]"
-            >
-              {/* Animated SVG Quantum Corridor Node Mesh Background */}
-              <svg
-                className="absolute inset-0 w-full h-full opacity-25 group-hover:opacity-45 transition-opacity duration-500 pointer-events-none"
-                viewBox="0 0 600 400"
-                fill="none"
+            {/* Scroll Tunnel Telemetry + Reel Navigation Controls */}
+            <div className="flex flex-wrap items-center gap-3 self-start lg:self-auto">
+              <div className="px-3.5 py-2 rounded-xl bg-[#070D19]/90 border border-[#10B981]/40 flex items-center gap-3">
+                <Layers className="w-4 h-4 text-[#10B981]" />
+                <div>
+                  <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+                    3D TUNNEL SCROLL DEPTH
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <div className="w-24 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#10B981] to-cyan-400 transition-all duration-150"
+                        style={{ width: `${scrollDepthPct}%` }}
+                      />
+                    </div>
+                    <span className="font-mono text-xs font-bold text-[#10B981] tabular-nums">
+                      {scrollDepthPct}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="font-mono text-xs text-slate-400 mx-1">
+                CORRIDOR <span className="text-white font-bold">0{activeIndex + 1}</span> / 0
+                {CORRIDORS.length}
+              </div>
+              <button
+                type="button"
+                data-cursor="PREV CORRIDOR"
+                onMouseEnter={() => soundEngine.playHover(0.9)}
+                onClick={() => cycleCorridor(-1)}
+                aria-label="Previous corridor"
+                className="w-11 h-11 rounded-xl bg-white/5 hover:bg-white/10 border border-white/15 flex items-center justify-center text-white transition-all active:scale-95"
               >
-                <defs>
-                  <linearGradient id="corridorArcGrad" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor={current.accent} stopOpacity="0.9" />
-                    <stop offset="100%" stopColor={current.secondary} stopOpacity="0.2" />
-                  </linearGradient>
-                </defs>
-                <circle
-                  cx="460"
-                  cy="190"
-                  r="150"
-                  stroke="url(#corridorArcGrad)"
-                  strokeWidth="1.2"
-                  strokeDasharray="6 6"
-                />
-                <circle
-                  cx="460"
-                  cy="190"
-                  r="95"
-                  stroke={current.accent}
-                  strokeWidth="0.9"
-                  strokeOpacity="0.4"
-                />
-                <path
-                  d="M 40 310 Q 250 90 520 170"
-                  stroke="url(#corridorArcGrad)"
-                  strokeWidth="2.5"
-                />
-                <path
-                  d="M 40 310 Q 280 260 520 170"
-                  stroke={current.secondary}
-                  strokeWidth="1.2"
-                  strokeDasharray="4 4"
-                />
-                <circle cx="40" cy="310" r="6" fill={current.accent} />
-                <circle cx="275" cy="185" r="5" fill={current.secondary} />
-                <circle cx="520" cy="170" r="8" fill={current.accent} />
-              </svg>
-
-              {/* Top Telemetry Bar */}
-              <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="px-2.5 py-1 rounded-md bg-white/10 font-mono text-xs font-bold text-[#10B981]">
-                    {current.index}
-                  </span>
-                  <span className="font-mono text-xs tracking-widest text-slate-400 uppercase">
-                    {current.code}
-                  </span>
-                </div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#10B981]/15 border border-[#10B981]/40 text-xs font-mono text-[#10B981]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
-                  <span>{current.pair}</span>
-                </div>
-              </div>
-
-              {/* Center Title & Description */}
-              <div className="relative z-10 my-8">
-                <div className="text-xs font-mono uppercase tracking-[0.2em] text-cyan-400 mb-2">
-                  {current.subtitle}
-                </div>
-                <h3 className="text-2xl sm:text-4xl font-bold tracking-tight text-white group-hover:text-[#10B981] transition-colors">
-                  <ScrambleText text={current.title} triggerKey={current.id} />
-                </h3>
-                <p className="text-sm sm:text-base text-slate-300 mt-3 max-w-xl leading-relaxed">
-                  {current.summary}
-                </p>
-              </div>
-
-              {/* Bottom Metrics & Launch Portal Button */}
-              <div className="relative z-10 pt-6 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-6">
-                  <div>
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
-                      FINALITY LATENCY
-                    </div>
-                    <div className="font-mono text-lg font-bold text-white">{current.latency}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
-                      CORRIDOR VOLUME
-                    </div>
-                    <div className="font-mono text-lg font-bold text-[#10B981]">
-                      {current.volume}
-                    </div>
-                  </div>
-                  <div className="hidden sm:block">
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
-                      INSTITUTIONAL SPREAD
-                    </div>
-                    <div className="font-mono text-lg font-bold text-cyan-400">
-                      {current.spread}
-                    </div>
-                  </div>
-                </div>
-
-                <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#10B981] text-[#030712] font-mono text-xs font-bold uppercase tracking-wider group-hover:translate-x-1 transition-transform">
-                  <span>Enter Corridor Portal</span>
-                  <ArrowUpRight className="w-4 h-4" />
-                </span>
-              </div>
-            </motion.div>
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                data-cursor="NEXT CORRIDOR"
+                onMouseEnter={() => soundEngine.playHover(1.1)}
+                onClick={() => cycleCorridor(1)}
+                aria-label="Next corridor"
+                className="w-11 h-11 rounded-xl bg-[#10B981]/15 hover:bg-[#10B981]/25 border border-[#10B981]/40 flex items-center justify-center text-[#10B981] transition-all active:scale-95"
+              >
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
-          {/* Right 5 Cols: Interactive Corridor Reel Index Stack */}
-          <div className="lg:col-span-5 flex flex-col justify-between gap-3">
-            {CORRIDORS.map((item, idx) => {
-              const isSelected = idx === activeIndex;
-              return (
-                <div
-                  key={item.id}
-                  onMouseEnter={() => {
-                    soundEngine.playHover(1 + idx * 0.08);
-                    setActiveIndex(idx);
+          {/* 3D Scroll-Scrubbed Featured Corridor Stage + Selector Matrix */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            {/* Left 7 Cols: Interactive 3D Perspective Portal Stage */}
+            <div
+              ref={cardContainerRef}
+              onMouseMove={handleMouseMove}
+              onMouseLeave={() => setTilt({ x: 0, y: 0 })}
+              style={{ perspective: 1300 }}
+              className="lg:col-span-7 flex relative"
+            >
+              {/* Multi-Layer Foreground Parallax Floating Telemetry Badges */}
+              <motion.div
+                style={{ y: floatBadgeY1 }}
+                className="pointer-events-none hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#030712]/90 border border-[#10B981]/50 shadow-[0_10px_30px_rgba(16,185,129,0.25)] backdrop-blur-md absolute -top-4 right-6 z-30"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-[#10B981]" />
+                <span className="font-mono text-[11px] font-bold text-white">
+                  Z-PLANE // {current.code}
+                </span>
+              </motion.div>
+
+              <motion.div
+                style={{ y: floatBadgeY2 }}
+                className="pointer-events-none hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#030712]/90 border border-cyan-400/40 shadow-[0_10px_30px_rgba(6,182,212,0.2)] backdrop-blur-md absolute -bottom-4 left-6 z-30"
+              >
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                <span className="font-mono text-[11px] text-cyan-300">
+                  ATOMIC RAIL: {current.nodes[0]} → {current.nodes[current.nodes.length - 1]}
+                </span>
+              </motion.div>
+
+              <motion.div
+                style={{
+                  rotateY: scrollRotateY,
+                  rotateX: scrollRotateX,
+                  scale: scrollScale,
+                  transformStyle: 'preserve-3d',
+                }}
+                className="w-full flex"
+              >
+                <motion.div
+                  key={current.id}
+                  initial={{ opacity: 0, rotateY: -18, scale: 0.9, z: -120 }}
+                  animate={{
+                    opacity: 1,
+                    rotateX: tilt.x,
+                    rotateY: tilt.y,
+                    scale: 1,
+                    z: 0,
                   }}
-                  onClick={() => openCorridorPortal(item, idx)}
-                  data-cursor="OPEN PORTAL"
-                  className={`p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-4 ${
-                    isSelected
-                      ? 'bg-[#0B1325]/95 border-[#10B981]/60 shadow-[0_0_30px_rgba(16,185,129,0.14)]'
-                      : 'bg-[#070D19]/70 border-white/10 hover:border-white/25'
-                  }`}
+                  transition={{ type: 'spring', stiffness: 190, damping: 22 }}
+                  onClick={() => openCorridorPortal(current, activeIndex)}
+                  data-cursor="LAUNCH CORRIDOR"
+                  className="relative w-full rounded-3xl bg-gradient-to-br from-[#0B1325]/95 via-[#070D19]/95 to-[#030712]/95 border border-white/15 hover:border-[#10B981]/60 p-7 sm:p-10 shadow-[0_25px_70px_rgba(0,0,0,0.65)] cursor-pointer overflow-hidden group flex flex-col justify-between min-h-[420px]"
                 >
-                  <div className="space-y-1">
+                  {/* Animated SVG Quantum Corridor Node Mesh Background */}
+                  <svg
+                    className="absolute inset-0 w-full h-full opacity-25 group-hover:opacity-45 transition-opacity duration-500 pointer-events-none"
+                    viewBox="0 0 600 400"
+                    fill="none"
+                  >
+                    <defs>
+                      <linearGradient id="corridorArcGrad" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor={current.accent} stopOpacity="0.9" />
+                        <stop offset="100%" stopColor={current.secondary} stopOpacity="0.2" />
+                      </linearGradient>
+                    </defs>
+                    <circle
+                      cx="460"
+                      cy="190"
+                      r="150"
+                      stroke="url(#corridorArcGrad)"
+                      strokeWidth="1.2"
+                      strokeDasharray="6 6"
+                    />
+                    <circle
+                      cx="460"
+                      cy="190"
+                      r="95"
+                      stroke={current.accent}
+                      strokeWidth="0.9"
+                      strokeOpacity="0.4"
+                    />
+                    <path
+                      d="M 40 310 Q 250 90 520 170"
+                      stroke="url(#corridorArcGrad)"
+                      strokeWidth="2.5"
+                    />
+                    <path
+                      d="M 40 310 Q 280 260 520 170"
+                      stroke={current.secondary}
+                      strokeWidth="1.2"
+                      strokeDasharray="4 4"
+                    />
+                    <circle cx="40" cy="310" r="6" fill={current.accent} />
+                    <circle cx="275" cy="185" r="5" fill={current.secondary} />
+                    <circle cx="520" cy="170" r="8" fill={current.accent} />
+                  </svg>
+
+                  {/* Top Telemetry Bar */}
+                  <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
-                      <span
-                        className={`font-mono text-xs font-bold ${
-                          isSelected ? 'text-[#10B981]' : 'text-slate-500'
-                        }`}
-                      >
-                        {item.index} //
+                      <span className="px-2.5 py-1 rounded-md bg-white/10 font-mono text-xs font-bold text-[#10B981]">
+                        {current.index}
                       </span>
-                      <span className="font-mono text-[11px] text-slate-400 uppercase tracking-wider">
-                        {item.pair}
+                      <span className="font-mono text-xs tracking-widest text-slate-400 uppercase">
+                        {current.code}
                       </span>
                     </div>
-                    <h4 className="text-base font-bold text-white">{item.title}</h4>
-                    <div className="text-xs text-slate-400 font-mono">
-                      Latency: <span className="text-[#10B981]">{item.latency}</span> · Vol:{' '}
-                      <span className="text-slate-200">{item.volume}</span>
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#10B981]/15 border border-[#10B981]/40 text-xs font-mono text-[#10B981]">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-ping" />
+                      <span>{current.pair}</span>
                     </div>
                   </div>
 
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-colors ${
+                  {/* Center Title & Description */}
+                  <div className="relative z-10 my-6">
+                    <div className="text-xs font-mono uppercase tracking-[0.2em] text-cyan-400 mb-2">
+                      {current.subtitle}
+                    </div>
+                    <h3 className="text-2xl sm:text-4xl font-bold tracking-tight text-white group-hover:text-[#10B981] transition-colors">
+                      <ScrambleText text={current.title} triggerKey={current.id} />
+                    </h3>
+                    <p className="text-sm sm:text-base text-slate-300 mt-3 max-w-xl leading-relaxed">
+                      {current.summary}
+                    </p>
+
+                    {/* 4-Hop Node Pill Strip */}
+                    <div className="mt-5 flex flex-wrap items-center gap-2">
+                      {current.nodes.map((node, i) => (
+                        <span
+                          key={node}
+                          className="px-2.5 py-1 rounded-lg bg-[#030712]/80 border border-white/10 font-mono text-[11px] text-slate-300"
+                        >
+                          <span className="text-[#10B981] mr-1">0{i + 1}</span>
+                          {node}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bottom Metrics & Launch Portal Button */}
+                  <div className="relative z-10 pt-5 border-t border-white/10 flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-6">
+                      <div>
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+                          FINALITY LATENCY
+                        </div>
+                        <div className="font-mono text-lg font-bold text-white">
+                          {current.latency}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+                          CORRIDOR VOLUME
+                        </div>
+                        <div className="font-mono text-lg font-bold text-[#10B981]">
+                          {current.volume}
+                        </div>
+                      </div>
+                      <div className="hidden sm:block">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+                          INSTITUTIONAL SPREAD
+                        </div>
+                        <div className="font-mono text-lg font-bold text-cyan-400">
+                          {current.spread}
+                        </div>
+                      </div>
+                    </div>
+
+                    <span className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#10B981] text-[#030712] font-mono text-xs font-bold uppercase tracking-wider group-hover:translate-x-1 transition-transform">
+                      <span>Enter Corridor Portal</span>
+                      <ArrowUpRight className="w-4 h-4" />
+                    </span>
+                  </div>
+                </motion.div>
+              </motion.div>
+            </div>
+
+            {/* Right 5 Cols: Interactive Corridor Reel Index Stack */}
+            <div className="lg:col-span-5 flex flex-col justify-between gap-3">
+              {CORRIDORS.map((item, idx) => {
+                const isSelected = idx === activeIndex;
+                return (
+                  <motion.div
+                    key={item.id}
+                    animate={{
+                      x: isSelected ? -6 : 0,
+                      scale: isSelected ? 1.015 : 1,
+                    }}
+                    transition={{ type: 'spring', stiffness: 260, damping: 24 }}
+                    onMouseEnter={() => {
+                      soundEngine.playHover(1 + idx * 0.08);
+                      setActiveIndex(idx);
+                    }}
+                    onClick={() => openCorridorPortal(item, idx)}
+                    data-cursor="OPEN PORTAL"
+                    className={`p-5 rounded-2xl border transition-colors cursor-pointer flex items-center justify-between gap-4 ${
                       isSelected
-                        ? 'bg-[#10B981] text-[#030712] border-[#10B981]'
-                        : 'bg-white/5 text-slate-400 border-white/10'
+                        ? 'bg-[#0B1325]/95 border-[#10B981]/60 shadow-[0_0_30px_rgba(16,185,129,0.16)]'
+                        : 'bg-[#070D19]/70 border-white/10 hover:border-white/25'
                     }`}
                   >
-                    <ArrowUpRight className="w-4 h-4" />
-                  </div>
-                </div>
-              );
-            })}
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className={`font-mono text-xs font-bold ${
+                            isSelected ? 'text-[#10B981]' : 'text-slate-500'
+                          }`}
+                        >
+                          {item.index} //
+                        </span>
+                        <span className="font-mono text-[11px] text-slate-400 uppercase tracking-wider">
+                          {item.pair}
+                        </span>
+                        {isSelected && (
+                          <span className="px-2 py-0.5 rounded bg-[#10B981]/15 text-[#10B981] font-mono text-[10px] font-bold">
+                            ACTIVE IN 3D TUNNEL
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-base font-bold text-white">{item.title}</h4>
+                      <div className="text-xs text-slate-400 font-mono">
+                        Latency: <span className="text-[#10B981]">{item.latency}</span> · Vol:{' '}
+                        <span className="text-slate-200">{item.volume}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          jumpToCorridorScroll(idx);
+                        }}
+                        className="hidden sm:inline-flex px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 font-mono text-[10px] text-slate-300"
+                      >
+                        LOCK
+                      </button>
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-colors ${
+                          isSelected
+                            ? 'bg-[#10B981] text-[#030712] border-[#10B981]'
+                            : 'bg-white/5 text-slate-400 border-white/10'
+                        }`}
+                      >
+                        <ArrowUpRight className="w-4 h-4" />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>

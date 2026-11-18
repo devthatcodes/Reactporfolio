@@ -1,5 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useTransform,
+  useSpring,
+  useMotionValueEvent,
+} from 'framer-motion';
 import {
   ArrowUpRight,
   ArrowLeft,
@@ -8,8 +15,6 @@ import {
   ShieldCheck,
   Gauge,
   Layers,
-  Cpu,
-  Globe,
   X,
   Sliders,
   Sparkles,
@@ -145,7 +150,6 @@ const CASES = [
   },
 ];
 
-// Procedural Canvas Preview for each Case Card & Portal Takeover
 function CaseProceduralCanvas({ type, accent, accentSecondary, intensity = 1, interactive = false }) {
   const canvasRef = useRef(null);
 
@@ -184,7 +188,6 @@ function CaseProceduralCanvas({ type, accent, accentSecondary, intensity = 1, in
 
       ctx.clearRect(0, 0, w, h);
 
-      // Subtle background grid
       ctx.strokeStyle = 'rgba(245, 242, 235, 0.05)';
       ctx.lineWidth = 1;
       for (let gx = 0; gx < w; gx += 32) {
@@ -252,7 +255,6 @@ function CaseProceduralCanvas({ type, accent, accentSecondary, intensity = 1, in
           ctx.fill();
         }
       } else {
-        // Corridor arcs
         const nodes = 5;
         for (let i = 0; i < nodes; i++) {
           const x1 = (w / (nodes + 1)) * (i + 1);
@@ -296,11 +298,51 @@ export default function CaseHighlightsSection({
   onSelectShader,
   forceStreamLayout = false,
 }) {
-  const [layoutMode, setLayoutMode] = useState(forceStreamLayout ? 'stream' : 'stream');
+  const [layoutMode, setLayoutMode] = useState('stream');
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedCase, setSelectedCase] = useState(null);
   const [simFrequency, setSimFrequency] = useState(1.25);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  const [scrollDepthPct, setScrollDepthPct] = useState(0);
+
+  // Sticky Scroll-Driven 3D Runway Reference
+  const runwayRef = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: runwayRef,
+    offset: ['start start', 'end end'],
+  });
+
+  const smoothRunway = useSpring(scrollYProgress, {
+    damping: 32,
+    stiffness: 240,
+    mass: 0.4,
+  });
+
+  // Automatically switch active project & morph foreground 3D geometry as user scrolls through #work!
+  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
+    if (layoutMode !== 'stream') return;
+    const clamped = Math.max(0, Math.min(0.999, latest));
+    setScrollDepthPct(Math.round(clamped * 100));
+    const idx = Math.floor(clamped * CASES.length);
+    if (idx !== activeIndex && idx >= 0 && idx < CASES.length) {
+      setActiveIndex(idx);
+      if (onSelectShader) onSelectShader(CASES[idx].shaderMode);
+    }
+  });
+
+  // Continuous 3D Z-space wave transforms driven by scroll inside the sticky stage
+  const stageRotateY = useTransform(
+    smoothRunway,
+    [0, 0.25, 0.5, 0.75, 1],
+    [-12, 8, -10, 10, 0]
+  );
+  const stageRotateX = useTransform(
+    smoothRunway,
+    [0, 0.25, 0.5, 0.75, 1],
+    [10, -6, 8, -8, 0]
+  );
+  const badgeParallaxY = useTransform(smoothRunway, [0, 1], [45, -55]);
+  const canvasParallaxY = useTransform(smoothRunway, [0, 1], [-30, 35]);
 
   useEffect(() => {
     if (forceStreamLayout) setLayoutMode('stream');
@@ -359,332 +401,402 @@ export default function CaseHighlightsSection({
   const currentStreamCase = CASES[activeIndex];
 
   return (
-    <section id="work" className="relative py-24 sm:py-32 px-5 sm:px-8 max-w-7xl mx-auto">
-      {/* Header + Active Theory Mode Switcher */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
-        transition={{ duration: 0.6 }}
-        className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12"
-      >
-        <div>
-          <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.24em] text-lime mb-3">
-            <span className="w-2 h-2 rounded-full bg-lime animate-pulse" />
-            <span>// INTERACTIVE WORK ARCHIVE (2026)</span>
-          </div>
-          <h2 className="font-display font-bold text-3xl sm:text-5xl lg:text-6xl tracking-tight text-ivory">
-            <ScrambleText text="Selected Portals" scrambleOnMount={false} />
-            <span className="text-lime">.</span>
-          </h2>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Stream vs Matrix Toggle */}
-          <div className="inline-flex items-center bg-surface/90 border border-ivory/15 rounded-full p-1 backdrop-blur-md">
-            <button
-              type="button"
-              data-cursor="3D STREAM REEL"
-              onClick={() => {
-                soundEngine.playClick();
-                setLayoutMode('stream');
-              }}
-              className={`px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all ${
-                layoutMode === 'stream'
-                  ? 'bg-lime text-obsidian font-semibold shadow-[0_0_16px_rgba(200,255,50,0.3)]'
-                  : 'text-ivory/65 hover:text-ivory'
-              }`}
-            >
-              3D Work Stream
-            </button>
-            <button
-              type="button"
-              data-cursor="BENTO MATRIX"
-              onClick={() => {
-                soundEngine.playClick();
-                setLayoutMode('grid');
-              }}
-              className={`px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all ${
-                layoutMode === 'grid'
-                  ? 'bg-lime text-obsidian font-semibold shadow-[0_0_16px_rgba(200,255,50,0.3)]'
-                  : 'text-ivory/65 hover:text-ivory'
-              }`}
-            >
-              Matrix Grid
-            </button>
-          </div>
-
-          <button
-            type="button"
-            data-cursor="REQUEST DOSSIER"
-            onClick={() => {
-              soundEngine.playClick();
-              onOpenInquiry();
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-ivory/15 text-xs font-mono uppercase tracking-wider text-ivory hover:border-lime/50 hover:text-lime transition-colors"
-          >
-            Request Dossier
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </motion.div>
-
-      {/* MODE 1: ACTIVE THEORY 3D PERSPECTIVE WORK STREAM */}
+    <section id="work" className="relative px-5 sm:px-8 max-w-7xl mx-auto">
+      {/* MODE 1: ACTIVE THEORY STICKY SCROLL-SCRUBBED 3D Z-TUNNEL */}
       {layoutMode === 'stream' ? (
-        <div className="relative">
-          {/* Index Selector Rail */}
-          <div className="flex items-center justify-between gap-4 mb-6 border-b border-ivory/10 pb-4">
-            <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
-              {CASES.map((c, idx) => {
-                const active = idx === activeIndex;
-                return (
+        <div ref={runwayRef} className="relative min-h-[250vh] py-12">
+          <div className="sticky top-20 pt-2 pb-8 flex flex-col justify-between">
+            {/* Header + Active Theory Mode Switcher */}
+            <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-6">
+              <div>
+                <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.24em] text-lime mb-2">
+                  <span className="w-2 h-2 rounded-full bg-lime animate-pulse" />
+                  <span>
+                    // SCROLL-SCRUBBED 3D WORK TUNNEL · DEPTH {String(scrollDepthPct).padStart(3, '0')}%
+                  </span>
+                </div>
+                <h2 className="font-display font-bold text-3xl sm:text-5xl tracking-tight text-ivory">
+                  <ScrambleText text="Selected Portals" scrambleOnMount={false} />
+                  <span className="text-lime">.</span>
+                </h2>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="inline-flex items-center bg-surface/90 border border-ivory/15 rounded-full p-1 backdrop-blur-md">
                   <button
-                    key={c.id}
                     type="button"
-                    data-cursor={`SELECT ${c.index}`}
+                    data-cursor="3D SCROLL STREAM"
                     onClick={() => {
                       soundEngine.playClick();
-                      setActiveIndex(idx);
-                      if (onSelectShader) onSelectShader(c.shaderMode);
+                      setLayoutMode('stream');
                     }}
-                    onMouseEnter={() => soundEngine.playHover()}
-                    className={`px-3.5 py-2 rounded-xl border text-left transition-all shrink-0 ${
-                      active
-                        ? 'bg-surface border-lime text-ivory shadow-[0_0_20px_rgba(200,255,50,0.15)]'
-                        : 'bg-obsidian/60 border-ivory/10 text-ivory/50 hover:text-ivory hover:border-ivory/25'
+                    className={`px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all ${
+                      layoutMode === 'stream'
+                        ? 'bg-lime text-obsidian font-semibold shadow-[0_0_16px_rgba(200,255,50,0.3)]'
+                        : 'text-ivory/65 hover:text-ivory'
                     }`}
                   >
-                    <div className="text-[10px] font-mono text-lime">{c.index} // PORTAL</div>
-                    <div className="font-display font-semibold text-xs sm:text-sm truncate max-w-[160px]">
-                      {c.client}
-                    </div>
+                    3D Scroll Stream
                   </button>
-                );
-              })}
+                  <button
+                    type="button"
+                    data-cursor="BENTO MATRIX"
+                    onClick={() => {
+                      soundEngine.playClick();
+                      setLayoutMode('grid');
+                    }}
+                    className={`px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider transition-all ${
+                      layoutMode === 'grid'
+                        ? 'bg-lime text-obsidian font-semibold shadow-[0_0_16px_rgba(200,255,50,0.3)]'
+                        : 'text-ivory/65 hover:text-ivory'
+                    }`}
+                  >
+                    Matrix Grid
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  data-cursor="REQUEST DOSSIER"
+                  onClick={() => {
+                    soundEngine.playClick();
+                    onOpenInquiry();
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-ivory/15 text-xs font-mono uppercase tracking-wider text-ivory hover:border-lime/50 hover:text-lime transition-colors"
+                >
+                  Request Dossier
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            {/* Live Scroll-Progress Z-Tunnel Rail */}
+            <div className="mb-5">
+              <div className="flex items-center justify-between gap-4 mb-3">
+                <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
+                  {CASES.map((c, idx) => {
+                    const active = idx === activeIndex;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        data-cursor={`SELECT ${c.index}`}
+                        onClick={() => {
+                          soundEngine.playClick();
+                          setActiveIndex(idx);
+                          if (onSelectShader) onSelectShader(c.shaderMode);
+                        }}
+                        onMouseEnter={() => soundEngine.playHover()}
+                        className={`px-3.5 py-2 rounded-xl border text-left transition-all shrink-0 ${
+                          active
+                            ? 'bg-surface border-lime text-ivory shadow-[0_0_20px_rgba(200,255,50,0.18)] scale-[1.03]'
+                            : 'bg-obsidian/60 border-ivory/10 text-ivory/50 hover:text-ivory hover:border-ivory/25'
+                        }`}
+                      >
+                        <div className="text-[10px] font-mono text-lime">{c.index} // PORTAL</div>
+                        <div className="font-display font-semibold text-xs sm:text-sm truncate max-w-[155px]">
+                          {c.client}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    aria-label="Previous Work"
+                    data-cursor="PREV WORK"
+                    onClick={() => handleStepStream(-1)}
+                    className="w-9 h-9 rounded-full bg-surface border border-ivory/15 flex items-center justify-center text-ivory hover:border-lime hover:text-lime transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next Work"
+                    data-cursor="NEXT WORK"
+                    onClick={() => handleStepStream(1)}
+                    className="w-9 h-9 rounded-full bg-surface border border-ivory/15 flex items-center justify-center text-ivory hover:border-lime hover:text-lime transition-colors"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scroll Runway Progress Bar */}
+              <div className="w-full h-1 bg-ivory/10 rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-gradient-to-r from-indigoGlow via-lime to-lime shadow-[0_0_12px_#C8FF32]"
+                  style={{ width: `${scrollDepthPct}%` }}
+                />
+              </div>
+            </div>
+
+            {/* 3D Perspective Stage Card driven by BOTH Scroll & Cursor Tilt */}
+            <motion.div
+              style={{
+                rotateY: stageRotateY,
+                rotateX: stageRotateX,
+                transformStyle: 'preserve-3d',
+                perspective: '1500px',
+              }}
+              className="will-change-transform"
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentStreamCase.id}
+                  initial={{
+                    opacity: 0,
+                    z: -260,
+                    scale: 0.78,
+                    rotateX: 22,
+                    rotateY: -18,
+                    filter: 'blur(10px)',
+                  }}
+                  animate={{
+                    opacity: 1,
+                    z: 0,
+                    scale: 1,
+                    rotateX: tilt.x,
+                    rotateY: tilt.y,
+                    filter: 'blur(0px)',
+                  }}
+                  exit={{
+                    opacity: 0,
+                    z: 180,
+                    scale: 1.14,
+                    rotateX: -16,
+                    rotateY: 16,
+                    filter: 'blur(8px)',
+                  }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  onMouseMove={handleCardMouseMove}
+                  onMouseLeave={() => setTilt({ x: 0, y: 0 })}
+                  style={{ transformStyle: 'preserve-3d' }}
+                  className="relative rounded-3xl bg-surface/90 border border-ivory/15 p-6 sm:p-10 overflow-hidden shadow-[0_30px_90px_rgba(0,0,0,0.7)] backdrop-blur-xl group"
+                >
+                  <div
+                    className="absolute -top-32 -right-32 w-96 h-96 rounded-full blur-[120px] opacity-35 pointer-events-none transition-all duration-500"
+                    style={{ backgroundColor: currentStreamCase.accent }}
+                  />
+
+                  <div className="relative z-10 grid lg:grid-cols-12 gap-8 items-center">
+                    {/* Left Column: Editorial & Telemetry with Foreground Parallax */}
+                    <motion.div
+                      style={{ y: badgeParallaxY }}
+                      className="lg:col-span-6 space-y-5 will-change-transform"
+                    >
+                      <div className="flex items-center gap-3 text-xs font-mono uppercase tracking-[0.22em] text-ivory/60">
+                        <span
+                          className="px-2.5 py-1 rounded bg-obsidian border border-ivory/15 font-bold"
+                          style={{ color: currentStreamCase.accent }}
+                        >
+                          {currentStreamCase.index} / 0{CASES.length}
+                        </span>
+                        <span>{currentStreamCase.sector}</span>
+                      </div>
+
+                      <h3 className="font-display font-bold text-3xl sm:text-5xl tracking-tight text-ivory leading-[1.04]">
+                        <ScrambleText
+                          text={currentStreamCase.client}
+                          triggerKey={currentStreamCase.id}
+                        />
+                      </h3>
+
+                      <p className="text-ivory/75 text-sm sm:text-base leading-relaxed">
+                        {currentStreamCase.summary}
+                      </p>
+
+                      {/* 4 Key Telemetry Pills */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                        {currentStreamCase.stats.map((st) => (
+                          <div
+                            key={st.label}
+                            className="rounded-xl bg-obsidian/85 border border-ivory/10 p-3 shadow-lg"
+                          >
+                            <div className="text-[10px] font-mono uppercase tracking-wider text-ivory/45">
+                              {st.label}
+                            </div>
+                            <div
+                              className="font-display font-bold text-lg sm:text-xl mt-0.5"
+                              style={{ color: currentStreamCase.accent }}
+                            >
+                              {st.value}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-4 pt-2">
+                        <button
+                          type="button"
+                          data-cursor="LAUNCH PORTAL"
+                          onClick={() => handleOpenCase(currentStreamCase, activeIndex)}
+                          onMouseEnter={() => soundEngine.playHover()}
+                          className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-lime text-obsidian font-display font-semibold text-sm hover:bg-ivory transition-all shadow-[0_0_30px_rgba(200,255,50,0.3)]"
+                        >
+                          <Play className="w-4 h-4 fill-current" />
+                          Launch Interactive Case Portal
+                        </button>
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-lime/80">
+                          [ KEEP SCROLLING TO FLY TO NEXT PORTAL ]
+                        </span>
+                      </div>
+                    </motion.div>
+
+                    {/* Right Column: Live Procedural Shader / Canvas Viewport with Counter-Parallax */}
+                    <motion.div
+                      style={{ y: canvasParallaxY }}
+                      onClick={() => handleOpenCase(currentStreamCase, activeIndex)}
+                      data-cursor="ENTER PORTAL"
+                      className="lg:col-span-6 relative h-72 sm:h-96 rounded-2xl bg-obsidian border border-ivory/15 overflow-hidden cursor-pointer group/canvas will-change-transform shadow-2xl"
+                    >
+                      <CaseProceduralCanvas
+                        type={currentStreamCase.visualType}
+                        accent={currentStreamCase.accent}
+                        accentSecondary={currentStreamCase.accentSecondary}
+                        intensity={1.25}
+                        interactive={true}
+                      />
+
+                      <div className="absolute top-4 inset-x-4 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.2em] text-ivory/60 pointer-events-none">
+                        <span>LIVE TELEMETRY // {currentStreamCase.id.toUpperCase()}</span>
+                        <span
+                          className="px-2 py-0.5 rounded bg-obsidian/90 border border-ivory/15"
+                          style={{ color: currentStreamCase.accent }}
+                        >
+                          Z-TUNNEL // {scrollDepthPct}%
+                        </span>
+                      </div>
+
+                      <div className="absolute bottom-4 inset-x-4 flex items-end justify-between pointer-events-none">
+                        <div className="bg-obsidian/85 backdrop-blur-md border border-ivory/10 rounded-xl px-4 py-2.5">
+                          <div
+                            className="font-display font-bold text-2xl sm:text-3xl"
+                            style={{ color: currentStreamCase.accent }}
+                          >
+                            {currentStreamCase.metric}
+                          </div>
+                          <div className="text-[10px] font-mono uppercase tracking-wider text-ivory/60">
+                            {currentStreamCase.metricLabel}
+                          </div>
+                        </div>
+
+                        <div className="px-3.5 py-2 rounded-full bg-lime text-obsidian font-mono text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 group-hover/canvas:scale-105 transition-transform">
+                          <span>ENTER PORTAL</span>
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </div>
+                      </div>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </motion.div>
+          </div>
+        </div>
+      ) : (
+        /* MODE 2: BENTO MATRIX GRID WITH 3D SCROLL FLIP-IN */
+        <div className="py-20">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-[0.24em] text-lime mb-3">
+                <span className="w-2 h-2 rounded-full bg-lime animate-pulse" />
+                <span>// INTERACTIVE WORK ARCHIVE (MATRIX VIEW)</span>
+              </div>
+              <h2 className="font-display font-bold text-3xl sm:text-5xl tracking-tight text-ivory">
+                Selected Portals<span className="text-lime">.</span>
+              </h2>
+            </div>
+
+            <div className="inline-flex items-center bg-surface/90 border border-ivory/15 rounded-full p-1 backdrop-blur-md self-start">
               <button
                 type="button"
-                aria-label="Previous Work"
-                data-cursor="PREV WORK"
-                onClick={() => handleStepStream(-1)}
-                className="w-10 h-10 rounded-full bg-surface border border-ivory/15 flex items-center justify-center text-ivory hover:border-lime hover:text-lime transition-colors"
+                onClick={() => {
+                  soundEngine.playClick();
+                  setLayoutMode('stream');
+                }}
+                className="px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider text-ivory/65 hover:text-ivory"
               >
-                <ArrowLeft className="w-4 h-4" />
+                3D Scroll Stream
               </button>
               <button
                 type="button"
-                aria-label="Next Work"
-                data-cursor="NEXT WORK"
-                onClick={() => handleStepStream(1)}
-                className="w-10 h-10 rounded-full bg-surface border border-ivory/15 flex items-center justify-center text-ivory hover:border-lime hover:text-lime transition-colors"
+                onClick={() => {
+                  soundEngine.playClick();
+                  setLayoutMode('grid');
+                }}
+                className="px-4 py-1.5 rounded-full text-xs font-mono uppercase tracking-wider bg-lime text-obsidian font-semibold"
               >
-                <ArrowRight className="w-4 h-4" />
+                Matrix Grid
               </button>
             </div>
           </div>
 
-          {/* 3D Perspective Stage Card */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentStreamCase.id}
-              initial={{ opacity: 0, y: 24, rotateX: 8, scale: 0.96 }}
-              animate={{
-                opacity: 1,
-                y: 0,
-                rotateX: tilt.x,
-                rotateY: tilt.y,
-                scale: 1,
-              }}
-              exit={{ opacity: 0, y: -24, rotateX: -8, scale: 0.96 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              onMouseMove={handleCardMouseMove}
-              onMouseLeave={() => setTilt({ x: 0, y: 0 })}
-              style={{ transformStyle: 'preserve-3d', perspective: '1400px' }}
-              className="relative rounded-3xl bg-surface/90 border border-ivory/15 p-6 sm:p-10 lg:p-12 overflow-hidden shadow-[0_30px_90px_rgba(0,0,0,0.65)] backdrop-blur-xl group"
-            >
-              {/* Ambient Glow */}
-              <div
-                className="absolute -top-32 -right-32 w-96 h-96 rounded-full blur-[120px] opacity-35 pointer-events-none transition-all duration-500"
-                style={{ backgroundColor: currentStreamCase.accent }}
-              />
-
-              <div className="relative z-10 grid lg:grid-cols-12 gap-8 items-center">
-                {/* Left Column: Editorial & Telemetry */}
-                <div className="lg:col-span-6 space-y-6">
-                  <div className="flex items-center gap-3 text-xs font-mono uppercase tracking-[0.22em] text-ivory/60">
-                    <span
-                      className="px-2.5 py-1 rounded bg-obsidian border border-ivory/15 font-bold"
-                      style={{ color: currentStreamCase.accent }}
-                    >
-                      {currentStreamCase.index} / 0{CASES.length}
-                    </span>
-                    <span>{currentStreamCase.sector}</span>
-                  </div>
-
-                  <h3 className="font-display font-bold text-3xl sm:text-5xl tracking-tight text-ivory leading-[1.05]">
-                    <ScrambleText
-                      text={currentStreamCase.client}
-                      triggerKey={currentStreamCase.id}
-                    />
-                  </h3>
-
-                  <p className="text-ivory/75 text-sm sm:text-base leading-relaxed">
-                    {currentStreamCase.summary}
-                  </p>
-
-                  {/* 4 Key Telemetry Pills */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                    {currentStreamCase.stats.map((st) => (
-                      <div
-                        key={st.label}
-                        className="rounded-xl bg-obsidian/80 border border-ivory/10 p-3"
-                      >
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-ivory/45">
-                          {st.label}
-                        </div>
-                        <div
-                          className="font-display font-bold text-lg sm:text-xl mt-0.5"
-                          style={{ color: currentStreamCase.accent }}
-                        >
-                          {st.value}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-4 pt-2">
-                    <button
-                      type="button"
-                      data-cursor="LAUNCH PORTAL"
-                      onClick={() => handleOpenCase(currentStreamCase, activeIndex)}
-                      onMouseEnter={() => soundEngine.playHover()}
-                      className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-lime text-obsidian font-display font-semibold text-sm hover:bg-ivory transition-all shadow-[0_0_30px_rgba(200,255,50,0.3)]"
-                    >
-                      <Play className="w-4 h-4 fill-current" />
-                      Launch Interactive Case Portal
-                    </button>
-                    <span className="text-xs font-mono uppercase tracking-wider text-ivory/45">
-                      [ CLICK TO ENTER FULLSCREEN LAB ]
-                    </span>
-                  </div>
-                </div>
-
-                {/* Right Column: Live Procedural Shader / Canvas Viewport */}
-                <div
-                  onClick={() => handleOpenCase(currentStreamCase, activeIndex)}
-                  data-cursor="ENTER PORTAL"
-                  className="lg:col-span-6 relative h-72 sm:h-96 rounded-2xl bg-obsidian border border-ivory/15 overflow-hidden cursor-pointer group/canvas"
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5" style={{ perspective: '1400px' }}>
+            {CASES.map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <motion.article
+                  key={item.id}
+                  data-cursor="LAUNCH PORTAL"
+                  onClick={() => handleOpenCase(item, idx)}
+                  onMouseEnter={() => soundEngine.playHover()}
+                  initial={{ opacity: 0, y: 70, rotateX: 20, scale: 0.9 }}
+                  whileInView={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+                  viewport={{ once: false, amount: 0.2 }}
+                  transition={{ duration: 0.65, delay: idx * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={{ y: -8, scale: 1.01 }}
+                  className={`${item.span} cursor-pointer group relative rounded-2xl bg-surface/90 border border-ivory/10 p-6 sm:p-8 overflow-hidden transition-all hover:border-lime/50 backdrop-blur-md`}
                 >
-                  <CaseProceduralCanvas
-                    type={currentStreamCase.visualType}
-                    accent={currentStreamCase.accent}
-                    accentSecondary={currentStreamCase.accentSecondary}
-                    intensity={1.2}
-                    interactive={true}
-                  />
-
-                  {/* Top HUD Overlay inside Canvas */}
-                  <div className="absolute top-4 inset-x-4 flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.2em] text-ivory/60 pointer-events-none">
-                    <span>LIVE TELEMETRY // {currentStreamCase.id.toUpperCase()}</span>
-                    <span
-                      className="px-2 py-0.5 rounded bg-obsidian/90 border border-ivory/15"
-                      style={{ color: currentStreamCase.accent }}
-                    >
-                      60 FPS WEBGL
-                    </span>
-                  </div>
-
-                  {/* Bottom Metric Overlay */}
-                  <div className="absolute bottom-4 inset-x-4 flex items-end justify-between pointer-events-none">
-                    <div className="bg-obsidian/85 backdrop-blur-md border border-ivory/10 rounded-xl px-4 py-2.5">
-                      <div
-                        className="font-display font-bold text-2xl sm:text-3xl"
-                        style={{ color: currentStreamCase.accent }}
-                      >
-                        {currentStreamCase.metric}
+                  <div className="relative z-10 flex flex-col h-full justify-between">
+                    <div>
+                      <div className="flex items-center justify-between gap-4 mb-5">
+                        <div>
+                          <span className="text-[11px] font-mono uppercase tracking-wider text-lime block">
+                            {item.index} // {item.sector}
+                          </span>
+                          <h3 className="font-display font-bold text-xl sm:text-2xl text-ivory mt-1">
+                            {item.client}
+                          </h3>
+                        </div>
+                        <div className="w-10 h-10 rounded-full bg-obsidian border border-ivory/15 flex items-center justify-center text-ivory/70 group-hover:text-obsidian group-hover:bg-lime group-hover:border-lime transition-all">
+                          <Icon className="w-4 h-4" />
+                        </div>
                       </div>
-                      <div className="text-[10px] font-mono uppercase tracking-wider text-ivory/60">
-                        {currentStreamCase.metricLabel}
-                      </div>
-                    </div>
 
-                    <div className="px-3.5 py-2 rounded-full bg-lime text-obsidian font-mono text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 group-hover/canvas:scale-105 transition-transform">
-                      <span>ENTER PORTAL</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      ) : (
-        /* MODE 2: BENTO MATRIX GRID (All cards clickable to launch Portal) */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {CASES.map((item, idx) => {
-            const Icon = item.icon;
-            return (
-              <motion.article
-                key={item.id}
-                data-cursor="LAUNCH PORTAL"
-                onClick={() => handleOpenCase(item, idx)}
-                onMouseEnter={() => soundEngine.playHover()}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.55, delay: idx * 0.08 }}
-                whileHover={{ y: -6 }}
-                className={`${item.span} cursor-pointer group relative rounded-2xl bg-surface/90 border border-ivory/10 p-6 sm:p-8 overflow-hidden transition-all hover:border-lime/50 backdrop-blur-md`}
-              >
-                <div className="relative z-10 flex flex-col h-full justify-between">
-                  <div>
-                    <div className="flex items-center justify-between gap-4 mb-5">
-                      <div>
-                        <span className="text-[11px] font-mono uppercase tracking-wider text-lime block">
-                          {item.index} // {item.sector}
+                      <div className="mb-4 flex items-baseline gap-3">
+                        <span
+                          className="font-display font-bold text-4xl sm:text-5xl tracking-tight"
+                          style={{ color: item.accent }}
+                        >
+                          {item.metric}
                         </span>
-                        <h3 className="font-display font-bold text-xl sm:text-2xl text-ivory mt-1">
-                          {item.client}
-                        </h3>
+                        <span className="text-xs font-mono uppercase tracking-wider text-ivory/55">
+                          {item.metricLabel}
+                        </span>
                       </div>
-                      <div className="w-10 h-10 rounded-full bg-obsidian border border-ivory/15 flex items-center justify-center text-ivory/70 group-hover:text-obsidian group-hover:bg-lime group-hover:border-lime transition-all">
-                        <Icon className="w-4 h-4" />
-                      </div>
+
+                      <p className="text-sm text-ivory/70 leading-relaxed mb-5">{item.summary}</p>
                     </div>
 
-                    <div className="mb-4 flex items-baseline gap-3">
-                      <span
-                        className="font-display font-bold text-4xl sm:text-5xl tracking-tight"
-                        style={{ color: item.accent }}
-                      >
-                        {item.metric}
-                      </span>
-                      <span className="text-xs font-mono uppercase tracking-wider text-ivory/55">
-                        {item.metricLabel}
-                      </span>
-                    </div>
-
-                    <p className="text-sm text-ivory/70 leading-relaxed mb-5">{item.summary}</p>
-                  </div>
-
-                  <div className="relative h-40 rounded-xl bg-obsidian border border-ivory/10 overflow-hidden">
-                    <CaseProceduralCanvas
-                      type={item.visualType}
-                      accent={item.accent}
-                      accentSecondary={item.accentSecondary}
-                      intensity={1.0}
-                    />
-                    <div className="absolute bottom-2.5 right-3 px-2.5 py-1 rounded bg-obsidian/90 border border-ivory/15 text-[10px] font-mono uppercase tracking-wider text-lime flex items-center gap-1">
-                      <span>OPEN INTERACTIVE PORTAL</span>
-                      <ArrowUpRight className="w-3 h-3" />
+                    <div className="relative h-40 rounded-xl bg-obsidian border border-ivory/10 overflow-hidden">
+                      <CaseProceduralCanvas
+                        type={item.visualType}
+                        accent={item.accent}
+                        accentSecondary={item.accentSecondary}
+                        intensity={1.0}
+                      />
+                      <div className="absolute bottom-2.5 right-3 px-2.5 py-1 rounded bg-obsidian/90 border border-ivory/15 text-[10px] font-mono uppercase tracking-wider text-lime flex items-center gap-1">
+                        <span>OPEN INTERACTIVE PORTAL</span>
+                        <ArrowUpRight className="w-3 h-3" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.article>
-            );
-          })}
+                </motion.article>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -699,7 +811,6 @@ export default function CaseHighlightsSection({
             className="fixed inset-0 z-[75] bg-obsidian/95 backdrop-blur-2xl overflow-y-auto"
           >
             <div className="min-h-screen max-w-7xl mx-auto px-5 sm:px-8 py-8 sm:py-12 flex flex-col justify-between">
-              {/* Top Portal Bar */}
               <div className="flex items-center justify-between border-b border-ivory/15 pb-5 mb-8">
                 <div className="flex items-center gap-3">
                   <span
@@ -746,9 +857,7 @@ export default function CaseHighlightsSection({
                 </div>
               </div>
 
-              {/* Portal Main Content */}
               <div className="grid lg:grid-cols-12 gap-10 items-start my-auto">
-                {/* Left Column: Deep-Dive Architecture */}
                 <div className="lg:col-span-6 space-y-6">
                   <h2 className="font-display font-bold text-4xl sm:text-6xl tracking-tight text-ivory leading-none">
                     <ScrambleText text={selectedCase.client} triggerKey={selectedCase.id} />
@@ -807,7 +916,6 @@ export default function CaseHighlightsSection({
                   </div>
                 </div>
 
-                {/* Right Column: Interactive Live Simulation Sandbox */}
                 <div className="lg:col-span-6 rounded-3xl bg-surface border border-ivory/15 p-6 space-y-5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-lime">
@@ -833,7 +941,6 @@ export default function CaseHighlightsSection({
                     </div>
                   </div>
 
-                  {/* Interactive Frequency Scrubber */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs font-mono text-ivory/65">
                       <span>SIMULATION VELOCITY / SHADER OVERDRIVE</span>

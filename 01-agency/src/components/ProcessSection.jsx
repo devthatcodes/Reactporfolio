@@ -1,6 +1,13 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef } from 'react';
+import {
+  motion,
+  AnimatePresence,
+  useScroll,
+  useMotionValueEvent,
+} from 'framer-motion';
 import { Compass, Cpu, Sparkles, Rocket, CheckCircle2 } from 'lucide-react';
+import ScrambleText from './ScrambleText';
+import soundEngine from '../utils/soundEngine';
 
 const STEPS = [
   {
@@ -71,40 +78,70 @@ const STEPS = [
 
 export default function ProcessSection() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const sectionRef = useRef(null);
+
+  // Scroll-scrubbed process step progression as user scrolls through #process
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start 70%', 'end 30%'],
+  });
+
+  useMotionValueEvent(scrollYProgress, 'change', (latest) => {
+    const clamped = Math.max(0, Math.min(0.999, latest));
+    const idx = Math.floor(clamped * STEPS.length);
+    if (idx !== activeIndex && idx >= 0 && idx < STEPS.length) {
+      setActiveIndex(idx);
+    }
+  });
+
   const activeStep = STEPS[activeIndex];
   const ActiveIcon = activeStep.icon;
 
   return (
-    <section id="process" className="relative py-24 sm:py-32 px-5 sm:px-8 max-w-7xl mx-auto">
+    <section
+      id="process"
+      ref={sectionRef}
+      className="relative py-20 sm:py-28 px-5 sm:px-8 max-w-7xl mx-auto"
+    >
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.2 }}
+        initial={{ opacity: 0, y: 28, rotateX: 16 }}
+        whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+        viewport={{ once: false, amount: 0.25 }}
         transition={{ duration: 0.6 }}
+        style={{ transformPerspective: 1200 }}
         className="mb-14"
       >
         <span className="text-xs font-mono uppercase tracking-[0.22em] text-lime block mb-3">
-          // Engineering Process
+          // Scroll-Synchronized Engineering Process
         </span>
         <h2 className="font-display font-bold text-3xl sm:text-5xl tracking-tight text-ivory">
-          From ambiguity to
+          <ScrambleText text="From ambiguity to" scrambleOnMount={false} />
           <br />
           production velocity.
         </h2>
       </motion.div>
 
-      {/* Interactive 4-Step Timeline Selector */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+      {/* Interactive 4-Step Timeline Selector with 3D Scroll Entry */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8" style={{ perspective: '1200px' }}>
         {STEPS.map((item, idx) => {
           const isActive = idx === activeIndex;
           return (
-            <button
+            <motion.button
               key={item.id}
               type="button"
-              onClick={() => setActiveIndex(idx)}
-              className={`relative text-left p-5 rounded-2xl border transition-colors focus:outline-none ${
+              data-cursor={`STEP ${item.step}`}
+              onClick={() => {
+                soundEngine.playClick();
+                setActiveIndex(idx);
+              }}
+              onMouseEnter={() => soundEngine.playHover()}
+              initial={{ opacity: 0, y: 36, rotateX: 20 }}
+              whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+              viewport={{ once: false, amount: 0.2 }}
+              transition={{ duration: 0.5, delay: idx * 0.07 }}
+              className={`relative text-left p-5 rounded-2xl border transition-all focus:outline-none ${
                 isActive
-                  ? 'border-lime/50 bg-surface'
+                  ? 'border-lime/50 bg-surface shadow-[0_0_24px_rgba(200,255,50,0.12)] scale-[1.02]'
                   : 'border-ivory/10 bg-surface/40 hover:bg-surface/80 hover:border-ivory/20'
               }`}
             >
@@ -128,22 +165,25 @@ export default function ProcessSection() {
               <div className="font-display font-semibold text-base sm:text-lg text-ivory">
                 {item.title}
               </div>
-            </button>
+            </motion.button>
           );
         })}
       </div>
 
-      {/* Detail Panel */}
-      <div className="relative rounded-2xl bg-surface border border-ivory/10 p-6 sm:p-10 overflow-hidden">
+      {/* 3D Detail Panel */}
+      <div
+        className="relative rounded-2xl bg-surface/90 backdrop-blur-xl border border-ivory/15 p-6 sm:p-10 overflow-hidden shadow-2xl"
+        style={{ perspective: '1400px' }}
+      >
         <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-indigoGlow/15 blur-[100px] pointer-events-none" />
 
         <AnimatePresence mode="wait">
           <motion.div
             key={activeStep.id}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            initial={{ opacity: 0, y: 24, rotateX: 14, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -24, rotateX: -14, scale: 0.96 }}
+            transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             className="relative z-10 grid lg:grid-cols-12 gap-8 items-center"
           >
             <div className="lg:col-span-7">
@@ -155,14 +195,14 @@ export default function ProcessSection() {
               </div>
 
               <h3 className="font-display font-bold text-2xl sm:text-3xl text-ivory mb-4 leading-snug">
-                {activeStep.headline}
+                <ScrambleText text={activeStep.headline} triggerKey={activeStep.id} />
               </h3>
               <p className="text-ivory/70 text-sm sm:text-base leading-relaxed">
                 {activeStep.description}
               </p>
             </div>
 
-            <div className="lg:col-span-5 bg-obsidian/70 border border-ivory/10 rounded-xl p-5 sm:p-6">
+            <div className="lg:col-span-5 bg-obsidian/75 border border-ivory/10 rounded-xl p-5 sm:p-6">
               <div className="text-xs font-mono uppercase tracking-wider text-ivory/50 mb-4">
                 Phase Artifacts
               </div>
