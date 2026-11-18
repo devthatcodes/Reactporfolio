@@ -28,11 +28,11 @@ export default function ContactFooter({ onOpenTheater }) {
       className="relative py-24 px-5 sm:px-8 max-w-7xl mx-auto border-t border-white/10"
     >
       <div className="grid lg:grid-cols-12 gap-12 items-start mb-20">
-        {/* Left Column: Deontae Work Direct Contact */}
+        {/* Left Column: Deontae Word Direct Contact */}
         <div className="lg:col-span-6 space-y-6">
           <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-mono text-emerald-300">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span>DEONTAE WORK · OPEN TO FRONT END ENGINEERING ROLES</span>
+            <span>DEONTAE WORD · OPEN TO FRONT END ENGINEERING ROLES</span>
           </div>
 
           <h2 className="font-display font-extrabold text-4xl sm:text-6xl tracking-tight text-[#F5F4F0] leading-[1.02]">
@@ -97,7 +97,7 @@ export default function ContactFooter({ onOpenTheater }) {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="text-xs font-mono uppercase tracking-[0.2em] text-white/45 mb-2">
-                // DIRECT INQUIRY TO DEONTAE WORK
+                // DIRECT INQUIRY TO DEONTAE WORD
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
@@ -150,7 +150,7 @@ export default function ContactFooter({ onOpenTheater }) {
       <div className="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/45">
         <div className="flex flex-wrap items-center gap-4">
           <span className="font-mono uppercase tracking-wider text-white/65">
-            DEONTAE WORK // LIVE EXHIBITION:
+            DEONTAE WORD // LIVE EXHIBITION:
           </span>
           {PORTFOLIO_PROJECTS.map((p) => (
             <button
@@ -167,7 +167,7 @@ export default function ContactFooter({ onOpenTheater }) {
           ))}
         </div>
         <div className="font-mono">
-          © {new Date().getFullYear()} Deontae Work · Front End Engineer
+          © {new Date().getFullYear()} Deontae Word · Front End Engineer
         </div>
       </div>
     </footer>

@@ -53,14 +53,14 @@ export default function HeroPortfolio({
 
       {/* Center Editorial + Kinetic Stage */}
       <div className="my-auto py-8 sm:py-12">
-        {/* Clean, Sophisticated Deontae Work Headline */}
+        {/* Clean, Sophisticated Deontae Word Headline */}
         <div className="mb-8">
           <motion.div
             style={{ x: firstNameX }}
             className="flex flex-wrap items-baseline justify-between gap-4 will-change-transform"
           >
             <h1 className="font-display font-extrabold text-5xl sm:text-7xl lg:text-[96px] leading-[0.95] tracking-[-0.04em] text-[#F5F4F0] uppercase">
-              Deontae Work
+              Deontae Word
             </h1>
             <span className="font-serif italic text-2xl sm:text-4xl lg:text-5xl text-[#E2D9C8]">
               Front End Engineer

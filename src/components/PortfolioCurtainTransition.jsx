@@ -2,8 +2,8 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /**
- * Signature Transition for Deontae Work's Portfolio:
- * Asymmetric Diagonal Silk Curtain Sweep with the "DW // DEONTAE WORK" Monogram Crest.
+ * Signature Transition for Deontae Word's Portfolio:
+ * Asymmetric Diagonal Silk Curtain Sweep with the "DW // DEONTAE WORD" Monogram Crest.
  * 100% GPU-composited translate3d + opacity.
  */
 export default function PortfolioCurtainTransition({ transitionState }) {
@@ -34,7 +34,7 @@ export default function PortfolioCurtainTransition({ transitionState }) {
                   DW
                 </span>
                 <span className="font-mono text-[11px] uppercase tracking-[0.28em] text-white/55">
-                  {subtitle || 'DEONTAE WORK · FRONT END ENGINEER'}
+                  {subtitle || 'DEONTAE WORD · FRONT END ENGINEER'}
                 </span>
               </div>
               <div className="font-serif italic text-4xl sm:text-6xl text-[#F5F4F0] tracking-tight">

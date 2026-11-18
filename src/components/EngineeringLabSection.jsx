@@ -95,7 +95,7 @@ export default function EngineeringLabSection({ onOpenInquiry }) {
         </div>
         <p className="text-sm sm:text-base text-white/60 max-w-md leading-relaxed">
           Clear scope, fast communication, and direct collaboration with{' '}
-          <strong className="text-white">Deontae Work</strong> from initial concept to launch.
+          <strong className="text-white">Deontae Word</strong> from initial concept to launch.
         </p>
       </div>
 

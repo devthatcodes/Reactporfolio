@@ -155,7 +155,7 @@ function ProjectStageArtwork({ project }) {
             4829 •••• •••• 9014
           </div>
           <div className="flex justify-between text-[10px] font-mono text-white/55">
-            <span>DEONTAE WORK</span>
+            <span>DEONTAE WORD</span>
             <span>ZERO-LATENCY RAIL</span>
           </div>
         </div>

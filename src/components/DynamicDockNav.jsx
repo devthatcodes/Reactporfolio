@@ -16,7 +16,7 @@ export default function DynamicDockNav({
   return (
     <header className="fixed top-4 inset-x-0 z-50 px-4 sm:px-8 pointer-events-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-        {/* Left: Deontae Work Identity */}
+        {/* Left: Deontae Word Identity */}
         <button
           type="button"
           onClick={() => {
@@ -33,7 +33,7 @@ export default function DynamicDockNav({
           </span>
           <div className="text-left leading-tight">
             <div className="font-display font-bold text-xs sm:text-sm text-[#F5F4F0] tracking-tight">
-              Deontae Work
+              Deontae Word
             </div>
             <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-white/50">
               Front End Engineer

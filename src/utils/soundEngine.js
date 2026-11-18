@@ -1,4 +1,4 @@
-// Subtle, high-craft harmonic Web Audio UI feedback for Deontae Work's portfolio
+// Subtle, high-craft harmonic Web Audio UI feedback for Deontae Word's portfolio
 class PortfolioSoundEngine {
   constructor() {
     this.ctx = null;
