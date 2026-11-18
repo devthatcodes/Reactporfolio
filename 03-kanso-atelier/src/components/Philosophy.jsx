@@ -52,7 +52,7 @@ export default function Philosophy() {
   return (
     <>
       {/* 01 Studio Overview Strip */}
-      <section id="studio" className="py-20 md:py-28 border-t border-charcoal/10 bg-alabaster">
+      <section id="studio" className="relative z-10 py-20 md:py-28 border-t border-charcoal/10 bg-alabaster/80 backdrop-blur-[2px]">
         <div className="max-w-[1360px] mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
@@ -92,7 +92,7 @@ export default function Philosophy() {
       </section>
 
       {/* 03 Philosophy / Ethos Strip */}
-      <section id="philosophy" className="py-20 md:py-28 bg-stone border-y border-charcoal/10">
+      <section id="philosophy" className="relative z-10 py-20 md:py-28 bg-stone/85 backdrop-blur-[2px] border-y border-charcoal/10">
         <div className="max-w-[1360px] mx-auto px-6 md:px-12">
           <motion.div
             initial={{ opacity: 0, y: 16 }}

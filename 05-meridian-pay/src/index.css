@@ -5,6 +5,8 @@
 @layer base {
   html {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #030712;
+    color: #ffffff;
   }
 }
 
@@ -12,13 +14,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.bg-grid-slate {
-  background-image: linear-gradient(to right, rgba(15, 23, 42, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(15, 23, 42, 0.035) 1px, transparent 1px);
-  background-size: 36px 36px;
-}
-
-/* Custom range slider styling for spend limit */
+/* Custom range slider styling for spend & tranche limits */
 input[type='range'].meridian-slider {
   -webkit-appearance: none;
   appearance: none;
@@ -37,23 +33,23 @@ input[type='range'].meridian-slider::-webkit-slider-thumb {
   height: 20px;
   width: 20px;
   border-radius: 9999px;
-  background: #ffffff;
-  border: 2.5px solid #2563eb;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+  background: #030712;
+  border: 2.5px solid #10b981;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.7);
   margin-top: -6px;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 input[type='range'].meridian-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.35);
+  transform: scale(1.15);
+  box-shadow: 0 0 22px rgba(16, 185, 129, 0.95);
 }
 
 input[type='range'].meridian-slider::-moz-range-thumb {
   height: 20px;
   width: 20px;
   border-radius: 9999px;
-  background: #ffffff;
-  border: 2.5px solid #2563eb;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+  background: #030712;
+  border: 2.5px solid #10b981;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.7);
 }

@@ -1,63 +1,66 @@
 import React, { useState, useRef } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { Lock, Unlock, Shield, Sliders, Wifi } from 'lucide-react';
+import { Lock, Unlock, Shield, Sliders, Wifi, Sparkles } from 'lucide-react';
+import ScrambleText from './ScrambleText';
+import { soundEngine } from '../utils/soundEngine';
 
 const CARD_THEMES = {
   obsidian: {
     id: 'obsidian',
-    name: 'Obsidian Metal',
-    badge: 'PHYSICAL · TITANIUM',
-    bgClass: 'from-[#0F172A] via-[#1E293B] to-[#0B1120]',
+    name: 'Obsidian Titanium',
+    badge: 'PHYSICAL · LASER TITANIUM',
+    bgClass: 'from-[#070D19] via-[#111C35] to-[#030712]',
     accentColor: '#10B981',
     textColor: 'text-white',
     subTextColor: 'text-slate-300',
     last4: '4829',
     holder: 'ALEXANDER CHEN · CFO',
-    network: 'VISA CORPORATE',
+    network: 'VISA INFINITE INSTITUTIONAL',
   },
   emerald: {
     id: 'emerald',
-    name: 'Emerald Virtual',
-    badge: 'VIRTUAL · SaaS & CLOUD',
-    bgClass: 'from-[#064E3B] via-[#059669] to-[#047857]',
-    accentColor: '#A7F3D0',
+    name: 'Quantum Emerald',
+    badge: 'VIRTUAL · ZERO-KNOWLEDGE',
+    bgClass: 'from-[#022C22] via-[#065F46] to-[#047857]',
+    accentColor: '#6EE7B7',
     textColor: 'text-white',
     subTextColor: 'text-emerald-100',
     last4: '9104',
-    holder: 'AWS INFRASTRUCTURE',
-    network: 'VISA COMMERCIAL',
+    holder: 'AI COMPUTE CLUSTER 04',
+    network: 'VISA COMMERCIAL DIRECT',
   },
   cobalt: {
     id: 'cobalt',
-    name: 'Cobalt Travel',
-    badge: 'TRAVEL · 0% FX FEE',
-    bgClass: 'from-[#1E3A8A] via-[#2563EB] to-[#1D4ED8]',
-    accentColor: '#93C5FD',
+    name: 'Cyber Cobalt',
+    badge: 'EXECUTIVE · 0% FX SPREAD',
+    bgClass: 'from-[#0F172A] via-[#1D4ED8] to-[#0284C7]',
+    accentColor: '#7DD3FC',
     textColor: 'text-white',
-    subTextColor: 'text-blue-100',
+    subTextColor: 'text-cyan-100',
     last4: '7731',
-    holder: 'EMEA SALES TEAM',
-    network: 'MASTERCARD WORLD',
+    holder: 'TOKYO–LONDON DESK',
+    network: 'MASTERCARD WORLD ELITE',
   },
 };
 
-export default function VirtualCardShowcase() {
+export default function VirtualCardShowcase({ onShaderPulse }) {
   const [selectedTheme, setSelectedTheme] = useState('obsidian');
-  const [spendLimit, setSpendLimit] = useState(85000);
+  const [spendLimit, setSpendLimit] = useState(125000);
   const [isFrozen, setIsFrozen] = useState(false);
   const [requireReceipt, setRequireReceipt] = useState(true);
+  const [foilCoords, setFoilCoords] = useState({ x: 50, y: 50, angle: 135 });
 
   const cardRef = useRef(null);
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
 
-  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [10, -10]), {
-    stiffness: 220,
-    damping: 24,
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [14, -14]), {
+    stiffness: 240,
+    damping: 22,
   });
-  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-12, 12]), {
-    stiffness: 220,
-    damping: 24,
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-16, 16]), {
+    stiffness: 240,
+    damping: 22,
   });
 
   const handleMouseMove = (e) => {
@@ -67,65 +70,89 @@ export default function VirtualCardShowcase() {
     const yPct = (e.clientY - rect.top) / rect.height - 0.5;
     mouseX.set(xPct);
     mouseY.set(yPct);
+    setFoilCoords({
+      x: Math.round((xPct + 0.5) * 100),
+      y: Math.round((yPct + 0.5) * 100),
+      angle: Math.round(135 + xPct * 90 - yPct * 60),
+    });
   };
 
   const handleMouseLeave = () => {
     mouseX.set(0);
     mouseY.set(0);
+    setFoilCoords({ x: 50, y: 50, angle: 135 });
   };
 
   const theme = CARD_THEMES[selectedTheme];
-  const currentSpend = 18450;
+  const currentSpend = 24800;
   const utilizationPct = Math.min(100, Math.round((currentSpend / spendLimit) * 100));
   const sliderPct = ((spendLimit - 5000) / (250000 - 5000)) * 100;
 
   return (
-    <section id="cards" className="py-20 lg:py-28 bg-[#F8FAFC] border-b border-slate-200/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section id="cards" className="relative py-24 lg:py-32 border-b border-white/10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-2xl mb-12 lg:mb-16">
-          <div className="text-xs font-mono font-semibold uppercase tracking-wider text-[#2563EB] mb-2.5">
-            Programmable Corporate Cards
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-[11px] font-mono font-semibold uppercase tracking-widest text-cyan-400 mb-3">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>03 // HOLOGRAPHIC METAL &amp; VIRTUAL CARDS</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-[#0F172A]">
-            Issue physical &amp; virtual cards with built-in spend guardrails.
+          <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white">
+            <ScrambleText text="Programmable Titanium Cards." />
           </h2>
-          <p className="text-base text-slate-600 mt-3">
-            Spin up vendor-locked virtual cards in seconds or ship laser-etched titanium cards
-            with real-time limits and multi-currency settlement.
+          <p className="text-base text-slate-400 mt-3">
+            Spin up vendor-locked virtual cards in milliseconds or issue laser-etched titanium
+            cards with real-time cryptographic spend guardrails and multi-currency settlement.
           </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          {/* Left: 3D Tilt Interactive Card */}
+          {/* Left: 3D Gyroscopic Tilt Interactive Card with Iridescent Holographic Foil Shimmer */}
           <div className="lg:col-span-6 flex flex-col items-center">
-            <div style={{ perspective: 1100 }} className="w-full max-w-[430px]">
+            <div style={{ perspective: 1150 }} className="w-full max-w-[440px]">
               <motion.div
                 ref={cardRef}
+                data-cursor="ROTATE 3D CARD"
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
                 style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-                className={`relative w-full aspect-[1.586/1] rounded-2xl bg-gradient-to-br ${theme.bgClass} p-6 sm:p-7 shadow-card-elevated overflow-hidden select-none cursor-pointer border border-white/15`}
+                className={`relative w-full aspect-[1.586/1] rounded-3xl bg-gradient-to-br ${theme.bgClass} p-6 sm:p-7 shadow-[0_30px_80px_rgba(0,0,0,0.85)] overflow-hidden select-none cursor-pointer border border-white/20`}
               >
-                {/* Bespoke Geometric SVG Pattern Overlay */}
+                {/* Live Iridescent Holographic Foil Shimmer Layer */}
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-40 mix-blend-screen transition-opacity duration-200"
+                  style={{
+                    background: `radial-gradient(circle at ${foilCoords.x}% ${foilCoords.y}%, rgba(16, 185, 129, 0.45), rgba(6, 182, 212, 0.28) 38%, rgba(59, 130, 246, 0.15) 65%, transparent 85%), linear-gradient(${foilCoords.angle}deg, transparent 20%, rgba(255,255,255,0.18) 50%, transparent 80%)`,
+                  }}
+                />
+
+                {/* Bespoke Geometric Quantum SVG Pattern Overlay */}
                 <svg
-                  className="absolute inset-0 w-full h-full opacity-15 pointer-events-none"
+                  className="absolute inset-0 w-full h-full opacity-20 pointer-events-none"
                   viewBox="0 0 400 250"
                   fill="none"
                   aria-hidden="true"
                 >
                   <circle cx="340" cy="40" r="140" stroke="white" strokeWidth="1" />
-                  <circle cx="340" cy="40" r="95" stroke="white" strokeWidth="0.75" />
+                  <circle cx="340" cy="40" r="95" stroke="#10B981" strokeWidth="0.85" />
+                  <circle
+                    cx="340"
+                    cy="40"
+                    r="55"
+                    stroke="#06B6D4"
+                    strokeWidth="0.75"
+                    strokeDasharray="4 4"
+                  />
                   <path d="M-20 210 Q 180 120 420 220" stroke="white" strokeWidth="1" />
                 </svg>
 
                 {/* Frozen Overlay */}
                 {isFrozen && (
-                  <div className="absolute inset-0 bg-[#0F172A]/70 backdrop-blur-[2px] z-20 flex flex-col items-center justify-center gap-2">
-                    <div className="w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
-                      <Lock className="w-5 h-5 text-white" />
+                  <div className="absolute inset-0 bg-[#030712]/80 backdrop-blur-md z-20 flex flex-col items-center justify-center gap-2">
+                    <div className="w-12 h-12 rounded-full bg-[#10B981]/15 border border-[#10B981]/40 flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-[#10B981]" />
                     </div>
-                    <span className="font-mono text-xs font-semibold tracking-widest text-white uppercase">
-                      Card Frozen
+                    <span className="font-mono text-xs font-bold tracking-widest text-[#10B981] uppercase">
+                      CRYPTOGRAPHIC FREEZE ACTIVE
                     </span>
                   </div>
                 )}
@@ -134,7 +161,7 @@ export default function VirtualCardShowcase() {
                   {/* Top Row */}
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-md bg-white/15 flex items-center justify-center">
+                      <div className="w-7 h-7 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                           <path
                             d="M4 18V6L12 13L20 6V18"
@@ -145,46 +172,57 @@ export default function VirtualCardShowcase() {
                           />
                         </svg>
                       </div>
-                      <span className={`font-semibold text-sm tracking-tight ${theme.textColor}`}>
+                      <span className={`font-bold text-sm tracking-tight ${theme.textColor}`}>
                         Meridian
                       </span>
                     </div>
                     <span
-                      className={`font-mono text-[10px] tracking-wider px-2.5 py-1 rounded-full bg-white/10 border border-white/15 ${theme.subTextColor}`}
+                      className={`font-mono text-[10px] tracking-wider px-2.5 py-1 rounded-full bg-black/30 border border-white/20 ${theme.subTextColor}`}
                     >
                       {theme.badge}
                     </span>
                   </div>
 
-                  {/* Middle Row: EMV Chip & Contactless */}
+                  {/* Middle Row: Holographic EMV Chip & Contactless + Gyro Telemetry */}
                   <div className="flex items-center justify-between my-auto">
-                    <div className="w-11 h-8 rounded-md bg-gradient-to-br from-amber-200/90 via-amber-300/80 to-amber-500/80 border border-amber-100/50 flex items-center justify-center shadow-inner">
-                      <div className="w-7 h-5 border border-amber-900/30 rounded-[3px] grid grid-cols-2 gap-px p-0.5">
-                        <div className="border-r border-amber-900/25" />
+                    <div className="w-12 h-9 rounded-md bg-gradient-to-br from-amber-200/90 via-emerald-200/80 to-cyan-300/85 border border-white/40 flex items-center justify-center shadow-inner">
+                      <div className="w-8 h-6 border border-slate-900/30 rounded-[3px] grid grid-cols-2 gap-px p-0.5">
+                        <div className="border-r border-slate-900/25" />
                         <div />
                       </div>
                     </div>
-                    <Wifi className={`w-5 h-5 rotate-90 opacity-75 ${theme.textColor}`} />
+                    <div className="flex items-center gap-3">
+                      <span className="font-mono text-[10px] text-white/60">
+                        FOIL {foilCoords.x}% · {foilCoords.y}%
+                      </span>
+                      <Wifi className={`w-5 h-5 rotate-90 opacity-85 ${theme.textColor}`} />
+                    </div>
                   </div>
 
                   {/* Bottom Row */}
                   <div className="space-y-3">
                     <div
-                      className={`font-mono text-lg sm:text-xl tracking-[0.18em] ${theme.textColor} tabular-nums`}
+                      className={`font-mono text-lg sm:text-xl tracking-[0.2em] ${theme.textColor} tabular-nums`}
                     >
-                      •••• •••• •••• {theme.last4}
+                      4921 •••• •••• {theme.last4}
                     </div>
                     <div className="flex items-end justify-between">
                       <div>
-                        <div className={`text-[10px] uppercase tracking-wider opacity-70 ${theme.subTextColor}`}>
-                          Cardholder
+                        <div
+                          className={`text-[10px] font-mono uppercase tracking-wider opacity-70 ${theme.subTextColor}`}
+                        >
+                          Authorized Entity
                         </div>
-                        <div className={`font-mono text-xs font-medium tracking-wide ${theme.textColor}`}>
+                        <div
+                          className={`font-mono text-xs font-semibold tracking-wide ${theme.textColor}`}
+                        >
                           {theme.holder}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className={`font-mono text-[11px] font-semibold tracking-wider ${theme.textColor}`}>
+                        <div
+                          className={`font-mono text-[10px] font-bold tracking-wider ${theme.textColor}`}
+                        >
                           {theme.network}
                         </div>
                       </div>
@@ -195,23 +233,29 @@ export default function VirtualCardShowcase() {
             </div>
 
             {/* Theme Selector Pills */}
-            <div className="mt-7 inline-flex p-1.5 rounded-xl bg-white border border-slate-200 shadow-sm gap-1">
+            <div className="mt-7 inline-flex p-1.5 rounded-2xl bg-[#070D19] border border-white/15 shadow-lg gap-1">
               {Object.values(CARD_THEMES).map((item) => {
                 const active = selectedTheme === item.id;
                 return (
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => setSelectedTheme(item.id)}
-                    className={`relative px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
-                      active ? 'text-white' : 'text-slate-600 hover:text-[#0F172A]'
+                    data-cursor={`FINISH: ${item.name.toUpperCase()}`}
+                    onMouseEnter={() => soundEngine.playHover(1.05)}
+                    onClick={() => {
+                      soundEngine.playClick();
+                      if (onShaderPulse) onShaderPulse();
+                      setSelectedTheme(item.id);
+                    }}
+                    className={`relative px-3.5 py-2 rounded-xl text-xs font-mono font-semibold transition-colors ${
+                      active ? 'text-[#030712]' : 'text-slate-400 hover:text-white'
                     }`}
                   >
                     {active && (
                       <motion.span
                         layoutId="cardThemePill"
                         transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-                        className="absolute inset-0 rounded-lg bg-[#0F172A]"
+                        className="absolute inset-0 rounded-xl bg-[#10B981]"
                       />
                     )}
                     <span className="relative z-10">{item.name}</span>
@@ -221,30 +265,35 @@ export default function VirtualCardShowcase() {
             </div>
           </div>
 
-          {/* Right: Interactive Spend-Limit Slider & Controls */}
+          {/* Right: Interactive Spend-Limit Slider & Cryptographic Controls */}
           <div className="lg:col-span-6">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-card-subtle p-6 sm:p-8 space-y-7">
+            <div className="bg-[#070D19]/90 backdrop-blur-xl rounded-3xl border border-white/15 shadow-[0_20px_60px_rgba(0,0,0,0.65)] p-6 sm:p-8 space-y-7">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-[#2563EB]/10 text-[#2563EB] flex items-center justify-center">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#10B981]/15 border border-[#10B981]/30 text-[#10B981] flex items-center justify-center">
                     <Sliders className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-base font-semibold text-[#0F172A]">
-                      Live Spend Limit Control
+                    <h3 className="text-base font-bold text-white">
+                      Real-Time Spend Guardrail Engine
                     </h3>
-                    <p className="text-xs text-slate-500">
-                      Changes enforce globally in &lt;200ms
+                    <p className="text-xs font-mono text-slate-400">
+                      ENFORCES ACROSS VISA / MASTERCARD NODES IN &lt;180ms
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setIsFrozen((f) => !f)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                  data-cursor={isFrozen ? 'UNFREEZE CARD' : 'FREEZE CARD'}
+                  onClick={() => {
+                    soundEngine.playClick();
+                    if (onShaderPulse) onShaderPulse();
+                    setIsFrozen((f) => !f);
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold uppercase border transition-colors ${
                     isFrozen
-                      ? 'bg-amber-50 border-amber-200 text-amber-700'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                      ? 'bg-amber-500/20 border-amber-400/50 text-amber-300'
+                      : 'bg-white/5 border-white/15 text-slate-200 hover:bg-white/10'
                   }`}
                 >
                   {isFrozen ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
@@ -255,8 +304,10 @@ export default function VirtualCardShowcase() {
               {/* Spend Limit Slider */}
               <div className="space-y-3">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-sm font-medium text-slate-600">Monthly Spend Cap</span>
-                  <span className="font-mono text-2xl sm:text-3xl font-bold text-[#0F172A] tabular-nums">
+                  <span className="text-xs font-mono uppercase tracking-wider text-slate-400">
+                    MONTHLY VELOCITY LIMIT
+                  </span>
+                  <span className="font-mono text-2xl sm:text-3xl font-bold text-[#10B981] tabular-nums">
                     ${spendLimit.toLocaleString('en-US')}
                   </span>
                 </div>
@@ -268,16 +319,18 @@ export default function VirtualCardShowcase() {
                     max={250000}
                     step={5000}
                     value={spendLimit}
-                    onChange={(e) => setSpendLimit(Number(e.target.value))}
+                    onChange={(e) => {
+                      setSpendLimit(Number(e.target.value));
+                    }}
                     aria-label="Monthly Spend Limit"
                     className="meridian-slider w-full"
                     style={{
-                      background: `linear-gradient(to right, #2563EB 0%, #2563EB ${sliderPct}%, #E2E8F0 ${sliderPct}%, #E2E8F0 100%)`,
+                      background: `linear-gradient(to right, #10B981 0%, #06B6D4 ${sliderPct}%, #1E293B ${sliderPct}%, #1E293B 100%)`,
                       borderRadius: '9999px',
                       height: '8px',
                     }}
                   />
-                  <div className="flex justify-between text-[11px] font-mono text-slate-400 mt-2">
+                  <div className="flex justify-between text-[11px] font-mono text-slate-500 mt-2">
                     <span>$5,000</span>
                     <span>$125,000</span>
                     <span>$250,000</span>
@@ -286,17 +339,20 @@ export default function VirtualCardShowcase() {
               </div>
 
               {/* Utilization Preview */}
-              <div className="rounded-xl bg-[#F8FAFC] border border-slate-200/80 p-4 space-y-2.5">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-600 font-medium">Current Cycle Utilization</span>
-                  <span className="font-mono font-semibold text-[#0F172A] tabular-nums">
-                    ${currentSpend.toLocaleString('en-US')} / ${spendLimit.toLocaleString('en-US')} ({utilizationPct}%)
+              <div className="rounded-2xl bg-[#030712]/85 border border-white/10 p-4 space-y-2.5">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-slate-400">CURRENT CYCLE UTILIZATION</span>
+                  <span className="font-semibold text-white tabular-nums">
+                    ${currentSpend.toLocaleString('en-US')} / ${spendLimit.toLocaleString('en-US')}{' '}
+                    ({utilizationPct}%)
                   </span>
                 </div>
-                <div className="w-full h-2.5 rounded-full bg-slate-200 overflow-hidden">
+                <div className="w-full h-2.5 rounded-full bg-slate-800 overflow-hidden">
                   <motion.div
                     className={`h-full rounded-full ${
-                      utilizationPct > 80 ? 'bg-amber-500' : 'bg-[#10B981]'
+                      utilizationPct > 80
+                        ? 'bg-amber-400'
+                        : 'bg-gradient-to-r from-[#10B981] to-cyan-400'
                     }`}
                     initial={false}
                     animate={{ width: `${utilizationPct}%` }}
@@ -306,15 +362,15 @@ export default function VirtualCardShowcase() {
               </div>
 
               {/* Policy Toggle */}
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+              <div className="pt-2 border-t border-white/10 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <Shield className="w-4 h-4 text-[#10B981]" />
                   <div>
-                    <div className="text-sm font-medium text-[#0F172A]">
-                      Require Receipt &amp; Memo &gt; $500
+                    <div className="text-sm font-semibold text-white">
+                      Zero-Knowledge Receipt Attestation &gt; $500
                     </div>
-                    <div className="text-xs text-slate-500">
-                      Auto-syncs to NetSuite &amp; QuickBooks
+                    <div className="text-xs font-mono text-slate-400">
+                      AUTO-RECONCILES TO NETSUITE, SAP &amp; WORKDAY
                     </div>
                   </div>
                 </div>
@@ -322,13 +378,16 @@ export default function VirtualCardShowcase() {
                   type="button"
                   role="switch"
                   aria-checked={requireReceipt}
-                  onClick={() => setRequireReceipt((v) => !v)}
+                  onClick={() => {
+                    soundEngine.playClick();
+                    setRequireReceipt((v) => !v);
+                  }}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ${
-                    requireReceipt ? 'bg-[#10B981]' : 'bg-slate-200'
+                    requireReceipt ? 'bg-[#10B981]' : 'bg-slate-700'
                   }`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-[#030712] shadow ring-0 transition duration-200 ${
                       requireReceipt ? 'translate-x-5' : 'translate-x-0'
                     }`}
                   />

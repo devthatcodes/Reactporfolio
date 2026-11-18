@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Sparkles, ChevronDown } from 'lucide-react';
+import ScrambleText from './ScrambleText';
+import { playHover, playClick } from '../utils/soundEngine';
 
 const TIERS = [
   {
@@ -62,14 +64,14 @@ export default function PricingSection({ onSelectPlan }) {
   const [showComparison, setShowComparison] = useState(false);
 
   return (
-    <section id="pricing" className="border-t border-[#27272A]/80 bg-[#09090B] py-20 sm:py-28">
+    <section id="pricing" className="relative border-t border-[#27272A]/80 py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <span className="font-mono text-xs uppercase tracking-[0.2em] text-cyan-400">
-            Transparent Pricing
+            05 // COMPUTE PRICING
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#FAFAFA] sm:text-4xl">
-            Predictable pricing that scales with tokens.
+            <ScrambleText text="Predictable pricing that scales with tokens." scrambleOnMount={false} />
           </h2>
           <p className="mt-3 text-base text-zinc-400">
             Start free in seconds. Upgrade when your production traffic demands edge caching and SLAs.
@@ -79,7 +81,11 @@ export default function PricingSection({ onSelectPlan }) {
           <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-[#27272A] bg-[#111115] p-1.5">
             <button
               type="button"
-              onClick={() => setAnnual(false)}
+              onMouseEnter={playHover}
+              onClick={() => {
+                playClick();
+                setAnnual(false);
+              }}
               className={`rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
                 !annual ? 'bg-[#27272A] text-white' : 'text-zinc-400 hover:text-zinc-200'
               }`}
@@ -88,7 +94,11 @@ export default function PricingSection({ onSelectPlan }) {
             </button>
             <button
               type="button"
-              onClick={() => setAnnual(true)}
+              onMouseEnter={playHover}
+              onClick={() => {
+                playClick();
+                setAnnual(true);
+              }}
               className={`flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-semibold transition-colors ${
                 annual ? 'bg-[#27272A] text-white' : 'text-zinc-400 hover:text-zinc-200'
               }`}
@@ -112,10 +122,11 @@ export default function PricingSection({ onSelectPlan }) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.4 }}
-                className={`relative flex flex-col justify-between rounded-2xl border p-7 ${
+                onMouseEnter={playHover}
+                className={`relative flex flex-col justify-between rounded-2xl border p-7 backdrop-blur-md transition-all hover:-translate-y-1 ${
                   tier.popular
-                    ? 'border-cyan-400/50 bg-[#111115] shadow-2xl shadow-cyan-500/10'
-                    : 'border-[#27272A] bg-[#111115]/70'
+                    ? 'border-cyan-400/50 bg-[#111115]/95 shadow-2xl shadow-cyan-500/10'
+                    : 'border-[#27272A] bg-[#111115]/80 hover:border-zinc-700'
                 }`}
               >
                 {tier.popular && (
@@ -163,11 +174,16 @@ export default function PricingSection({ onSelectPlan }) {
 
                 <button
                   type="button"
-                  onClick={() => onSelectPlan(tier.name)}
+                  data-cursor="[ SELECT PLAN ]"
+                  onMouseEnter={playHover}
+                  onClick={() => {
+                    playClick();
+                    onSelectPlan(tier.name);
+                  }}
                   className={`mt-8 w-full rounded-xl py-2.5 text-sm font-semibold transition-all ${
                     tier.popular
                       ? 'bg-gradient-to-r from-[#22D3EE] to-[#8B5CF6] text-[#09090B] hover:opacity-90'
-                      : 'border border-[#27272A] bg-[#09090B] text-[#FAFAFA] hover:border-zinc-600'
+                      : 'border border-[#27272A] bg-[#09090B] text-[#FAFAFA] hover:border-cyan-400/50'
                   }`}
                 >
                   {tier.cta}
@@ -181,7 +197,11 @@ export default function PricingSection({ onSelectPlan }) {
         <div className="mt-10 text-center">
           <button
             type="button"
-            onClick={() => setShowComparison((prev) => !prev)}
+            onMouseEnter={playHover}
+            onClick={() => {
+              playClick();
+              setShowComparison((prev) => !prev);
+            }}
             className="inline-flex items-center gap-2 rounded-lg border border-[#27272A] bg-[#111115] px-4 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
           >
             <span>{showComparison ? 'Hide' : 'Compare'} full plan specifications</span>

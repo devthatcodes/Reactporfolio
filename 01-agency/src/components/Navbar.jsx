@@ -1,15 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowUpRight, Menu, X } from 'lucide-react';
+import { ArrowUpRight, Menu, X, Volume2, VolumeX, Sparkles } from 'lucide-react';
+import ScrambleText from './ScrambleText';
+import soundEngine from '../utils/soundEngine';
 
 const NAV_LINKS = [
-  { label: 'Capabilities', href: '#services' },
-  { label: 'Outcomes', href: '#work' },
-  { label: 'Process', href: '#process' },
-  { label: 'Estimator', href: '#estimator' },
+  { label: 'Work Stream', href: '#work', shader: 1 },
+  { label: 'Capabilities', href: '#services', shader: 0 },
+  { label: 'Process', href: '#process', shader: 2 },
+  { label: 'Estimator', href: '#estimator', shader: 0 },
 ];
 
-export default function Navbar({ onOpenInquiry }) {
+export default function Navbar({
+  onOpenInquiry,
+  onTriggerPortal,
+  onSelectShader,
+  soundEnabled,
+  onToggleSound,
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -19,13 +27,29 @@ export default function Navbar({ onOpenInquiry }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleLinkClick = (e, href) => {
+  const handleLinkClick = (e, item) => {
     e.preventDefault();
     setMobileOpen(false);
-    const target = document.querySelector(href);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    soundEngine.playTransition();
+
+    if (onSelectShader && typeof item.shader === 'number') {
+      onSelectShader(item.shader);
     }
+
+    if (onTriggerPortal) {
+      onTriggerPortal({
+        label: item.label,
+        sublabel: `PORTAL NAVIGATION // ${item.href.toUpperCase()}`,
+        accent: '#C8FF32',
+      });
+    }
+
+    setTimeout(() => {
+      const target = document.querySelector(item.href);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 220);
   };
 
   return (
@@ -40,7 +64,9 @@ export default function Navbar({ onOpenInquiry }) {
         {/* Brand Logo */}
         <a
           href="#top"
-          onClick={(e) => handleLinkClick(e, '#top')}
+          data-cursor="HOME PORTAL"
+          onClick={(e) => handleLinkClick(e, { label: 'Vespera Studio', href: '#top', shader: 0 })}
+          onMouseEnter={() => soundEngine.playHover()}
           className="flex items-center gap-3 group focus:outline-none"
         >
           <div className="relative w-9 h-9 rounded-lg bg-surface border border-ivory/15 flex items-center justify-center overflow-hidden group-hover:border-lime/60 transition-colors">
@@ -70,36 +96,60 @@ export default function Navbar({ onOpenInquiry }) {
           </div>
           <div className="flex flex-col leading-none">
             <span className="font-display font-bold text-base sm:text-lg tracking-tight text-ivory">
-              Vespera<span className="text-lime">.</span>
+              <ScrambleText text="Vespera" scrambleOnMount={false} />
+              <span className="text-lime">.</span>
             </span>
-            <span className="text-[10px] uppercase tracking-[0.2em] text-ivory/50 hidden sm:block">
-              Digital Studio
+            <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-ivory/50 hidden sm:block">
+              WEBGL &amp; PRODUCT LAB
             </span>
           </div>
         </a>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1 bg-surface/70 border border-ivory/10 rounded-full px-2 py-1.5 backdrop-blur-md">
+        <nav className="hidden md:flex items-center gap-1 bg-surface/75 border border-ivory/10 rounded-full px-2 py-1.5 backdrop-blur-md">
           {NAV_LINKS.map((item) => (
             <a
               key={item.href}
               href={item.href}
-              onClick={(e) => handleLinkClick(e, item.href)}
-              className="px-4 py-1.5 text-sm font-medium text-ivory/75 hover:text-ivory rounded-full hover:bg-ivory/5 transition-colors"
+              data-cursor={`PORTAL: ${item.label.toUpperCase()}`}
+              onClick={(e) => handleLinkClick(e, item)}
+              onMouseEnter={() => soundEngine.playHover()}
+              className="px-4 py-1.5 text-xs font-mono uppercase tracking-wider text-ivory/75 hover:text-lime rounded-full hover:bg-ivory/5 transition-colors"
             >
-              {item.label}
+              <ScrambleText text={item.label} scrambleOnMount={false} />
             </a>
           ))}
         </nav>
 
         {/* Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
+          {/* Audio Synth Pill (Mobile & Desktop) */}
           <button
             type="button"
-            onClick={() => onOpenInquiry()}
-            className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-lime text-obsidian font-display font-semibold text-sm tracking-tight hover:bg-ivory transition-colors shadow-[0_0_24px_rgba(200,255,50,0.2)]"
+            data-cursor={soundEnabled ? 'MUTE AUDIO' : 'ENABLE AUDIO'}
+            onClick={onToggleSound}
+            onMouseEnter={() => soundEngine.playHover()}
+            aria-label="Toggle Sound"
+            className={`p-2.5 rounded-full border transition-all ${
+              soundEnabled
+                ? 'bg-surface/90 border-lime/40 text-lime'
+                : 'bg-surface/60 border-ivory/15 text-ivory/50 hover:text-ivory'
+            }`}
           >
-            Start a Project
+            {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+          </button>
+
+          <button
+            type="button"
+            data-cursor="INITIATE BRIEF"
+            onClick={() => {
+              soundEngine.playClick();
+              onOpenInquiry();
+            }}
+            onMouseEnter={() => soundEngine.playHover()}
+            className="hidden sm:inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-lime text-obsidian font-display font-semibold text-xs uppercase tracking-wider hover:bg-ivory transition-colors shadow-[0_0_24px_rgba(200,255,50,0.25)]"
+          >
+            <span>Start a Project</span>
             <ArrowUpRight className="w-4 h-4" />
           </button>
 
@@ -129,8 +179,8 @@ export default function Navbar({ onOpenInquiry }) {
                 <a
                   key={item.href}
                   href={item.href}
-                  onClick={(e) => handleLinkClick(e, item.href)}
-                  className="py-2.5 px-3 rounded-lg text-base font-medium text-ivory/85 hover:text-lime hover:bg-ivory/5 transition-colors"
+                  onClick={(e) => handleLinkClick(e, item)}
+                  className="py-2.5 px-3 rounded-lg text-sm font-mono uppercase tracking-wider text-ivory/85 hover:text-lime hover:bg-ivory/5 transition-colors"
                 >
                   {item.label}
                 </a>

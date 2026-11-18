@@ -9,7 +9,10 @@ import {
   Terminal,
   Zap,
   CheckCircle2,
+  Compass,
 } from 'lucide-react';
+import ScrambleText from './ScrambleText';
+import { playHover, playClick } from '../utils/soundEngine';
 
 const REGIONS = {
   'us-east-1': { baseLatency: 14, throughput: 48200, cacheHit: 64.2 },
@@ -47,12 +50,13 @@ const MODEL_NODES = [
   },
 ];
 
-export default function HeroTelemetry({ onOpenModal }) {
+export default function HeroTelemetry({ onOpenModal, onNavigateReel }) {
   const [region, setRegion] = useState('us-east-1');
   const [isLive, setIsLive] = useState(true);
   const [selectedModel, setSelectedModel] = useState(MODEL_NODES[0].id);
   const [series, setSeries] = useState([15, 18, 14, 19, 13, 16, 21, 15, 14, 17, 13, 15, 16, 14, 15, 13]);
   const [throughput, setThroughput] = useState(REGIONS['us-east-1'].throughput);
+  const [tilt, setTilt] = useState({ rx: 0, ry: 0 });
 
   useEffect(() => {
     setThroughput(REGIONS[region].throughput);
@@ -92,21 +96,18 @@ export default function HeroTelemetry({ onOpenModal }) {
   const currentP50 = series[series.length - 1];
   const currentP95 = Math.round(currentP50 * 1.65);
 
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width;
+    const py = (e.clientY - rect.top) / rect.height;
+    setTilt({
+      rx: (0.5 - py) * 6,
+      ry: (px - 0.5) * 6,
+    });
+  };
+
   return (
     <section id="telemetry" className="relative overflow-hidden pt-16 pb-20 sm:pt-24 sm:pb-28">
-      {/* Animated Gradient Mesh */}
-      <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-40" />
-      <motion.div
-        animate={{ scale: [1, 1.08, 1], opacity: [0.22, 0.34, 0.22] }}
-        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-        className="pointer-events-none absolute -top-32 left-1/4 h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-cyan-500/20 blur-[120px]"
-      />
-      <motion.div
-        animate={{ scale: [1.05, 0.96, 1.05], opacity: [0.2, 0.32, 0.2] }}
-        transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
-        className="pointer-events-none absolute top-10 right-1/4 h-[380px] w-[380px] translate-x-1/3 rounded-full bg-violet-600/20 blur-[120px]"
-      />
-
       <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Hero Copy */}
         <div className="mx-auto max-w-3xl text-center">
@@ -114,10 +115,10 @@ export default function HeroTelemetry({ onOpenModal }) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#27272A] bg-[#111115]/90 px-3.5 py-1.5 text-xs font-medium text-zinc-300"
+            className="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-[#111115]/90 px-3.5 py-1.5 font-mono text-xs font-medium text-cyan-300 shadow-[0_0_25px_rgba(34,211,238,0.12)]"
           >
             <Zap className="h-3.5 w-3.5 text-cyan-400" />
-            <span>v2.4 Edge Gateway • Sub-10ms Semantic Routing</span>
+            <ScrambleText text="01 // NEURAL STREAM • SUB-10MS SEMANTIC ROUTING" speed={20} />
           </motion.div>
 
           <motion.h1
@@ -126,9 +127,9 @@ export default function HeroTelemetry({ onOpenModal }) {
             transition={{ duration: 0.5, delay: 0.06 }}
             className="text-4xl font-extrabold tracking-tight text-[#FAFAFA] sm:text-6xl lg:text-[64px] lg:leading-[1.06]"
           >
-            Real-time observability and routing for{' '}
-            <span className="bg-gradient-to-r from-[#22D3EE] to-[#8B5CF6] bg-clip-text text-transparent">
-              production AI
+            Autonomous telemetry &amp; neural routing for{' '}
+            <span className="bg-gradient-to-r from-[#22D3EE] via-[#8B5CF6] to-[#34D399] bg-clip-text text-transparent">
+              <ScrambleText text="production AI" scrambleOnMount={false} />
             </span>
             .
           </motion.h1>
@@ -139,8 +140,7 @@ export default function HeroTelemetry({ onOpenModal }) {
             transition={{ duration: 0.5, delay: 0.14 }}
             className="mx-auto mt-6 max-w-2xl text-base leading-relaxed text-zinc-400 sm:text-lg"
           >
-            Unify OpenAI, Anthropic, and self-hosted models behind a single ultra-low-latency gateway.
-            Cut inference spend by 42% with semantic caching, automatic failover, and full-trace telemetry.
+            Unify OpenAI, Anthropic, and self-hosted vLLM clusters behind a single WebGL-monitored neural fabric. Cut inference spend by 42% with edge vector caching, sub-4ms failover, and full-trace telemetry.
           </motion.p>
 
           <motion.div
@@ -151,41 +151,58 @@ export default function HeroTelemetry({ onOpenModal }) {
           >
             <button
               type="button"
-              onClick={onOpenModal}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#22D3EE] to-[#8B5CF6] px-6 py-3 text-sm font-semibold text-[#09090B] shadow-lg shadow-cyan-500/15 transition-opacity hover:opacity-90"
+              onMouseEnter={playHover}
+              onClick={() => {
+                playClick();
+                onOpenModal();
+              }}
+              data-cursor="[ PROVISION KEY ]"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#22D3EE] to-[#8B5CF6] px-6 py-3 text-sm font-semibold text-[#09090B] shadow-lg shadow-cyan-500/20 transition-all hover:scale-[1.02] hover:opacity-95"
             >
-              <span>Get API Key</span>
+              <span>Get Sandbox API Key</span>
               <ArrowRight className="h-4 w-4" />
             </button>
 
-            <a
-              href="#sdk"
-              className="inline-flex items-center gap-2 rounded-xl border border-[#27272A] bg-[#111115] px-6 py-3 text-sm font-semibold text-[#FAFAFA] transition-colors hover:border-zinc-600 hover:bg-[#18181D]"
+            <button
+              type="button"
+              onMouseEnter={playHover}
+              onClick={() => {
+                playClick();
+                if (onNavigateReel) onNavigateReel();
+              }}
+              data-cursor="[ ENTER WORK REEL ]"
+              className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/40 bg-[#111115]/90 px-6 py-3 text-sm font-semibold text-[#FAFAFA] transition-all hover:border-cyan-300 hover:bg-[#181820]"
             >
-              <Terminal className="h-4 w-4 text-cyan-400" />
-              <span>Explore SDK</span>
-            </a>
+              <Compass className="h-4 w-4 text-cyan-400" />
+              <span>Launch Architecture Reel</span>
+            </button>
           </motion.div>
         </div>
 
-        {/* Interactive Live Telemetry Mockup */}
+        {/* Interactive 3D Tilt Live Telemetry Mockup */}
         <motion.div
           initial={{ opacity: 0, y: 28 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.65, delay: 0.3 }}
-          className="mx-auto mt-14 max-w-5xl rounded-2xl border border-[#27272A] bg-[#111115]/95 p-4 shadow-2xl shadow-black/60 backdrop-blur-md sm:p-6"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={() => setTilt({ rx: 0, ry: 0 })}
+          style={{
+            transform: `perspective(1200px) rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)`,
+            transformStyle: 'preserve-3d',
+          }}
+          className="mx-auto mt-14 max-w-5xl rounded-2xl border border-[#27272A] bg-[#111115]/90 p-4 shadow-[0_25px_70px_-15px_rgba(0,0,0,0.85)] backdrop-blur-xl transition-transform duration-200 sm:p-6"
         >
           {/* Telemetry Top Bar */}
           <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-[#27272A] pb-4">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-zinc-700" />
-                <span className="h-2.5 w-2.5 rounded-full bg-zinc-700" />
-                <span className="h-2.5 w-2.5 rounded-full bg-zinc-700" />
+                <span className="h-2.5 w-2.5 rounded-full bg-rose-500/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/70" />
               </div>
               <div className="flex items-center gap-2 rounded-md border border-[#27272A] bg-[#09090B] px-2.5 py-1">
                 <Activity className="h-3.5 w-3.5 text-cyan-400" />
-                <span className="font-mono text-xs text-zinc-300">aether://telemetry/live</span>
+                <span className="font-mono text-xs text-zinc-300">aether://telemetry/live-fabric</span>
               </div>
             </div>
 
@@ -196,7 +213,12 @@ export default function HeroTelemetry({ onOpenModal }) {
                   <button
                     key={reg}
                     type="button"
-                    onClick={() => setRegion(reg)}
+                    onMouseEnter={playHover}
+                    onClick={() => {
+                      playClick();
+                      setRegion(reg);
+                    }}
+                    data-cursor="[ SWITCH POP ]"
                     className={`rounded-md px-2.5 py-1 font-mono text-[11px] transition-colors ${
                       region === reg
                         ? 'bg-[#1D1D24] text-cyan-300'
@@ -211,7 +233,11 @@ export default function HeroTelemetry({ onOpenModal }) {
               {/* Pause/Live Button */}
               <button
                 type="button"
-                onClick={() => setIsLive((prev) => !prev)}
+                onMouseEnter={playHover}
+                onClick={() => {
+                  playClick();
+                  setIsLive((prev) => !prev);
+                }}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272A] bg-[#09090B] px-2.5 py-1 font-mono text-[11px] text-zinc-300 transition-colors hover:border-zinc-600"
               >
                 {isLive ? (
@@ -232,7 +258,7 @@ export default function HeroTelemetry({ onOpenModal }) {
           {/* Telemetry Main Grid */}
           <div className="grid gap-5 lg:grid-cols-12">
             {/* Left: Sparkline & Throughput */}
-            <div className="flex flex-col justify-between rounded-xl border border-[#27272A] bg-[#09090B] p-4 lg:col-span-6">
+            <div className="flex flex-col justify-between rounded-xl border border-[#27272A] bg-[#09090B]/95 p-4 lg:col-span-6">
               <div className="mb-3 flex items-start justify-between">
                 <div>
                   <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">
@@ -314,13 +340,13 @@ export default function HeroTelemetry({ onOpenModal }) {
             </div>
 
             {/* Right: Interactive Model Routing Nodes */}
-            <div className="flex flex-col justify-between rounded-xl border border-[#27272A] bg-[#09090B] p-4 lg:col-span-6">
+            <div className="flex flex-col justify-between rounded-xl border border-[#27272A] bg-[#09090B]/95 p-4 lg:col-span-6">
               <div className="mb-3 flex items-center justify-between">
                 <span className="font-mono text-[11px] uppercase tracking-wider text-zinc-500">
                   Interactive Model Router
                 </span>
-                <span className="font-mono text-[11px] text-zinc-400">
-                  Click node to inspect
+                <span className="font-mono text-[11px] text-cyan-400">
+                  [CLICK NODE TO INSPECT]
                 </span>
               </div>
 
@@ -372,7 +398,12 @@ export default function HeroTelemetry({ onOpenModal }) {
                       <button
                         key={node.id}
                         type="button"
-                        onClick={() => setSelectedModel(node.id)}
+                        data-cursor="[ INSPECT NODE ]"
+                        onMouseEnter={playHover}
+                        onClick={() => {
+                          playClick();
+                          setSelectedModel(node.id);
+                        }}
                         className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left transition-all ${
                           isSelected
                             ? 'border-cyan-400/60 bg-[#16161C] shadow-md'

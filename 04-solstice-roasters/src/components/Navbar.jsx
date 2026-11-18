@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Menu, X } from 'lucide-react';
+import { ShoppingBag, Menu, X, Volume2, VolumeX, Flame } from 'lucide-react';
+import soundEngine from '../utils/soundEngine';
+import { ROAST_MODES } from './SensoryHud';
 
 export function SolsticeCrest({ className = 'w-9 h-9', light = false }) {
   const strokeColor = light ? '#FBF8F3' : '#1E1612';
@@ -51,22 +53,81 @@ export function SolsticeCrest({ className = 'w-9 h-9', light = false }) {
   );
 }
 
-export default function Navbar({ cartCount, onOpenCart }) {
+export default function Navbar({
+  cartCount,
+  onOpenCart,
+  roastMode = 0,
+  onCycleRoastMode,
+  onPortalNavigate,
+}) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(soundEngine.isEnabled());
+
+  useEffect(() => {
+    return soundEngine.subscribe(setAudioEnabled);
+  }, []);
 
   const navLinks = [
-    { label: 'Single Origins', href: '#origins' },
-    { label: 'Brew Guide', href: '#brew-guide' },
-    { label: 'Tasting Room', href: '#tasting-room' },
-    { label: 'Subscribe', href: '#subscribe' },
+    {
+      code: '01',
+      label: 'Single Origins',
+      href: '#origins',
+      portalTitle: '01 // MICRO-LOT REEL',
+      subtitle: '3D TERROIR SHOWCASE • SEASONAL HARVEST',
+      viewMode: 'reel',
+    },
+    {
+      code: '02',
+      label: 'Flavor Matrix',
+      href: '#origins',
+      portalTitle: '02 // SENSORY FLAVOR MATRIX',
+      subtitle: 'ACIDITY × SWEETNESS SPECTROGRAPHY',
+      viewMode: 'matrix',
+    },
+    {
+      code: '03',
+      label: 'Brew Guide',
+      href: '#brew-guide',
+      portalTitle: '03 // EXTRACTION LAB',
+      subtitle: 'REAL-TIME POUR TELEMETRY & RATIOS',
+    },
+    {
+      code: '04',
+      label: 'Tasting Room',
+      href: '#tasting-room',
+      portalTitle: '04 // TASTING ROOM',
+      subtitle: 'PORTLAND SLOW BAR & CUPPING RESERVATIONS',
+    },
   ];
 
+  const handleNavClick = (e, link) => {
+    if (onPortalNavigate) {
+      e.preventDefault();
+      soundEngine.playPortalWipe();
+      onPortalNavigate({
+        id: link.href.replace('#', ''),
+        code: `PORTAL ${link.code}`,
+        title: link.portalTitle,
+        subtitle: link.subtitle,
+        viewMode: link.viewMode,
+      });
+    }
+    setMobileOpen(false);
+  };
+
+  const modeInfo = ROAST_MODES[roastMode % ROAST_MODES.length];
+
   return (
-    <header className="sticky top-0 z-40 bg-cream/90 backdrop-blur-md border-b border-espresso/10">
+    <header className="sticky top-0 z-40 bg-cream/85 backdrop-blur-md border-b border-espresso/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="h-20 flex items-center justify-between gap-4">
           {/* Brand */}
-          <a href="#" className="flex items-center gap-3 group">
+          <a
+            href="#"
+            data-cursor="HOME // TOP"
+            onMouseEnter={() => soundEngine.playHover(0)}
+            className="flex items-center gap-3 group"
+          >
             <motion.div
               whileHover={{ rotate: 12 }}
               transition={{ type: 'spring', stiffness: 260, damping: 18 }}
@@ -77,30 +138,99 @@ export default function Navbar({ cartCount, onOpenCart }) {
               <span className="font-serif text-xl sm:text-2xl font-semibold tracking-tight text-espresso block leading-none">
                 Solstice
               </span>
-              <span className="text-[11px] uppercase tracking-[0.22em] text-umber/70 font-medium">
-                Roasters
+              <span className="text-[10px] font-mono uppercase tracking-[0.22em] text-umber/70 font-medium">
+                Sensory Lab // PDX
               </span>
             </div>
           </a>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
-            {navLinks.map((link) => (
+          <nav className="hidden lg:flex items-center gap-7">
+            {navLinks.map((link, idx) => (
               <a
-                key={link.href}
+                key={link.label}
                 href={link.href}
-                className="text-sm font-medium text-umber hover:text-terracotta transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-terracotta hover:after:w-full after:transition-all after:duration-300"
+                data-cursor={`PORTAL ${link.code}`}
+                onMouseEnter={() => soundEngine.playHover(idx)}
+                onClick={(e) => handleNavClick(e, link)}
+                className="group text-sm font-medium text-umber hover:text-terracotta transition-colors relative py-1 flex items-center gap-1.5 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1.5px] after:bg-terracotta hover:after:w-full after:transition-all after:duration-300"
               >
-                {link.label}
+                <span className="text-[10px] font-mono text-terracotta/75 group-hover:text-terracotta">
+                  {link.code}
+                </span>
+                <span>{link.label}</span>
               </a>
             ))}
           </nav>
 
-          {/* Actions */}
-          <div className="flex items-center gap-3">
+          {/* Actions: Thermal Shader Pill + Audio Synth Equalizer + Bag */}
+          <div className="flex items-center gap-2.5">
+            {/* Thermal Shader Mode Quick Switcher */}
+            <button
+              type="button"
+              data-cursor="THERMAL SHADER"
+              onClick={() => {
+                soundEngine.playRoastShift((roastMode + 1) % 3);
+                if (onCycleRoastMode) onCycleRoastMode();
+              }}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-cream-dark/90 border border-espresso/15 text-[11px] font-mono uppercase tracking-wider text-espresso hover:border-terracotta transition-colors"
+              title="Switch WebGL Thermal Shader Roast Profile"
+            >
+              <Flame className="w-3.5 h-3.5 text-terracotta" />
+              <span>{modeInfo.code.split(' ')[0]}</span>
+            </button>
+
+            {/* Web Audio API Synth Equalizer Toggle */}
+            <button
+              type="button"
+              data-cursor="SYNTH AUDIO"
+              onClick={() => soundEngine.toggle()}
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border text-[11px] font-mono uppercase tracking-wider transition-colors ${
+                audioEnabled
+                  ? 'bg-cream-dark/90 border-espresso/15 text-espresso hover:border-terracotta'
+                  : 'bg-cream border-espresso/10 text-umber/50 hover:text-espresso'
+              }`}
+              aria-label="Toggle Web Audio Sensory Synthesizer"
+            >
+              {audioEnabled ? (
+                <Volume2 className="w-3.5 h-3.5 text-terracotta" />
+              ) : (
+                <VolumeX className="w-3.5 h-3.5 text-umber/50" />
+              )}
+              <span className="hidden md:inline">
+                AUDIO [{audioEnabled ? 'ON' : 'OFF'}]
+              </span>
+              {/* Live Equalizer Bars */}
+              <span className="inline-flex items-end gap-0.5 h-3">
+                {[0, 1, 2].map((bar) => (
+                  <motion.span
+                    key={bar}
+                    animate={
+                      audioEnabled
+                        ? { height: ['35%', '100%', '45%'] }
+                        : { height: '25%' }
+                    }
+                    transition={{
+                      duration: 0.55 + bar * 0.15,
+                      repeat: audioEnabled ? Infinity : 0,
+                      ease: 'easeInOut',
+                    }}
+                    className={`w-0.5 rounded-full ${
+                      audioEnabled ? 'bg-terracotta' : 'bg-umber/30'
+                    }`}
+                  />
+                ))}
+              </span>
+            </button>
+
+            {/* Shopping Bag Button */}
             <motion.button
               type="button"
-              onClick={onOpenCart}
+              data-cursor="ROASTERY BAG"
+              onClick={() => {
+                soundEngine.playClick();
+                onOpenCart();
+              }}
               whileTap={{ scale: 0.96 }}
               className="relative inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-espresso text-cream text-sm font-medium hover:bg-umber transition-colors shadow-sm"
               aria-label="Open shopping bag"
@@ -124,7 +254,7 @@ export default function Navbar({ cartCount, onOpenCart }) {
             <button
               type="button"
               onClick={() => setMobileOpen((prev) => !prev)}
-              className="md:hidden p-2 rounded-full border border-espresso/15 text-espresso hover:bg-cream-dark transition-colors"
+              className="lg:hidden p-2 rounded-full border border-espresso/15 text-espresso hover:bg-cream-dark transition-colors"
               aria-label="Toggle menu"
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -141,17 +271,18 @@ export default function Navbar({ cartCount, onOpenCart }) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="md:hidden overflow-hidden border-t border-espresso/10 bg-cream"
+            className="lg:hidden overflow-hidden border-t border-espresso/10 bg-cream"
           >
-            <div className="px-4 py-4 flex flex-col gap-3">
+            <div className="px-4 py-4 flex flex-col gap-2">
               {navLinks.map((link) => (
                 <a
-                  key={link.href}
+                  key={link.label}
                   href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="py-2 px-3 rounded-lg text-base font-medium text-umber hover:bg-cream-dark hover:text-terracotta transition-colors"
+                  onClick={(e) => handleNavClick(e, link)}
+                  className="py-2 px-3 rounded-lg text-base font-medium text-umber hover:bg-cream-dark hover:text-terracotta transition-colors flex items-center justify-between"
                 >
-                  {link.label}
+                  <span>{link.label}</span>
+                  <span className="text-xs font-mono text-terracotta">{link.code}</span>
                 </a>
               ))}
             </div>

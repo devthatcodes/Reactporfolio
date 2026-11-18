@@ -3,7 +3,7 @@ import { ArrowUp } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-charcoal text-alabaster/80 py-16 border-t border-charcoal">
+    <footer className="relative z-10 bg-charcoal text-alabaster/80 py-16 pb-24 border-t border-charcoal">
       <div className="max-w-[1360px] mx-auto px-6 md:px-12">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-alabaster/10">
           <div className="md:col-span-5 space-y-3">

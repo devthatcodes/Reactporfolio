@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ArrowUpRight } from 'lucide-react';
+import { Menu, X, ArrowUpRight, Volume2, VolumeX } from 'lucide-react';
+import ScrambleText from './ScrambleText';
+import { soundEngine } from '../utils/soundEngine';
 
 const NAV_ITEMS = [
-  { index: '01', label: 'Studio', href: '#studio' },
-  { index: '02', label: 'Works', href: '#works' },
-  { index: '03', label: 'Philosophy', href: '#philosophy' },
-  { index: '04', label: 'Contact', href: '#contact' },
+  { index: '01', label: 'Studio', href: '#studio', sectionTitle: 'THE STUDIO' },
+  { index: '02', label: 'Works', href: '#works', sectionTitle: 'MONOGRAPH ARCHIVE' },
+  { index: '03', label: 'Philosophy', href: '#philosophy', sectionTitle: 'SPATIAL ETHOS' },
+  { index: '04', label: 'Contact', href: '#contact', sectionTitle: 'COMMISSION INQUIRY' },
 ];
 
-export default function Header() {
+export default function Header({ onNavigatePortal }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 36);
@@ -26,12 +29,29 @@ export default function Header() {
     };
   }, [mobileOpen]);
 
+  const handleNavClick = (e, item) => {
+    e.preventDefault();
+    setMobileOpen(false);
+    soundEngine.playPortalSweep();
+    if (onNavigatePortal) {
+      onNavigatePortal(item);
+    } else {
+      const el = document.querySelector(item.href);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleToggleSound = () => {
+    const nextState = soundEngine.toggle();
+    setSoundEnabled(nextState);
+  };
+
   return (
     <>
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 ${
           scrolled
-            ? 'bg-alabaster/90 backdrop-blur-md border-b border-charcoal/10 py-4'
+            ? 'bg-alabaster/90 backdrop-blur-md border-b border-charcoal/10 py-3.5'
             : 'bg-transparent py-6'
         }`}
       >
@@ -39,56 +59,105 @@ export default function Header() {
           {/* Wordmark */}
           <a
             href="#top"
+            data-cursor="ORIGIN // TOP"
+            onMouseEnter={() => soundEngine.playHoverTick(1.1)}
+            onClick={(e) =>
+              handleNavClick(e, {
+                index: '00',
+                label: 'Origin',
+                href: '#top',
+                sectionTitle: 'KANSO ATELIER',
+              })
+            }
             className="group flex items-center gap-3 focus:outline-none"
             aria-label="Kanso Atelier Home"
           >
             <svg
-              width="24"
-              height="24"
+              width="26"
+              height="26"
               viewBox="0 0 24 24"
               fill="none"
               className="text-charcoal transition-transform duration-500 group-hover:rotate-90"
             >
               <rect x="2" y="2" width="20" height="20" stroke="currentColor" strokeWidth="1" />
               <line x1="2" y1="14" x2="22" y2="14" stroke="currentColor" strokeWidth="1" />
-              <line x1="12" y1="2" x2="12" y2="14" stroke="#9A7B4F" strokeWidth="1" />
+              <line x1="12" y1="2" x2="12" y2="14" stroke="#9A7B4F" strokeWidth="1.2" />
             </svg>
             <div className="flex flex-col leading-none">
               <span className="font-serif text-xl md:text-2xl tracking-[0.14em] uppercase text-charcoal">
                 Kanso Atelier
               </span>
-              <span className="text-[9px] uppercase tracking-[0.26em] text-taupe mt-0.5">
+              <span className="text-[9px] font-mono uppercase tracking-[0.26em] text-taupe mt-0.5">
                 Kyoto · Copenhagen
               </span>
             </div>
           </a>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-10" aria-label="Primary Navigation">
-            {NAV_ITEMS.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                className="group relative flex items-baseline gap-2 text-xs uppercase tracking-[0.2em] text-charcoal/80 hover:text-charcoal transition-colors py-1"
-              >
-                <span className="text-[10px] font-mono text-bronze/80 group-hover:text-bronze transition-colors">
-                  {item.index}
-                </span>
-                <span>{item.label}</span>
-                <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-bronze transition-all duration-300 group-hover:w-full" />
-              </a>
-            ))}
-          </nav>
+          {/* Desktop Navigation & Acoustic Synthesizer Toggle */}
+          <div className="hidden md:flex items-center gap-9">
+            <nav className="flex items-center gap-9" aria-label="Primary Navigation">
+              {NAV_ITEMS.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  data-cursor={`PORTAL // ${item.index}`}
+                  onMouseEnter={() => soundEngine.playHoverTick(1.0)}
+                  onClick={(e) => handleNavClick(e, item)}
+                  className="group relative flex items-baseline gap-2 text-xs uppercase tracking-[0.2em] text-charcoal/80 hover:text-charcoal transition-colors py-1"
+                >
+                  <span className="text-[10px] font-mono text-bronze/80 group-hover:text-bronze transition-colors">
+                    {item.index}
+                  </span>
+                  <ScrambleText text={item.label} scrambleOnHover duration={320} />
+                  <span className="absolute bottom-0 left-0 w-0 h-[1px] bg-bronze transition-all duration-300 group-hover:w-full" />
+                </a>
+              ))}
+            </nav>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            className="md:hidden p-2 -mr-2 text-charcoal hover:text-bronze transition-colors"
-            aria-label="Open navigation menu"
-          >
-            <Menu className="w-5 h-5 stroke-[1.25]" />
-          </button>
+            {/* Web Audio API Acoustic Synth Toggle */}
+            <button
+              type="button"
+              data-cursor={soundEnabled ? 'MUTE SYNTH' : 'ENABLE AUDIO'}
+              onClick={handleToggleSound}
+              className={`flex items-center gap-2 px-3 py-1.5 border text-[10px] font-mono uppercase tracking-[0.2em] transition-all ${
+                soundEnabled
+                  ? 'border-bronze bg-charcoal text-alabaster'
+                  : 'border-charcoal/15 bg-alabaster/70 text-taupe hover:text-charcoal hover:border-charcoal/40'
+              }`}
+              aria-label="Toggle procedural spatial audio"
+            >
+              {soundEnabled ? (
+                <Volume2 className="w-3.5 h-3.5 text-bronze animate-pulse" />
+              ) : (
+                <VolumeX className="w-3.5 h-3.5" />
+              )}
+              <span>SOUND [{soundEnabled ? 'ON' : 'OFF'}]</span>
+            </button>
+          </div>
+
+          {/* Mobile Menu & Audio Controls */}
+          <div className="flex items-center gap-2 md:hidden">
+            <button
+              type="button"
+              onClick={handleToggleSound}
+              className="p-2 text-charcoal hover:text-bronze transition-colors"
+              aria-label="Toggle sound"
+            >
+              {soundEnabled ? (
+                <Volume2 className="w-4 h-4 text-bronze" />
+              ) : (
+                <VolumeX className="w-4 h-4 text-taupe" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              className="p-2 -mr-2 text-charcoal hover:text-bronze transition-colors"
+              aria-label="Open navigation menu"
+            >
+              <Menu className="w-5 h-5 stroke-[1.25]" />
+            </button>
+          </div>
         </div>
       </header>
 
@@ -100,7 +169,7 @@ export default function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-50 bg-charcoal/30 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-50 bg-charcoal/40 backdrop-blur-sm md:hidden"
             onClick={() => setMobileOpen(false)}
           >
             <motion.aside
@@ -114,7 +183,7 @@ export default function Header() {
               <div>
                 <div className="flex items-center justify-between pb-6 border-b border-charcoal/10">
                   <span className="font-serif text-lg tracking-[0.16em] uppercase text-charcoal">
-                    Index
+                    Spatial Index
                   </span>
                   <button
                     type="button"
@@ -134,7 +203,7 @@ export default function Header() {
                       initial={{ opacity: 0, x: 16 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.08 + idx * 0.05 }}
-                      onClick={() => setMobileOpen(false)}
+                      onClick={(e) => handleNavClick(e, item)}
                       className="group flex items-center justify-between py-2 border-b border-charcoal/10"
                     >
                       <div className="flex items-baseline gap-4">

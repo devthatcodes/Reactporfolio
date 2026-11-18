@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Copy, Play, Terminal } from 'lucide-react';
+import ScrambleText from './ScrambleText';
+import { playHover, playClick } from '../utils/soundEngine';
 
 const SNIPPETS = {
   TypeScript: {
@@ -63,12 +65,14 @@ export default function SdkSwitcher() {
   const [running, setRunning] = useState(false);
 
   const handleCopy = () => {
+    playClick();
     navigator.clipboard?.writeText(SNIPPETS[activeTab].code);
     setCopied(true);
     setTimeout(() => setCopied(false), 1800);
   };
 
   const handleRunTest = () => {
+    playClick();
     setRunning(true);
     setTestOutput(null);
     setTimeout(() => {
@@ -85,16 +89,16 @@ export default function SdkSwitcher() {
   };
 
   return (
-    <section id="sdk" className="border-t border-[#27272A]/80 bg-[#09090B] py-20 sm:py-28">
+    <section id="sdk" className="relative border-t border-[#27272A]/80 py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-12 lg:grid-cols-12">
           {/* Left Copy */}
           <div className="lg:col-span-5">
             <span className="font-mono text-xs uppercase tracking-[0.2em] text-cyan-400">
-              Drop-In Integration
+              04 // DROP-IN SDK SANDBOX
             </span>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#FAFAFA] sm:text-4xl">
-              Two lines to full observability.
+              <ScrambleText text="Two lines to full observability." scrambleOnMount={false} />
             </h2>
             <p className="mt-4 text-base leading-relaxed text-zinc-400">
               Swap your base URL or drop in the Aether SDK. Works seamlessly with your existing OpenAI, Anthropic, and LangChain workflows with zero vendor lock-in.
@@ -118,7 +122,7 @@ export default function SdkSwitcher() {
 
           {/* Right Interactive Code Block */}
           <div className="lg:col-span-7">
-            <div className="overflow-hidden rounded-2xl border border-[#27272A] bg-[#111115] shadow-2xl">
+            <div className="overflow-hidden rounded-2xl border border-[#27272A] bg-[#111115]/95 shadow-2xl backdrop-blur-xl">
               {/* Header Bar with Framer Motion layoutId tabs */}
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#27272A] bg-[#09090B]/80 px-4 py-3">
                 <div className="flex items-center gap-1 rounded-lg border border-[#27272A] bg-[#111115] p-1">
@@ -128,7 +132,11 @@ export default function SdkSwitcher() {
                       <button
                         key={lang}
                         type="button"
-                        onClick={() => setActiveTab(lang)}
+                        onMouseEnter={playHover}
+                        onClick={() => {
+                          playClick();
+                          setActiveTab(lang);
+                        }}
                         className={`relative rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
                           isActive ? 'text-[#FAFAFA]' : 'text-zinc-400 hover:text-zinc-200'
                         }`}
@@ -149,6 +157,8 @@ export default function SdkSwitcher() {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
+                    data-cursor="[ EXECUTE REQUEST ]"
+                    onMouseEnter={playHover}
                     onClick={handleRunTest}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/30 bg-cyan-400/10 px-3 py-1.5 font-mono text-[11px] font-medium text-cyan-300 transition-colors hover:bg-cyan-400/20"
                   >
@@ -158,6 +168,7 @@ export default function SdkSwitcher() {
 
                   <button
                     type="button"
+                    onMouseEnter={playHover}
                     onClick={handleCopy}
                     className="inline-flex items-center gap-1.5 rounded-lg border border-[#27272A] bg-[#111115] px-3 py-1.5 font-mono text-[11px] text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white"
                   >

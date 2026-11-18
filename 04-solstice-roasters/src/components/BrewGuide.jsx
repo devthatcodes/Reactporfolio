@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Droplets, Flame, Play, Pause, RotateCcw, Scale, SlidersHorizontal } from 'lucide-react';
 import { BREW_RECIPES } from '../data/coffees';
+import ScrambleText from './ScrambleText';
+import soundEngine from '../utils/soundEngine';
 
 function formatTime(totalSec) {
   const mins = Math.floor(totalSec / 60);
@@ -30,7 +32,11 @@ function BrewDiagramSVG({ recipeId, isRunning }) {
             stroke="#1E1612"
             strokeWidth="2"
           />
-          <path d="M74 146H146L150 164C151 168 147 171 142 171H78C73 171 69 168 70 164L74 146Z" fill="#C85A32" fillOpacity="0.28" />
+          <path
+            d="M74 146H146L150 164C151 168 147 171 142 171H78C73 171 69 168 70 164L74 146Z"
+            fill="#C85A32"
+            fillOpacity="0.28"
+          />
           {/* V60 Cone */}
           <path d="M62 56H158L124 114H96L62 56Z" fill="#FBF8F3" stroke="#1E1612" strokeWidth="2" />
           <line x1="75" y1="68" x2="102" y2="112" stroke="#C85A32" strokeOpacity="0.4" strokeWidth="1.5" />
@@ -52,15 +58,39 @@ function BrewDiagramSVG({ recipeId, isRunning }) {
         <g>
           {/* Mug */}
           <rect x="74" y="124" width="72" height="46" rx="6" fill="#FBF8F3" stroke="#1E1612" strokeWidth="2" />
-          <path d="M146 134H156C161 134 164 138 164 144C164 150 161 154 156 154H146" stroke="#1E1612" strokeWidth="2" />
+          <path
+            d="M146 134H156C161 134 164 138 164 144C164 150 161 154 156 154H146"
+            stroke="#1E1612"
+            strokeWidth="2"
+          />
           {/* AeroPress Chamber */}
-          <rect x="84" y="64" width="52" height="60" rx="3" fill="#3A2A22" fillOpacity="0.14" stroke="#1E1612" strokeWidth="2" />
+          <rect
+            x="84"
+            y="64"
+            width="52"
+            height="60"
+            rx="3"
+            fill="#3A2A22"
+            fillOpacity="0.14"
+            stroke="#1E1612"
+            strokeWidth="2"
+          />
           {/* Plunger */}
           <motion.g
             animate={isRunning ? { y: [0, 14, 0] } : { y: 0 }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <rect x="90" y="34" width="40" height="34" rx="2" fill="#5E7461" fillOpacity="0.35" stroke="#1E1612" strokeWidth="2" />
+            <rect
+              x="90"
+              y="34"
+              width="40"
+              height="34"
+              rx="2"
+              fill="#5E7461"
+              fillOpacity="0.35"
+              stroke="#1E1612"
+              strokeWidth="2"
+            />
             <line x1="78" y1="34" x2="142" y2="34" stroke="#1E1612" strokeWidth="3" strokeLinecap="round" />
           </motion.g>
         </g>
@@ -83,7 +113,12 @@ function BrewDiagramSVG({ recipeId, isRunning }) {
             transition={{ duration: 1, repeat: Infinity }}
           />
           {/* Demitasse Cup */}
-          <path d="M82 122H138L130 162C129 167 124 170 118 170H102C96 170 91 167 90 162L82 122Z" fill="#FBF8F3" stroke="#1E1612" strokeWidth="2" />
+          <path
+            d="M82 122H138L130 162C129 167 124 170 118 170H102C96 170 91 167 90 162L82 122Z"
+            fill="#FBF8F3"
+            stroke="#1E1612"
+            strokeWidth="2"
+          />
           <path d="M86 132H134" stroke="#C85A32" strokeWidth="3" />
         </g>
       )}
@@ -109,6 +144,7 @@ export default function BrewGuide() {
       setElapsedSeconds((prev) => {
         if (prev >= recipe.totalSeconds) {
           setIsRunning(false);
+          soundEngine.playSuccess();
           return recipe.totalSeconds;
         }
         return prev + 1;
@@ -131,8 +167,8 @@ export default function BrewGuide() {
         {/* Header + Method Tabs */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
           <div className="max-w-2xl">
-            <span className="text-xs uppercase tracking-[0.22em] text-sage font-semibold block mb-2.5">
-              Dialed-In Extraction
+            <span className="text-xs font-mono uppercase tracking-[0.22em] text-sage font-semibold block mb-2.5">
+              03 // Dialed-In Extraction Lab
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-espresso font-normal tracking-tight">
               Interactive Brew Guide &amp; Timer
@@ -151,7 +187,11 @@ export default function BrewGuide() {
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setActiveTab(item.id)}
+                  data-cursor={`BREW // ${item.name.toUpperCase()}`}
+                  onClick={() => {
+                    soundEngine.playClick();
+                    setActiveTab(item.id);
+                  }}
                   className={`relative px-5 py-2.5 rounded-full text-sm font-medium transition-colors ${
                     isActive ? 'text-cream' : 'text-umber hover:text-espresso'
                   }`}
@@ -178,7 +218,7 @@ export default function BrewGuide() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -14 }}
             transition={{ duration: 0.3 }}
-            className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-cream rounded-3xl border border-espresso/12 p-6 sm:p-10 shadow-editorial"
+            className="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-cream/90 backdrop-blur-sm rounded-3xl border border-espresso/12 p-6 sm:p-10 shadow-editorial"
           >
             {/* Left Specs & Live Timer */}
             <div className="lg:col-span-5 flex flex-col justify-between space-y-6 lg:border-r lg:border-espresso/10 lg:pr-8">
@@ -188,7 +228,9 @@ export default function BrewGuide() {
                     Best with {recipe.recommendedCoffee}
                   </span>
                 </div>
-                <h3 className="font-serif text-3xl text-espresso">{recipe.name}</h3>
+                <h3 className="font-serif text-3xl text-espresso">
+                  <ScrambleText text={recipe.name} triggerKey={recipe.id} duration={360} />
+                </h3>
                 <p className="text-sm text-umber/75 mt-1">{recipe.subtitle}</p>
 
                 {/* Brew Diagram */}
@@ -245,8 +287,8 @@ export default function BrewGuide() {
               <div className="p-5 rounded-2xl bg-espresso text-cream space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-[11px] uppercase tracking-widest text-cream/60 block">
-                      Live Brew Timer
+                    <span className="text-[11px] font-mono uppercase tracking-widest text-cream/60 block">
+                      Live Brew Telemetry
                     </span>
                     <span className="font-serif text-3xl font-medium tabular-nums">
                       {formatTime(elapsedSeconds)}{' '}
@@ -259,7 +301,9 @@ export default function BrewGuide() {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
+                      data-cursor="BREW TIMER"
                       onClick={() => {
+                        soundEngine.playClick();
                         if (elapsedSeconds >= recipe.totalSeconds) setElapsedSeconds(0);
                         setIsRunning((prev) => !prev);
                       }}
@@ -280,7 +324,9 @@ export default function BrewGuide() {
 
                     <button
                       type="button"
+                      data-cursor="RESET TIMER"
                       onClick={() => {
+                        soundEngine.playClick();
                         setIsRunning(false);
                         setElapsedSeconds(0);
                       }}
@@ -307,7 +353,7 @@ export default function BrewGuide() {
             <div className="lg:col-span-7 flex flex-col justify-center space-y-4">
               <div className="flex items-center justify-between mb-1">
                 <h4 className="font-serif text-xl text-espresso">Step-by-Step Pour Timeline</h4>
-                <span className="text-xs text-umber/65">Click any step to jump</span>
+                <span className="text-xs font-mono text-umber/65">CLICK ANY PHASE TO SCRUB</span>
               </div>
 
               <div className="space-y-3.5">
@@ -319,7 +365,11 @@ export default function BrewGuide() {
                     <motion.button
                       key={step.id}
                       type="button"
-                      onClick={() => setElapsedSeconds(step.startSec)}
+                      data-cursor={`SCRUB // ${step.title.toUpperCase()}`}
+                      onClick={() => {
+                        soundEngine.playClick();
+                        setElapsedSeconds(step.startSec);
+                      }}
                       whileHover={{ x: 3 }}
                       className={`w-full text-left p-5 rounded-2xl border transition-all flex gap-4 items-start ${
                         isCurrent

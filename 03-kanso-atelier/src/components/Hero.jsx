@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, Sun } from 'lucide-react';
+import ScrambleText from './ScrambleText';
+import { soundEngine } from '../utils/soundEngine';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -15,14 +17,27 @@ const fadeUp = {
   }),
 };
 
-export default function Hero() {
+export default function Hero({ onNavigatePortal }) {
+  const [mouseNorm, setMouseNorm] = useState({ x: 0.65, y: 0.28 });
+
+  const handleMonolithMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.max(0.1, Math.min(0.9, (e.clientX - rect.left) / rect.width));
+    const y = Math.max(0.1, Math.min(0.85, (e.clientY - rect.top) / rect.height));
+    setMouseNorm({ x, y });
+  };
+
+  const sunCx = Math.round(90 + mouseNorm.x * 240);
+  const sunCy = Math.round(60 + mouseNorm.y * 140);
+  const shadowShift = Math.round((0.5 - mouseNorm.x) * 60);
+
   return (
     <section
       id="top"
-      className="relative min-h-screen pt-28 pb-16 md:pt-36 md:pb-24 flex flex-col justify-between overflow-hidden bg-architectural-grid"
+      className="relative z-10 min-h-screen pt-28 pb-16 md:pt-36 md:pb-24 flex flex-col justify-between overflow-hidden bg-architectural-grid"
     >
       <div className="max-w-[1360px] w-full mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center my-auto">
-        {/* Left Column: Editorial Typography */}
+        {/* Left Column: Editorial & Kinetic Typography */}
         <div className="lg:col-span-7 space-y-8 relative z-10">
           <motion.div
             variants={fadeUp}
@@ -32,7 +47,10 @@ export default function Hero() {
             className="flex items-center gap-4 text-xs uppercase tracking-[0.24em] text-taupe"
           >
             <span className="inline-block w-8 h-[1px] bg-bronze" />
-            <span>Architecture &amp; Spatial Design · Est. 2018</span>
+            <ScrambleText
+              text="Architecture & Spatial Experience · Est. 2018"
+              duration={720}
+            />
           </motion.div>
 
           <motion.h1
@@ -55,7 +73,7 @@ export default function Hero() {
           >
             Operating between Kyoto and Copenhagen, Kanso Atelier crafts residences, cultural
             pavilions, and sanctuaries rooted in material honesty, quiet proportion, and the
-            passage of natural daylight.
+            choreographed passage of natural daylight.
           </motion.p>
 
           <motion.div
@@ -67,9 +85,23 @@ export default function Hero() {
           >
             <a
               href="#works"
+              data-cursor="ENTER ARCHIVE"
+              onMouseEnter={() => soundEngine.playHoverTick(1.0)}
+              onClick={(e) => {
+                e.preventDefault();
+                soundEngine.playPortalSweep();
+                if (onNavigatePortal) {
+                  onNavigatePortal({
+                    index: '02',
+                    label: 'Works',
+                    href: '#works',
+                    sectionTitle: 'MONOGRAPH ARCHIVE',
+                  });
+                }
+              }}
               className="group inline-flex items-center gap-3 px-7 py-3.5 bg-charcoal text-alabaster text-xs uppercase tracking-[0.2em] hover:bg-bronze transition-colors duration-300"
             >
-              <span>Selected Works</span>
+              <span>Selected Monographs</span>
               <span className="text-alabaster/60 group-hover:translate-x-1 transition-transform">
                 →
               </span>
@@ -77,79 +109,120 @@ export default function Hero() {
 
             <a
               href="#philosophy"
+              data-cursor="STUDIO ETHOS"
+              onMouseEnter={() => soundEngine.playHoverTick(1.1)}
+              onClick={(e) => {
+                e.preventDefault();
+                soundEngine.playPortalSweep();
+                if (onNavigatePortal) {
+                  onNavigatePortal({
+                    index: '03',
+                    label: 'Philosophy',
+                    href: '#philosophy',
+                    sectionTitle: 'SPATIAL ETHOS',
+                  });
+                }
+              }}
               className="text-xs uppercase tracking-[0.2em] text-charcoal/80 hover:text-bronze border-b border-charcoal/20 hover:border-bronze pb-1 transition-colors"
             >
-              Studio Ethos
+              Spatial Philosophy
             </a>
           </motion.div>
         </div>
 
-        {/* Right Column: Bespoke Architectural Monolith & Line-Art Composition */}
+        {/* Right Column: Interactive Solar Monolith & Caustic Raytracer Study */}
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1.1, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           className="lg:col-span-5 relative"
         >
-          <div className="relative bg-stone border border-charcoal/10 p-6 sm:p-10 aspect-[4/5] flex items-center justify-center overflow-hidden">
-            {/* Subtle warm sunbeam gradient */}
+          <div
+            onMouseMove={handleMonolithMove}
+            data-cursor="STEER SOLAR AXIS"
+            className="relative bg-stone/90 backdrop-blur-sm border border-charcoal/15 p-6 sm:p-10 aspect-[4/5] flex items-center justify-center overflow-hidden cursor-crosshair"
+          >
+            {/* Dynamic cursor-steered warm sunbeam gradient */}
             <div
-              className="absolute inset-0 pointer-events-none opacity-60"
+              className="absolute inset-0 pointer-events-none transition-opacity duration-300"
               style={{
-                background:
-                  'radial-gradient(circle at 78% 18%, rgba(154, 123, 79, 0.16) 0%, rgba(239, 236, 230, 0) 62%)',
+                background: `radial-gradient(circle at ${mouseNorm.x * 100}% ${
+                  mouseNorm.y * 100
+                }%, rgba(154, 123, 79, 0.22) 0%, rgba(239, 236, 230, 0) 65%)`,
               }}
             />
+
+            {/* Top Interactive Telemetry Tag */}
+            <div className="absolute top-4 left-6 right-6 flex items-center justify-between text-[9px] font-mono uppercase tracking-[0.2em] text-taupe z-20">
+              <span className="flex items-center gap-1.5">
+                <Sun className="w-3 h-3 text-bronze" />
+                <span>INTERACTIVE HELIODON</span>
+              </span>
+              <span className="text-charcoal">
+                AZ {Math.round(mouseNorm.x * 180 + 90)}° / ALT {Math.round((1 - mouseNorm.y) * 75)}°
+              </span>
+            </div>
 
             <svg
               viewBox="0 0 400 500"
               className="w-full h-full relative z-10"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              aria-label="Minimalist architectural monolith and light study"
+              aria-label="Interactive architectural monolith and solar ray study"
             >
               {/* Outer architectural datum frame */}
-              <rect x="24" y="24" width="352" height="452" stroke="#1C1B19" strokeOpacity="0.14" strokeWidth="0.75" />
-
-              {/* Sun / Solstice Circle */}
-              <motion.circle
-                cx="292"
-                cy="112"
-                r="42"
-                stroke="#9A7B4F"
-                strokeWidth="1"
-                strokeDasharray="3 3"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ duration: 1.6, delay: 0.5 }}
-              />
-              <circle cx="292" cy="112" r="18" fill="#9A7B4F" fillOpacity="0.14" />
-
-              {/* Diagonal Light Ray */}
-              <motion.line
-                x1="334"
-                y1="70"
-                x2="90"
-                y2="395"
-                stroke="#9A7B4F"
-                strokeOpacity="0.45"
-                strokeWidth="0.85"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 1.4, delay: 0.6 }}
-              />
-              <line
-                x1="292"
-                y1="112"
-                x2="132"
-                y2="415"
-                stroke="#9A7B4F"
-                strokeOpacity="0.22"
+              <rect
+                x="24"
+                y="24"
+                width="352"
+                height="452"
+                stroke="#1C1B19"
+                strokeOpacity="0.14"
                 strokeWidth="0.75"
               />
 
+              {/* Interactive Sun / Solstice Orb */}
+              <circle
+                cx={sunCx}
+                cy={sunCy}
+                r="40"
+                stroke="#9A7B4F"
+                strokeWidth="1"
+                strokeDasharray="3 3"
+              />
+              <circle cx={sunCx} cy={sunCy} r="16" fill="#9A7B4F" fillOpacity="0.18" />
+              <circle cx={sunCx} cy={sunCy} r="4" fill="#9A7B4F" />
+
+              {/* Dynamic Diagonal Light Rays */}
+              <line
+                x1={sunCx}
+                y1={sunCy}
+                x2={140 + shadowShift}
+                y2="414"
+                stroke="#9A7B4F"
+                strokeOpacity="0.5"
+                strokeWidth="0.9"
+              />
+              <line
+                x1={sunCx + 24}
+                y1={sunCy - 16}
+                x2={195 + shadowShift}
+                y2="414"
+                stroke="#9A7B4F"
+                strokeOpacity="0.28"
+                strokeWidth="0.75"
+                strokeDasharray="4 4"
+              />
+
+              {/* Dynamic Cast Shadow Polygon on Ground Plinth */}
+              <polygon
+                points={`152,414 322,414 ${322 + shadowShift},438 ${152 + shadowShift},438`}
+                fill="#1C1B19"
+                fillOpacity="0.12"
+              />
+
               {/* Background Stone Volume */}
-              <motion.rect
+              <rect
                 x="78"
                 y="128"
                 width="148"
@@ -157,9 +230,6 @@ export default function Hero() {
                 fill="#E5E0D7"
                 stroke="#1C1B19"
                 strokeWidth="1"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.9, delay: 0.35 }}
               />
 
               {/* Timber Louver Rhythm inside Volume */}
@@ -177,26 +247,54 @@ export default function Hero() {
               ))}
 
               {/* Foreground Cantilevered Monolith */}
-              <motion.path
+              <path
                 d="M152 210 H322 V414 H152 Z"
                 fill="#F7F5F0"
                 stroke="#1C1B19"
                 strokeWidth="1.2"
-                initial={{ opacity: 0, x: 16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.9, delay: 0.5 }}
               />
 
-              {/* Deep Eave Shadow Band */}
-              <rect x="152" y="210" width="170" height="22" fill="#1C1B19" fillOpacity="0.08" />
+              {/* Deep Eave Shadow Band (height shifts subtly with solar altitude) */}
+              <rect
+                x="152"
+                y="210"
+                width="170"
+                height={Math.max(12, Math.round(mouseNorm.y * 34))}
+                fill="#1C1B19"
+                fillOpacity="0.1"
+              />
 
               {/* Framed Courtyard Void */}
-              <rect x="184" y="268" width="106" height="146" fill="#EFECE6" stroke="#1C1B19" strokeWidth="1" />
-              <line x1="237" y1="268" x2="237" y2="414" stroke="#1C1B19" strokeOpacity="0.35" strokeWidth="0.75" />
+              <rect
+                x="184"
+                y="268"
+                width="106"
+                height="146"
+                fill="#EFECE6"
+                stroke="#1C1B19"
+                strokeWidth="1"
+              />
+              <line
+                x1="237"
+                y1="268"
+                x2="237"
+                y2="414"
+                stroke="#1C1B19"
+                strokeOpacity="0.35"
+                strokeWidth="0.75"
+              />
 
               {/* Ground Plinth / Datum Line */}
               <line x1="48" y1="414" x2="352" y2="414" stroke="#1C1B19" strokeWidth="1.4" />
-              <line x1="48" y1="422" x2="352" y2="422" stroke="#1C1B19" strokeOpacity="0.3" strokeWidth="0.75" />
+              <line
+                x1="48"
+                y1="422"
+                x2="352"
+                y2="422"
+                stroke="#1C1B19"
+                strokeOpacity="0.3"
+                strokeWidth="0.75"
+              />
 
               {/* Architectural Dimension Marks */}
               <line x1="60" y1="128" x2="60" y2="414" stroke="#78736A" strokeWidth="0.6" />
@@ -216,14 +314,14 @@ export default function Hero() {
               </text>
 
               <text
-                x="280"
-                y="444"
+                x="265"
+                y="450"
                 fill="#78736A"
                 fontSize="8"
                 letterSpacing="2"
                 fontFamily="monospace"
               >
-                FIG. 01 / STUDY
+                FIG. 01 / HELIODON
               </text>
             </svg>
 
@@ -242,17 +340,32 @@ export default function Hero() {
         transition={{ delay: 0.9, duration: 0.8 }}
         className="max-w-[1360px] w-full mx-auto px-6 md:px-12 pt-10 flex items-center justify-between border-t border-charcoal/10 mt-12"
       >
-        <div className="flex items-center gap-6 text-[11px] uppercase tracking-[0.2em] text-taupe">
+        <div className="flex items-center gap-6 text-[11px] font-mono uppercase tracking-[0.2em] text-taupe">
           <span>Kyoto</span>
           <span className="text-bronze">·</span>
           <span>Copenhagen</span>
+          <span className="hidden sm:inline text-charcoal/30">|</span>
+          <span className="hidden sm:inline text-bronze">GLSL CAUSTIC FIELD ACTIVE</span>
         </div>
 
         <a
           href="#works"
-          className="group inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-charcoal hover:text-bronze transition-colors"
+          data-cursor="SCROLL TO WORKS"
+          onClick={(e) => {
+            e.preventDefault();
+            soundEngine.playPortalSweep();
+            if (onNavigatePortal) {
+              onNavigatePortal({
+                index: '02',
+                label: 'Works',
+                href: '#works',
+                sectionTitle: 'MONOGRAPH ARCHIVE',
+              });
+            }
+          }}
+          className="group inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.2em] text-charcoal hover:text-bronze transition-colors"
         >
-          <span>Scroll to explore</span>
+          <span>Explore Archive</span>
           <ArrowDown className="w-3.5 h-3.5 stroke-[1.5] group-hover:translate-y-0.5 transition-transform" />
         </a>
       </motion.div>

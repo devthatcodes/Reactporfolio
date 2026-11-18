@@ -1,8 +1,54 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Flame, Mountain, Sparkles } from 'lucide-react';
+import { ArrowRight, Flame, Mountain, Sparkles, Sliders } from 'lucide-react';
+import ScrambleText from './ScrambleText';
+import soundEngine from '../utils/soundEngine';
+import { ROAST_MODES } from './SensoryHud';
 
-export default function Hero() {
+const ROAST_CURVE_PRESETS = [
+  {
+    id: 0,
+    label: 'LIGHT FLORAL',
+    batch: 'Batch #SR-408 • Yirgacheffe Halo',
+    beanPath: 'M55 245 C105 292 160 282 225 225 C295 162 365 114 475 86',
+    rorPath: 'M55 155 C130 120 220 148 305 188 C380 224 435 242 475 258',
+    devTime: '13.8% (1:20)',
+    totalRoast: '09m 42s',
+    agtron: '68.4 Light',
+    dropLabel: 'Drop • 198.2°C',
+  },
+  {
+    id: 1,
+    label: 'MEDIUM CARAMEL',
+    batch: 'Batch #SR-412 • Tarrazú Honey',
+    beanPath: 'M55 245 C105 288 158 274 222 214 C290 150 365 98 475 68',
+    rorPath: 'M55 148 C130 116 220 142 305 182 C380 218 435 238 475 250',
+    devTime: '16.5% (1:41)',
+    totalRoast: '10m 15s',
+    agtron: '61.2 Med-Light',
+    dropLabel: 'Drop • 204.5°C',
+  },
+  {
+    id: 2,
+    label: 'DARK OBSIDIAN',
+    batch: 'Batch #SR-419 • Antigua Volcán',
+    beanPath: 'M55 245 C105 284 155 266 218 202 C288 138 365 84 475 52',
+    rorPath: 'M55 142 C130 110 220 136 305 176 C380 212 435 232 475 244',
+    devTime: '18.4% (1:56)',
+    totalRoast: '10m 30s',
+    agtron: '55.8 Medium',
+    dropLabel: 'Drop • 208.6°C',
+  },
+];
+
+export default function Hero({
+  roastMode = 0,
+  onSelectRoastMode,
+  onPortalNavigate,
+}) {
+  const [selectedMilestone, setSelectedMilestone] = useState(null);
+  const preset = ROAST_CURVE_PRESETS[roastMode % ROAST_CURVE_PRESETS.length];
+
   return (
     <section className="relative overflow-hidden border-b border-espresso/10 paper-grain">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 lg:py-24">
@@ -14,10 +60,17 @@ export default function Hero() {
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             className="lg:col-span-6 space-y-7"
           >
-            {/* Seasonal Harvest Badge */}
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-sage-light border border-sage/25 text-sage text-xs sm:text-sm font-medium tracking-wide">
+            {/* Seasonal Harvest + WebGL Telemetry Badge */}
+            <div className="inline-flex flex-wrap items-center gap-2.5 px-4 py-1.5 rounded-full bg-sage-light/90 backdrop-blur-sm border border-sage/25 text-sage text-xs sm:text-sm font-medium tracking-wide">
               <span className="w-2 h-2 rounded-full bg-terracotta animate-pulse" />
               <span>Autumn Harvest • Ethiopia &amp; Colombia</span>
+              <span className="text-[10px] font-mono uppercase tracking-widest px-2 py-0.5 rounded-full bg-espresso text-cream">
+                <ScrambleText
+                  text={`SHADER // ${ROAST_MODES[roastMode % 3].code}`}
+                  triggerKey={roastMode}
+                  duration={380}
+                />
+              </span>
             </div>
 
             <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal tracking-tight text-espresso leading-[1.06]">
@@ -36,6 +89,21 @@ export default function Hero() {
             <div className="flex flex-wrap items-center gap-4 pt-1">
               <a
                 href="#origins"
+                data-cursor="EXPLORE ORIGINS"
+                onMouseEnter={() => soundEngine.playHover(1)}
+                onClick={(e) => {
+                  if (onPortalNavigate) {
+                    e.preventDefault();
+                    soundEngine.playPortalWipe();
+                    onPortalNavigate({
+                      id: 'origins',
+                      code: 'PORTAL 01',
+                      title: '01 // MICRO-LOT REEL',
+                      subtitle: '3D TERROIR SHOWCASE • SINGLE-ORIGIN HARVEST',
+                      viewMode: 'reel',
+                    });
+                  }
+                }}
                 className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-terracotta text-cream font-medium text-sm sm:text-base hover:bg-terracotta-dark transition-all shadow-md hover:shadow-lg"
               >
                 <span>Explore Single Origins</span>
@@ -43,7 +111,21 @@ export default function Hero() {
               </a>
               <a
                 href="#brew-guide"
-                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-espresso/20 text-espresso font-medium text-sm sm:text-base hover:bg-cream-dark transition-colors"
+                data-cursor="EXTRACTION LAB"
+                onMouseEnter={() => soundEngine.playHover(2)}
+                onClick={(e) => {
+                  if (onPortalNavigate) {
+                    e.preventDefault();
+                    soundEngine.playPortalWipe();
+                    onPortalNavigate({
+                      id: 'brew-guide',
+                      code: 'PORTAL 03',
+                      title: '03 // EXTRACTION LAB',
+                      subtitle: 'DIALED-IN RATIOS • REAL-TIME POUR TELEMETRY',
+                    });
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full border border-espresso/20 bg-cream/70 backdrop-blur-sm text-espresso font-medium text-sm sm:text-base hover:bg-cream-dark transition-colors"
               >
                 <span>Brewing Ratios</span>
               </a>
@@ -57,7 +139,8 @@ export default function Hero() {
                   <span className="text-xs uppercase tracking-wider font-semibold">Elevation</span>
                 </div>
                 <p className="font-serif text-xl sm:text-2xl text-espresso font-medium">
-                  2,150m<span className="text-sm text-umber/60 font-sans ml-0.5">+</span>
+                  <ScrambleText text="2,150m" scrambleOnHover />
+                  <span className="text-sm text-umber/60 font-sans ml-0.5">+</span>
                 </p>
               </div>
               <div>
@@ -66,7 +149,8 @@ export default function Hero() {
                   <span className="text-xs uppercase tracking-wider font-semibold">Roast Cycle</span>
                 </div>
                 <p className="font-serif text-xl sm:text-2xl text-espresso font-medium">
-                  48h <span className="text-sm text-umber/60 font-sans">Ship</span>
+                  <ScrambleText text="48h" scrambleOnHover />{' '}
+                  <span className="text-sm text-umber/60 font-sans">Ship</span>
                 </p>
               </div>
               <div>
@@ -75,24 +159,50 @@ export default function Hero() {
                   <span className="text-xs uppercase tracking-wider font-semibold">Sourcing</span>
                 </div>
                 <p className="font-serif text-xl sm:text-2xl text-espresso font-medium">
-                  100% <span className="text-sm text-umber/60 font-sans">Direct</span>
+                  <ScrambleText text="100%" scrambleOnHover />{' '}
+                  <span className="text-sm text-umber/60 font-sans">Direct</span>
                 </p>
               </div>
             </div>
           </motion.div>
 
-          {/* Right Animated Botanical & Roast-Curve Illustration */}
+          {/* Right Animated Botanical & Interactive Roast-Curve Telemetry Stage */}
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
             className="lg:col-span-6 relative"
           >
-            <div className="relative rounded-3xl bg-cream-dark/75 border border-espresso/10 p-6 sm:p-8 shadow-editorial overflow-hidden">
-              {/* Top metadata bar */}
-              <div className="flex items-center justify-between text-xs text-umber/70 uppercase tracking-widest pb-4 border-b border-espresso/10">
-                <span>Batch #SR-408 • Loring S15 Falcon</span>
-                <span className="text-terracotta font-semibold">Live Roast Profile</span>
+            <div className="relative rounded-3xl bg-cream-dark/80 backdrop-blur-md border border-espresso/12 p-6 sm:p-8 shadow-editorial overflow-hidden">
+              {/* Top metadata bar + Live Shader Roast Profile Selector */}
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-umber/75 uppercase tracking-widest pb-4 border-b border-espresso/10">
+                <span className="font-mono text-[11px]">
+                  <ScrambleText text={preset.batch} triggerKey={roastMode} duration={360} />
+                </span>
+                <div className="inline-flex items-center gap-1 p-1 rounded-full bg-cream border border-espresso/10">
+                  <Sliders className="w-3 h-3 text-terracotta ml-1.5 mr-0.5" />
+                  {ROAST_CURVE_PRESETS.map((mode) => {
+                    const active = roastMode === mode.id;
+                    return (
+                      <button
+                        key={mode.id}
+                        type="button"
+                        data-cursor={`SHADER // ${mode.label}`}
+                        onClick={() => {
+                          soundEngine.playRoastShift(mode.id);
+                          if (onSelectRoastMode) onSelectRoastMode(mode.id);
+                        }}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-mono tracking-wider transition-all ${
+                          active
+                            ? 'bg-espresso text-cream font-semibold'
+                            : 'text-umber/70 hover:text-espresso'
+                        }`}
+                      >
+                        {mode.label.split(' ')[0]}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Bespoke Botanical + Roast Curve SVG */}
@@ -175,82 +285,123 @@ export default function Hero() {
 
                   {/* Roast Curve (Bean Temp) */}
                   <motion.path
-                    d="M55 245 C105 292 160 282 225 225 C295 162 365 110 475 78"
+                    key={`bean-${roastMode}`}
+                    d={preset.beanPath}
                     stroke="#C85A32"
                     strokeWidth="3.5"
                     strokeLinecap="round"
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
-                    transition={{ duration: 1.8, delay: 0.3, ease: 'easeInOut' }}
+                    transition={{ duration: 1.1, ease: 'easeInOut' }}
                   />
 
                   {/* Rate of Rise (RoR) secondary curve */}
                   <motion.path
-                    d="M55 155 C130 120 220 148 305 188 C380 224 435 242 475 255"
+                    key={`ror-${roastMode}`}
+                    d={preset.rorPath}
                     stroke="#3A2A22"
                     strokeWidth="1.75"
                     strokeDasharray="5 5"
                     strokeOpacity="0.55"
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
-                    transition={{ duration: 1.8, delay: 0.5, ease: 'easeInOut' }}
+                    transition={{ duration: 1.1, delay: 0.1, ease: 'easeInOut' }}
                   />
 
-                  {/* Key Roast Milestones */}
-                  <motion.g
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 1.1, duration: 0.4 }}
+                  {/* Key Interactive Roast Milestones */}
+                  <g
+                    className="cursor-pointer"
+                    onClick={() => {
+                      soundEngine.playClick();
+                      setSelectedMilestone('Turning Point • 94°C • Endothermic Phase');
+                    }}
                   >
-                    <circle cx="132" cy="276" r="5" fill="#FBF8F3" stroke="#1E1612" strokeWidth="2.5" />
+                    <circle cx="132" cy="276" r="6" fill="#FBF8F3" stroke="#1E1612" strokeWidth="2.5" />
                     <text x="115" y="300" fill="#3A2A22" fontSize="11" fontFamily="DM Sans, sans-serif">
                       Turning Pt
                     </text>
-                  </motion.g>
+                  </g>
 
-                  <motion.g
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 1.4, duration: 0.4 }}
+                  <g
+                    className="cursor-pointer"
+                    onClick={() => {
+                      soundEngine.playClick();
+                      setSelectedMilestone('First Crack • 196°C • Exothermic Ester Release');
+                    }}
                   >
-                    <circle cx="342" cy="132" r="5.5" fill="#C85A32" stroke="#FBF8F3" strokeWidth="2.5" />
-                    <text x="322" y="114" fill="#C85A32" fontSize="11" fontWeight="600" fontFamily="DM Sans, sans-serif">
+                    <circle cx="342" cy="132" r="6.5" fill="#C85A32" stroke="#FBF8F3" strokeWidth="2.5" />
+                    <text
+                      x="315"
+                      y="112"
+                      fill="#C85A32"
+                      fontSize="11"
+                      fontWeight="600"
+                      fontFamily="DM Sans, sans-serif"
+                    >
                       First Crack (196°C)
                     </text>
-                  </motion.g>
+                  </g>
 
-                  <motion.g
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: 1.7, duration: 0.4 }}
+                  <g
+                    className="cursor-pointer"
+                    onClick={() => {
+                      soundEngine.playClick();
+                      setSelectedMilestone(`${preset.dropLabel} • Quench Cooling Active`);
+                    }}
                   >
-                    <circle cx="475" cy="78" r="6" fill="#1E1612" stroke="#FBF8F3" strokeWidth="2.5" />
-                    <text x="415" y="60" fill="#1E1612" fontSize="11" fontWeight="600" fontFamily="DM Sans, sans-serif">
-                      Drop • 204°C
+                    <circle cx="475" cy="74" r="6.5" fill="#1E1612" stroke="#FBF8F3" strokeWidth="2.5" />
+                    <text
+                      x="402"
+                      y="54"
+                      fill="#1E1612"
+                      fontSize="11"
+                      fontWeight="600"
+                      fontFamily="DM Sans, sans-serif"
+                    >
+                      {preset.dropLabel}
                     </text>
-                  </motion.g>
+                  </g>
                 </svg>
+
+                {selectedMilestone && (
+                  <div className="mt-2 px-3 py-1.5 rounded-xl bg-espresso text-cream text-[11px] font-mono uppercase tracking-wider flex items-center justify-between">
+                    <span>PROBE TELEMETRY // {selectedMilestone}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMilestone(null)}
+                      className="text-terracotta hover:underline ml-2"
+                    >
+                      [CLEAR]
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Bottom Telemetry Strip */}
               <div className="grid grid-cols-3 gap-3 pt-4 border-t border-espresso/10 text-center sm:text-left">
-                <div className="bg-cream/80 rounded-xl px-3.5 py-2.5 border border-espresso/5">
+                <div className="bg-cream/85 rounded-xl px-3.5 py-2.5 border border-espresso/5">
                   <span className="text-[11px] uppercase tracking-wider text-umber/60 block">
                     Dev Time
                   </span>
-                  <span className="font-serif text-base font-medium text-espresso">14.8% (1:28)</span>
+                  <span className="font-serif text-base font-medium text-espresso">
+                    <ScrambleText text={preset.devTime} triggerKey={roastMode} duration={360} />
+                  </span>
                 </div>
-                <div className="bg-cream/80 rounded-xl px-3.5 py-2.5 border border-espresso/5">
+                <div className="bg-cream/85 rounded-xl px-3.5 py-2.5 border border-espresso/5">
                   <span className="text-[11px] uppercase tracking-wider text-umber/60 block">
                     Total Roast
                   </span>
-                  <span className="font-serif text-base font-medium text-espresso">09m 42s</span>
+                  <span className="font-serif text-base font-medium text-espresso">
+                    <ScrambleText text={preset.totalRoast} triggerKey={roastMode} duration={360} />
+                  </span>
                 </div>
-                <div className="bg-cream/80 rounded-xl px-3.5 py-2.5 border border-espresso/5">
+                <div className="bg-cream/85 rounded-xl px-3.5 py-2.5 border border-espresso/5">
                   <span className="text-[11px] uppercase tracking-wider text-umber/60 block">
                     Agtron Score
                   </span>
-                  <span className="font-serif text-base font-medium text-terracotta">68 Light</span>
+                  <span className="font-serif text-base font-medium text-terracotta">
+                    <ScrambleText text={preset.agtron} triggerKey={roastMode} duration={360} />
+                  </span>
                 </div>
               </div>
             </div>

@@ -9,16 +9,24 @@ import {
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
+import ScrambleText from './ScrambleText';
+import { playHover, playClick } from '../utils/soundEngine';
 
 function GlowCard({ children, className = '' }) {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0, rx: 0, ry: 0 });
   const [hovered, setHovered] = useState(false);
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const px = x / rect.width;
+    const py = y / rect.height;
     setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x,
+      y,
+      rx: (0.5 - py) * 7,
+      ry: (px - 0.5) * 7,
     });
   };
 
@@ -29,16 +37,26 @@ function GlowCard({ children, className = '' }) {
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.45 }}
       onMouseMove={handleMouseMove}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`group relative overflow-hidden rounded-2xl border border-[#27272A] bg-[#111115] p-6 transition-colors hover:border-zinc-700 ${className}`}
+      onMouseEnter={() => {
+        setHovered(true);
+        playHover();
+      }}
+      onMouseLeave={() => {
+        setHovered(false);
+        setMousePos((prev) => ({ ...prev, rx: 0, ry: 0 }));
+      }}
+      style={{
+        transform: `perspective(1000px) rotateX(${mousePos.rx}deg) rotateY(${mousePos.ry}deg)`,
+        transformStyle: 'preserve-3d',
+      }}
+      className={`group relative overflow-hidden rounded-2xl border border-[#27272A] bg-[#111115]/90 p-6 backdrop-blur-md transition-colors hover:border-cyan-400/50 ${className}`}
     >
       {/* Mouse-tracking radial glow */}
       <div
         className="pointer-events-none absolute -inset-px rounded-2xl transition-opacity duration-300"
         style={{
           opacity: hovered ? 1 : 0,
-          background: `radial-gradient(420px circle at ${mousePos.x}px ${mousePos.y}px, rgba(34, 211, 238, 0.12), rgba(139, 92, 246, 0.06) 40%, transparent 70%)`,
+          background: `radial-gradient(420px circle at ${mousePos.x}px ${mousePos.y}px, rgba(34, 211, 238, 0.14), rgba(139, 92, 246, 0.07) 40%, transparent 70%)`,
         }}
       />
       <div className="relative z-10 flex h-full flex-col justify-between">{children}</div>
@@ -67,14 +85,14 @@ export default function BentoGrid() {
   ];
 
   return (
-    <section id="platform" className="py-20 sm:py-28">
+    <section id="platform" className="relative py-20 sm:py-28">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12 max-w-2xl">
           <span className="font-mono text-xs uppercase tracking-[0.2em] text-cyan-400">
-            Core Infrastructure
+            03 // CORE INFRASTRUCTURE PRIMITIVES
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-[#FAFAFA] sm:text-4xl">
-            Built for zero-downtime AI at scale.
+            <ScrambleText text="Built for zero-downtime AI at scale." scrambleOnMount={false} />
           </h2>
           <p className="mt-3 text-base text-zinc-400">
             Every primitive you need to ship deterministic, observable, and cost-efficient LLM applications.
@@ -97,7 +115,11 @@ export default function BentoGrid() {
                     <button
                       key={val}
                       type="button"
-                      onClick={() => setThreshold(val)}
+                      data-cursor="[ TUNE COSINE ]"
+                      onClick={() => {
+                        playClick();
+                        setThreshold(val);
+                      }}
                       className={`rounded-md px-2 py-0.5 transition-colors ${
                         threshold === val ? 'bg-[#1D1D24] text-cyan-300' : 'text-zinc-500 hover:text-zinc-300'
                       }`}
@@ -145,7 +167,11 @@ export default function BentoGrid() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setOutageSimulated((prev) => !prev)}
+                  data-cursor="[ TRIGGER FAILOVER ]"
+                  onClick={() => {
+                    playClick();
+                    setOutageSimulated((prev) => !prev);
+                  }}
                   className={`rounded-lg border px-2.5 py-1 font-mono text-[11px] transition-colors ${
                     outageSimulated
                       ? 'border-amber-400/40 bg-amber-400/10 text-amber-300'
@@ -205,7 +231,11 @@ export default function BentoGrid() {
                     <button
                       key={span.id}
                       type="button"
-                      onClick={() => setActiveSpan(span.id)}
+                      data-cursor="[ INSPECT SPAN ]"
+                      onClick={() => {
+                        playClick();
+                        setActiveSpan(span.id);
+                      }}
                       className={`flex w-full items-center gap-2.5 rounded-md px-2 py-1 text-left transition-colors ${
                         selected ? 'bg-[#18181D]' : 'hover:bg-[#111115]'
                       }`}
@@ -233,7 +263,7 @@ export default function BentoGrid() {
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-violet-400/30 bg-violet-400/10 text-violet-400">
                     <GitBranch className="h-4 w-4" />
                   </div>
-                  <h3 className="text-lg font-bold text-[#FAFAFA]">Prompt Versioning & Canary Splits</h3>
+                  <h3 className="text-lg font-bold text-[#FAFAFA]">Prompt Versioning &amp; Canary Splits</h3>
                 </div>
                 <span className="inline-flex items-center gap-1 rounded-full border border-violet-400/30 bg-violet-400/10 px-2.5 py-0.5 font-mono text-[11px] text-violet-300">
                   <Sparkles className="h-3 w-3" /> Live A/B
